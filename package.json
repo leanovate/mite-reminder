@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "mite-api": "^0.1.0",
+    "moment": "^2.23.0",
     "prompts": "^2.0.1"
   }
 }
