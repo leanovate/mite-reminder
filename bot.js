@@ -56,7 +56,8 @@ const runTimeEntries = context => {
 
         console.log(`found ${datesWithoutEntires.length} that need time entries`)
         if (datesWithoutEntires.length > 0) {
-            datesWithoutEntires.map(date => `Your times are missing, please update them here: https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+            const message = "Your time entries for the following dates are missing:\n"
+                + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                 .join("\n")
             send(context, message)
         } else {
