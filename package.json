@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "bot": "node bot.js"
   },
   "author": "Moritz Rumpf",
   "license": "MIT",
   "dependencies": {
     "mite-api": "^0.1.0",
     "moment": "^2.23.0",
-    "prompts": "^2.0.1"
+    "prompts": "^2.0.1",
+    "slackbots": "^1.2.0"
   }
 }
