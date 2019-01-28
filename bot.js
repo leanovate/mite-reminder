@@ -34,7 +34,7 @@ const sendToId = async (context, message) => await context.bot.postMessage(conte
 
 const runTimeEntries = context => {
     const referenceDay = moment().subtract(40, "days")
-    const today = moment().startOf("day")
+    const today = moment().endOf("day")
     console.log("getting time entires from, to", referenceDay, today)
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
         from: referenceDay.format("YYYY-MM-DD"),
@@ -58,7 +58,7 @@ const runTimeEntries = context => {
         if (datesWithoutEntires.length > 0) {
             const message = "Your time entries for the following dates are missing:\n"
                 + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                .join("\n")
+                    .join("\n")
             send(context, message)
         } else {
             send(context, "You filled out all days in the last 40 days.")
