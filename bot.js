@@ -15,7 +15,7 @@ if (!process.env.SLACK_TOKEN) {
 let db = {}
 fs.readFile('db.json', 'utf8', (err, data) => {
     if (err) {
-        console.err("Error when loading db", err)
+        console.error("Error when loading db", err)
     }
     if (data) {
         db = JSON.parse(data)
@@ -70,7 +70,7 @@ const updateDb = (context, value) => {
     context.db[context.user] = value
     fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
         if (err) {
-            console.err("Failed to update db", err)
+            console.error("Failed to update db", err)
             send(context, "Sorry, there was an error completing your action")
         }
         console.log(`Updated db at key '${context.user}'`);
@@ -80,7 +80,7 @@ const removeFromDb = (context) => {
     delete context.db[context.user]
     fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
         if (err) {
-            console.err("Failed to update db", err)
+            console.error("Failed to update db", err)
             sendToId(context, "Sorry, there was an error completing your action")
         }
         console.log(`Removed db at key '${context.user}'`);
