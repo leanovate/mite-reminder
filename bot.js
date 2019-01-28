@@ -32,13 +32,11 @@ const isWeekend = dateAsMoment => [0, 6].includes(dateAsMoment.day())
 const send = async (context, message) => await context.bot.postMessageToUser(context.db[context.user].name, message)
 const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
 
-const runTimeEntries = context => {
-    const referenceDay = moment().subtract(40, "days")
-    const today = moment().endOf("day")
-    console.log("getting time entires from, to", referenceDay, today)
+const runTimeEntries = (context, start, end) => {
+    console.log("getting time entires from, to", start, end)
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
-        from: referenceDay.format("YYYY-MM-DD"),
-        to: today.format("YYYY-MM-DD"),
+        from: start.format("YYYY-MM-DD"),
+        to: end.format("YYYY-MM-DD"),
         user_id: 'current'
     }, async (_, result) => {
         if (!context.db[context.user]) {
@@ -46,8 +44,8 @@ const runTimeEntries = context => {
         }
         const times = result.map(entry => entry.time_entry.date_at)
         let datesToCheck = []
-        let date = referenceDay.clone()
-        while (date.isBefore(today)) {
+        let date = start.clone()
+        while (date.isBefore(end)) {
             datesToCheck.push(date.clone())
             date.add(1, "day")
         }
@@ -61,7 +59,7 @@ const runTimeEntries = context => {
                     .join("\n")
             send(context, message)
         } else {
-            send(context, "You filled out all days in the last 40 days.")
+            send(context, "You filled out all time entries in the interval.")
         }
     })
 }
@@ -115,7 +113,8 @@ bot.on('message', data => {
                 } else if (data.text === "unregister") {
                     unregisterUser(context)
                 } else if (data.text === "check") {
-                    runTimeEntries(context)
+                    send(context, "Checking time entries for the last 40 days...")
+                    runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().endOf("day"))
                 } else {
                     const userName = context.db[context.user].name
                     sendToId(context, `Hi${userName ? ` ${userName}` : ""}, I don't know this command. Send \`help\` to the \`mite\`-bot find out what you can do.`)
