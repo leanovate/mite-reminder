@@ -133,7 +133,7 @@ cron.schedule('30 9 1 * *', () => {
         if (db.hasOwnProperty(user)) {
             const context = { bot, user, db }
 
-            const referenceDay = moment().subtract(1, "month").subtract(15, "day") // referer to the previous month until the 15th
+            const referenceDay = moment().subtract(15, "day") // refer to the previous month until the 15th
             const startOfMonth = referenceDay.clone().startOf("month")
             const endOfMonth = referenceDay.clone().endOf("month")
             runTimeEntries(context, startOfMonth, endOfMonth)
