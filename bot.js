@@ -127,8 +127,8 @@ bot.on('message', data => {
     }
 })
 
-cron.schedule('0 9 1 * *', () => {
-    console.log(`Running cron for ${Object.keys(db).length} users.`)
+cron.schedule('30 9 1 * *', () => {
+    console.log(`Running monthly cron for ${Object.keys(db).length} users.`)
     for (let user in db) {
         if (db.hasOwnProperty(user)) {
             const context = { bot, user, db }
@@ -137,6 +137,20 @@ cron.schedule('0 9 1 * *', () => {
             const startOfMonth = referenceDay.clone().startOf("month")
             const endOfMonth = referenceDay.clone().endOf("month")
             runTimeEntries(context, startOfMonth, endOfMonth)
+        }
+    }
+});
+
+cron.schedule('0 9 * * 5', () => {
+    console.log(`Running weekly cron for ${Object.keys(db).length} users.`)
+    for (let user in db) {
+        if (db.hasOwnProperty(user)) {
+            const context = { bot, user, db }
+
+            const referenceDay = moment()
+            const sevenDaysEarlier = referenceDay.clone().subtract(7, "days").startOf("day")
+            const today = referenceDay.clone().startOf("day")
+            runTimeEntries(context, sevenDaysEarlier, today)
         }
     }
 });
