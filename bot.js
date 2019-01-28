@@ -33,6 +33,11 @@ const isWeekend = dateAsMoment => [0, 6].includes(dateAsMoment.day())
 const send = async (context, message) => await context.bot.postMessageToUser(context.db[context.user].name, message)
 const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
 
+const isTimeEnteredOnDay = (miteEntries, day) =>
+    miteEntries.map(entry => entry.time_entry.date_at).includes(day.format("YYYY-MM-DD"))
+    && miteEntries
+        .map(entry => entry.time_entry)
+        .filter(time_entry => time_entry.date_at === day.format("YYYY-MM-DD"))[0].minutes !== 0
 const runTimeEntries = (context, start, end) => {
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
         from: start.format("YYYY-MM-DD"),
@@ -42,7 +47,6 @@ const runTimeEntries = (context, start, end) => {
         if (!context.db[context.user]) {
             console.log("Failed to get time entries because user was not found in db")
         }
-        const times = result.map(entry => entry.time_entry.date_at)
         let datesToCheck = []
         let date = start.clone()
         while (date.isBefore(end)) {
@@ -50,11 +54,11 @@ const runTimeEntries = (context, start, end) => {
             date.add(1, "day")
         }
         const datesWithoutEntires = datesToCheck
-            .filter(date => !isWeekend(date) && !date.isHoliday() && !times.includes(date.format("YYYY-MM-DD")))
+            .filter(date => !isWeekend(date) && !date.isHoliday() && !isTimeEnteredOnDay(result, date))
 
         console.log(`found ${datesWithoutEntires.length} that need time entries`)
         if (datesWithoutEntires.length > 0) {
-            const message = "Your time entries for the following dates are missing:\n"
+            const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n")
             send(context, message)
