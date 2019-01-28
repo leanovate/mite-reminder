@@ -3,6 +3,7 @@ const SlackBot = require('slackbots');
 const miteApi = require("mite-api")
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const fs = require('fs');
+var cron = require('node-cron');
 
 if (!process.env.SLACK_TOKEN) {
     console.error("SLACK_TOKEN environment variable not set.\n")
@@ -33,7 +34,6 @@ const send = async (context, message) => await context.bot.postMessageToUser(con
 const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
 
 const runTimeEntries = (context, start, end) => {
-    console.log("getting time entires from, to", start, end)
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
         from: start.format("YYYY-MM-DD"),
         to: end.format("YYYY-MM-DD"),
@@ -58,8 +58,6 @@ const runTimeEntries = (context, start, end) => {
                 + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n")
             send(context, message)
-        } else {
-            send(context, "You filled out all time entries in the interval.")
         }
     })
 }
@@ -115,6 +113,7 @@ bot.on('message', data => {
                 } else if (data.text === "check") {
                     send(context, "Checking time entries for the last 40 days...")
                     runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().endOf("day"))
+                    send(context, "...done")
                 } else {
                     const userName = context.db[context.user].name
                     sendToId(context, `Hi${userName ? ` ${userName}` : ""}, I don't know this command. Send \`help\` to the \`mite\`-bot find out what you can do.`)
@@ -123,3 +122,17 @@ bot.on('message', data => {
         })
     }
 })
+
+cron.schedule('0 9 1 * *', () => {
+    console.log(`Running cron for ${Object.keys(db).length} users.`)
+    for (let user in db) {
+        if (db.hasOwnProperty(user)) {
+            const context = { bot, user, db }
+
+            const referenceDay = moment().subtract(1, "month").subtract(15, "day") // referer to the previous month until the 15th
+            const startOfMonth = referenceDay.clone().startOf("month")
+            const endOfMonth = referenceDay.clone().endOf("month")
+            runTimeEntries(context, startOfMonth, endOfMonth)
+        }
+    }
+});
