@@ -1,6 +1,8 @@
 const miteApi = require("mite-api")
 const prompts = require("prompts");
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
+const { createMiteApi } = require("./mite/mite-api")
+const { isWeekend} = require("./mite/time")
 
 if (!process.env.MITE_API_KEY) {
     console.error("MITE_API_KEY environment variable not set.\n")
@@ -10,17 +12,11 @@ if (!process.env.MITE_API_KEY) {
     process.exit()
 }
 
-const mite = miteApi({
-    account: 'leanovate',
-    apiKey: process.env.MITE_API_KEY,
-    applicationName: 'leanovate-mite-test'
-});
+const mite = createMiteApi(process.env.MITE_API_KEY)
 
 const referenceDay = moment().subtract(15, "day") // referer to the previous month until the 15th
 const startOfMonth = referenceDay.clone().startOf("month")
 const endOfMonth = referenceDay.clone().endOf("month")
-
-const isWeekend = dateAsMoment => [0, 6].includes(dateAsMoment.day())
 
 const createTimeEntry = entry => new Promise((resolve, _) => mite.addTimeEntry(entry, (_, result) => resolve(result)))
 const createNonProjectEntry = async dateAsString => createTimeEntry({

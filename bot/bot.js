@@ -1,9 +1,10 @@
 const SlackBot = require('slackbots');
-
-const miteApi = require("mite-api")
-const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
+const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
+const cron = require('node-cron');
+const { createMiteApi } = require("../mite/mite-api")
+const { isTimeEnteredOnDay, isWeekend} = require("../mite/time")
+const { registerUser, unregisterUser} = require("./db")
 const fs = require('fs');
-var cron = require('node-cron');
 
 if (!process.env.SLACK_TOKEN) {
     console.error("SLACK_TOKEN environment variable not set.\n")
@@ -22,22 +23,9 @@ fs.readFile('db.json', 'utf8', (err, data) => {
     }
 })
 
-const createMiteApi = apiKey => miteApi({
-    account: 'leanovate',
-    apiKey: apiKey,
-    applicationName: 'leanovate-mite-reminder'
-});
-
-const isWeekend = dateAsMoment => [0, 6].includes(dateAsMoment.day())
-
 const send = async (context, message) => await context.bot.postMessageToUser(context.db[context.user].name, message)
 const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
 
-const isTimeEnteredOnDay = (miteEntries, day) =>
-    miteEntries.map(entry => entry.time_entry.date_at).includes(day.format("YYYY-MM-DD"))
-    && miteEntries
-        .map(entry => entry.time_entry)
-        .filter(time_entry => time_entry.date_at === day.format("YYYY-MM-DD"))[0].minutes !== 0
 const runTimeEntries = (context, start, end) => {
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
         from: start.format("YYYY-MM-DD"),
@@ -64,35 +52,6 @@ const runTimeEntries = (context, start, end) => {
             send(context, message)
         }
     })
-}
-
-const updateDb = (context, value) => {
-    context.db[context.user] = value
-    fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
-        if (err) {
-            console.error("Failed to update db", err)
-            send(context, "Sorry, there was an error completing your action")
-        }
-        console.log(`Updated db at key '${context.user}'`);
-    })
-}
-const removeFromDb = (context) => {
-    delete context.db[context.user]
-    fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
-        if (err) {
-            console.error("Failed to update db", err)
-            sendToId(context, "Sorry, there was an error completing your action")
-        }
-        console.log(`Removed db at key '${context.user}'`);
-    })
-}
-const registerUser = (context, name, miteApiKey) => {
-    updateDb(context, { name, miteApiKey })
-    send(context, `Hi ${name}, I registered you. You can now check your times with \`check\`!`)
-}
-const unregisterUser = (context) => {
-    removeFromDb(context)
-    sendToId(context, `Ok, I successfully unregistered you.`)
 }
 
 var bot = new SlackBot({
