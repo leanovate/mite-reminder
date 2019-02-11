@@ -27,13 +27,20 @@ const send = async (context, message) => await context.bot.postMessageToUser(con
 const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
 
 const runTimeEntries = (context, start, end) => {
+    if (!context.db[context.user]) {
+        sendToId(context, "You are not registered, cannot check mite entries.")
+        console.log("Failed to get time entries because user was not found in db")
+        return
+    }
     createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
         from: start.format("YYYY-MM-DD"),
         to: end.format("YYYY-MM-DD"),
         user_id: 'current'
     }, async (_, result) => {
-        if (!context.db[context.user]) {
-            console.log("Failed to get time entries because user was not found in db")
+        if (typeof result !== "object") {
+            send(context, result)
+            console.log("Failed to get time entries: ", result)
+            return
         }
         let datesToCheck = []
         let date = start.clone()
