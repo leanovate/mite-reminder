@@ -72,7 +72,7 @@ bot.on('message', data => {
             if (im.channel.id === data.channel) {
                 const context = { bot, user: data.user, db }
                 if (data.text === "help") {
-                    send(context, "Use `register <your mite api key>` to receive mite reminders in the future (mite api can be found here https://leanovate.mite.yo.lk/myself ). Use `check` to list missing times in the last 60 days. Use `unregister` to undo your registration.")
+                    send(context, "Use `register <your mite api key>` to receive mite reminders in the future (mite api key can be found here https://leanovate.mite.yo.lk/myself ). Use `check` to list missing times in the last 40 days. Use `unregister` to undo your registration.")
                 } else if (data.text.startsWith("register")) {
                     const parts = data.text.split(" ")
                     registerUser(context, parts[1])
