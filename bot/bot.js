@@ -24,7 +24,7 @@ fs.readFile('db.json', 'utf8', (err, data) => {
     }
 })
 
-const runTimeEntries = (context, start, end) => {
+const runTimeEntries = (context, start, end, onNothingToReport) => {
     if (!context.db[context.user]) {
         send(context, "You are not registered, cannot check mite entries.")
         console.log("Failed to get time entries because user was not found in db")
@@ -55,6 +55,8 @@ const runTimeEntries = (context, start, end) => {
                 + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n")
             send(context, message)
+        } else {
+            onNothingToReport && onNothingToReport()
         }
     })
 }
@@ -79,8 +81,12 @@ bot.on('message', data => {
                 } else if (data.text === "unregister") {
                     unregisterUser(context)
                 } else if (data.text === "check") {
-                    send(context, "Checking time entries for the last 40 days")
-                    runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().startOf("day"))
+                    send(context, "Checking time entries for the last 40 days (exlcuding today)")
+                    runTimeEntries(
+                        context, 
+                        moment().subtract(40, "days").startOf("day"),
+                        moment().startOf("day"),
+                        () => send(context, "You completed all time entries!"))
                 } else {
                     send(context, "I don't know this command. Send `help` to find out what you can do.")
                 }
