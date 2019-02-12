@@ -80,7 +80,7 @@ bot.on('message', data => {
                     unregisterUser(context)
                 } else if (data.text === "check") {
                     send(context, "Checking time entries for the last 40 days")
-                    runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().endOf("day"))
+                    runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().startOf("day"))
                 } else {
                     send(context, "I don't know this command. Send `help` to find out what you can do.")
                 }
