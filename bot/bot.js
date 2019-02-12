@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const { createMiteApi } = require("../mite/mite-api")
 const { isTimeEnteredOnDay, isWeekend} = require("../mite/time")
 const { registerUser, unregisterUser} = require("./db")
+const { send } = require("./utils")
 const fs = require('fs');
 
 if (!process.env.SLACK_TOKEN) {
@@ -23,12 +24,9 @@ fs.readFile('db.json', 'utf8', (err, data) => {
     }
 })
 
-const send = async (context, message) => await context.bot.postMessageToUser(context.db[context.user].name, message)
-const sendToId = async (context, message) => await context.bot.postMessage(context.user, message)
-
 const runTimeEntries = (context, start, end) => {
     if (!context.db[context.user]) {
-        sendToId(context, "You are not registered, cannot check mite entries.")
+        send(context, "You are not registered, cannot check mite entries.")
         console.log("Failed to get time entries because user was not found in db")
         return
     }
@@ -74,19 +72,17 @@ bot.on('message', data => {
             if (im.channel.id === data.channel) {
                 const context = { bot, user: data.user, db }
                 if (data.text === "help") {
-                    sendToId(context, "Use `register <your slack name> <your mite api key>` to receive mite reminders in the future (mite api can be found here https://leanovate.mite.yo.lk/myself ). Use `check` to list missing times in the last 60 days. Use `unregister` to undo your registration.")
+                    send(context, "Use `register <your mite api key>` to receive mite reminders in the future (mite api can be found here https://leanovate.mite.yo.lk/myself ). Use `check` to list missing times in the last 60 days. Use `unregister` to undo your registration.")
                 } else if (data.text.startsWith("register")) {
                     const parts = data.text.split(" ")
-                    registerUser(context, parts[1], parts[2])
+                    registerUser(context, parts[1])
                 } else if (data.text === "unregister") {
                     unregisterUser(context)
                 } else if (data.text === "check") {
-                    send(context, "Checking time entries for the last 40 days...")
+                    send(context, "Checking time entries for the last 40 days")
                     runTimeEntries(context, moment().subtract(40, "days").startOf("day"), moment().endOf("day"))
-                    send(context, "...done")
                 } else {
-                    const userName = context.db[context.user].name
-                    sendToId(context, `Hi${userName ? ` ${userName}` : ""}, I don't know this command. Send \`help\` to the \`mite\`-bot find out what you can do.`)
+                    send(context, "I don't know this command. Send `help` to find out what you can do.")
                 }
             }
         })

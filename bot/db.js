@@ -1,3 +1,6 @@
+const fs = require('fs');
+const { send } = require("./utils")
+
 const updateDb = (context, value) => {
     context.db[context.user] = value
     fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
@@ -18,13 +21,13 @@ const removeFromDb = (context) => {
         console.log(`Removed db at key '${context.user}'`);
     })
 }
-const registerUser = (context, name, miteApiKey) => {
-    updateDb(context, { name, miteApiKey })
-    send(context, `Hi ${name}, I registered you. You can now check your times with \`check\`!`)
+const registerUser = (context, miteApiKey) => {
+    updateDb(context, { miteApiKey })
+    send(context, "Hi, I registered you. You can now check your times with `check`!")
 }
 const unregisterUser = (context) => {
     removeFromDb(context)
-    sendToId(context, `Ok, I successfully unregistered you.`)
+    sendToId(context, "Ok, I successfully unregistered you.")
 }
         
 module.exports = {
