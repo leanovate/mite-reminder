@@ -1,18 +1,22 @@
+#!/usr/bin/env node
 const miteApi = require("mite-api")
 const prompts = require("prompts");
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const { createMiteApi } = require("./mite/mite-api")
 const { isWeekend} = require("./mite/time")
+const config = require("./mite/config")
 
-if (!process.env.MITE_API_KEY) {
-    console.error("MITE_API_KEY environment variable not set.\n")
-    console.log("Either run 'export MITE_API_KEY=<your key>'")
-    console.log("or run again with 'MITE_API_KEY=<your key> npm start'")
-    console.log("Your api key can be found here: https://leanovate.mite.yo.lk/myself")
+const API_KEY = config.get().apiKey
+const ACCOUNT_NAME = config.get().account 
+
+if (!!!API_KEY) {
+    console.error("Mite key is not set!")
+    console.error("Please set the key via the 'mite' command")
+    console.error("Your api key can be found here: https://<account>.mite.yo.lk/myself where account is the name of the organization")
     process.exit()
 }
 
-const mite = createMiteApi(process.env.MITE_API_KEY)
+const mite = createMiteApi(API_KEY)
 
 const referenceDay = moment().subtract(15, "day") // referer to the previous month until the 15th
 const startOfMonth = referenceDay.clone().startOf("month")
@@ -55,7 +59,7 @@ const runTimeEntries = () => mite.getTimeEntries({
                 console.log("aborting...")
                 break // breaking because the user did not select yes or no (likely Ctrl+C)
             } else if (didWork) {
-                console.log(`Your times are missing, please update them here: https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                console.log(`Your times are missing, please update them here: https://${ACCOUNT_NAME}.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
             } else {
                 await createNonProjectEntry(dateAsString)
                 console.log("Ok, I've marked that day a non-project time")

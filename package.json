@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "mite-reminder": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leanovate/mite-reminder.git"
+  },
   "scripts": {
     "start": "node index.js",
     "bot": "node ./bot/bot.js"
@@ -12,6 +19,7 @@
   "dependencies": {
     "mite-api": "^0.1.0",
     "moment": "^2.23.0",
+    "nconf": "^0.10.0",
     "node-cron": "^2.0.3",
     "prompts": "^2.0.1",
     "slackbots": "^1.2.0"
