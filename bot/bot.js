@@ -2,8 +2,8 @@ const SlackBot = require('slackbots');
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
 const { createMiteApi } = require("../mite/mite-api")
-const { isTimeEnteredOnDay, isWeekend} = require("../mite/time")
-const { registerUser, unregisterUser} = require("./db")
+const { isTimeEnteredOnDay, isWeekend } = require("../mite/time")
+const { registerUser, unregisterUser } = require("./db")
 const { send } = require("./utils")
 const fs = require('fs');
 
@@ -83,7 +83,7 @@ bot.on('message', data => {
                 } else if (data.text === "check") {
                     send(context, "Checking time entries for the last 40 days (exlcuding today)")
                     runTimeEntries(
-                        context, 
+                        context,
                         moment().subtract(40, "days").startOf("day"),
                         moment().startOf("day"),
                         () => send(context, "You completed all time entries!"))
@@ -94,6 +94,12 @@ bot.on('message', data => {
         })
     }
 })
+bot.on('close', data => {
+    console.log("Bot disconnected", data)
+});
+bot.on('error', data => {
+    console.log("Bot got an error", data)
+});
 
 cron.schedule('30 9 1 * *', () => {
     console.log(`Running monthly cron for ${Object.keys(db).length} users.`)
