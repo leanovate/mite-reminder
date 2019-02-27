@@ -95,7 +95,8 @@ bot.on('message', data => {
     }
 })
 bot.on('close', data => {
-    console.log("Bot disconnected", data)
+    console.log("Bot disconnected, will try to reconnect", data)
+    bot.login()
 });
 bot.on('error', data => {
     console.log("Bot got an error", data)
