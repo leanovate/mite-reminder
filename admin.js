@@ -1,6 +1,6 @@
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const { createMiteApi, getTimeEntries } = require("./mite/mite-api")
-const fs = require('fs');
+const { loadUsersToCheck } = require("./bot/db")
 
 if (!process.env.MITE_API_KEY) {
     console.error("MITE_API_KEY environment variable not set.\n")
@@ -39,23 +39,6 @@ const runAllTimeEntires = async () => {
     const results = await Promise.all(ids.map(id => runTimeEntries(id)))
     console.log(results)
 }
-
-const loadUsersToCheck = () =>
-    new Promise(resolve =>
-        fs.readFile('users.csv', 'utf8', (err, data) => {
-            if (err) {
-                console.error("Error when loading users to check", err)
-            }
-            if (data) {
-                resolve(
-                    data
-                        .split(/\r?\n/)
-                        .map(entry => entry.split(",")[0])
-                )
-            }
-        })
-    )
-
 
 const command = process.argv[2]
 

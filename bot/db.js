@@ -29,8 +29,25 @@ const unregisterUser = (context) => {
     removeFromDb(context)
     sendToId(context, "Ok, I successfully unregistered you.")
 }
+
+const loadUsersToCheck = () =>
+    new Promise(resolve =>
+        fs.readFile('users.csv', 'utf8', (err, data) => {
+            if (err) {
+                console.error("Error when loading users to check", err)
+            }
+            if (data) {
+                resolve(
+                    data
+                        .split(/\r?\n/)
+                        .map(entry => entry.split(",")[0])
+                )
+            }
+        })
+    )
         
 module.exports = {
     registerUser,
-    unregisterUser
+    unregisterUser,
+    loadUsersToCheck
 }
