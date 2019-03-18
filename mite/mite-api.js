@@ -27,6 +27,9 @@ getTimeEntries = (mite, userId, from, to) =>
         )
     }))
 
+getUserName = (mite, userId) =>
+    new Promise(resolve => mite.getUser(userId, (_, result) => resolve(result.user.name)))
+
 module.exports = {
     createMiteApi,
     getTimeEntries

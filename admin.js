@@ -24,11 +24,8 @@ const getUsers = () => mite.getUsers(
         console.log("Users:", r)
     })
 
-getUserName = userId =>
-    new Promise(resolve => mite.getUser(userId, (_, result) => resolve(result.user.name)))
-
 const runTimeEntries = async userId => {
-    const userName = await getUserName(userId)
+    const userName = await getUserName(mite, userId)
     const missingEntries = await getTimeEntries(
         mite,
         userId,
