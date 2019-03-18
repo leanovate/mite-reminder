@@ -1,8 +1,7 @@
 const SlackBot = require('slackbots');
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
-const { createMiteApi } = require("../mite/mite-api")
-const { isTimeEnteredOnDay, isWeekend } = require("../mite/time")
+const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
 const { registerUser, unregisterUser } = require("./db")
 const { send } = require("./utils")
 const fs = require('fs');
@@ -24,31 +23,20 @@ fs.readFile('db.json', 'utf8', (err, data) => {
     }
 })
 
-const runTimeEntries = (context, start, end, onNothingToReport) => {
+const runTimeEntries = async (context, start, end, onNothingToReport) => {
     if (!context.db[context.user]) {
         send(context, "You are not registered, cannot check mite entries.")
         console.log("Failed to get time entries because user was not found in db")
         return
     }
-    createMiteApi(context.db[context.user].miteApiKey).getTimeEntries({
-        from: start.format("YYYY-MM-DD"),
-        to: end.format("YYYY-MM-DD"),
-        user_id: 'current'
-    }, async (_, result) => {
-        if (typeof result !== "object") {
-            send(context, result)
-            console.log("Failed to get time entries: ", result)
-            return
-        }
-        let datesToCheck = []
-        let date = start.clone()
-        while (date.isBefore(end)) {
-            datesToCheck.push(date.clone())
-            date.add(1, "day")
-        }
-        const datesWithoutEntires = datesToCheck
-            .filter(date => !isWeekend(date) && !date.isHoliday() && !isTimeEnteredOnDay(result, date))
 
+    try {
+        const datesWithoutEntires = await getTimeEntries(
+            createMiteApi(context.db[context.user].miteApiKey),
+            "current",
+            start,
+            end
+        )
         console.log(`found ${datesWithoutEntires.length} that need time entries`)
         if (datesWithoutEntires.length > 0) {
             const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
@@ -58,7 +46,10 @@ const runTimeEntries = (context, start, end, onNothingToReport) => {
         } else {
             onNothingToReport && onNothingToReport()
         }
-    })
+    } catch (err) {
+        send(context, err)
+        console.log("Failed to get time entries: ", err)
+    }
 }
 
 var bot = new SlackBot({

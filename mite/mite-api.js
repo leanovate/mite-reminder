@@ -8,11 +8,15 @@ const createMiteApi = apiKey => miteApi({
 });
 
 getTimeEntries = (mite, userId, from, to) =>
-    new Promise(resolve => mite.getTimeEntries({
+    new Promise((resolve, reject) => mite.getTimeEntries({
         from: from.format("YYYY-MM-DD"),
         to: to.format("YYYY-MM-DD"),
         user_id: userId
     }, (_, result) => {
+        if (typeof result !== "object") {
+            reject(result)
+            return
+        }
         const times = result.map(entry => entry.time_entry.date_at)
         const datesToCheck = getDatesBetween(from, to)
         resolve(datesToCheck
