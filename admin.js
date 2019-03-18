@@ -1,6 +1,5 @@
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
-const { createMiteApi } = require("./mite/mite-api")
-const { isWeekend } = require("./mite/time")
+const { createMiteApi, getTimeEntries } = require("./mite/mite-api")
 const fs = require('fs');
 
 if (!process.env.MITE_API_KEY) {
@@ -17,15 +16,6 @@ const referenceDay = moment().subtract(15, "day") // referer to the previous mon
 const startOfMonth = referenceDay.clone().startOf("month")
 const endOfMonth = referenceDay.clone().endOf("month")
 
-const getDatesBetween = (start, end) => {
-    const datesToCheck = []
-    let date = start.clone()
-    while (date.isBefore(end)) {
-        datesToCheck.push(date.clone())
-        date.add(1, "day")
-    }
-    return datesToCheck
-}
 
 const getUsers = () => mite.getUsers(
     {},
@@ -34,31 +24,16 @@ const getUsers = () => mite.getUsers(
         console.log("Users:", r)
     })
 
-getTimeEntries = (userId, from, to) =>
-    new Promise(resolve => mite.getTimeEntries({
-        from,
-        to,
-        user_id: userId
-    }, (_, result) => {
-        const times = result.map(entry => entry.time_entry.date_at)
-        const datesToCheck = getDatesBetween(startOfMonth, endOfMonth)
-        resolve(datesToCheck
-            .filter(date => !date.isHoliday())
-            .filter(date => !isWeekend(date))
-            .filter(date => !times.includes(date.format("YYYY-MM-DD")))
-            .map(date => date.format("YYYY-MM-DD"))
-        )
-    }))
 getUserName = userId =>
     new Promise(resolve => mite.getUser(userId, (_, result) => resolve(result.user.name)))
-
 
 const runTimeEntries = async userId => {
     const userName = await getUserName(userId)
     const missingEntries = await getTimeEntries(
+        mite,
         userId,
-        startOfMonth.format("YYYY-MM-DD"),
-        endOfMonth.format("YYYY-MM-DD"))
+        startOfMonth,
+        endOfMonth)
     return { userName, missingEntries }
 }
 
