@@ -59,15 +59,18 @@ const runTimeEntriesForUser = async (mite, userId, start, end) => {
         userId,
         start,
         end)
-    return { userName, daysMissing: missingEntries.length }
+    return { userName, missingEntries }
 }
 const runAllTimeEntries = async (context, start, end) => {
     const ids = await loadUsersToCheck()
-    const results = await Promise.all(
+    const message = (await Promise.all(
         ids
             .map(id => runTimeEntriesForUser(createMiteApi(context.db[context.user].miteApiKey), id, start, end))
-    )
-    await send(context, results)
+    ))
+        .filter(entry => entry.missingEntries.length > 0)
+        .map(entry => `${entry.userName}: ${entry.missingEntries.length}`)
+        .reduce((a, b) => a + "\n" + b, "")
+    await send(context, message)
 }
 
 var bot = new SlackBot({
