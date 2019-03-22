@@ -23,7 +23,6 @@ getTimeEntries = (mite, userId, from, to) =>
             .filter(date => !date.isHoliday())
             .filter(date => !isWeekend(date))
             .filter(date => !times.includes(date.format("YYYY-MM-DD")))
-            .map(date => date.format("YYYY-MM-DD"))
         )
     }))
 
