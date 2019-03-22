@@ -1,7 +1,7 @@
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
-const { registerUser, unregisterUser, loadUsersToCheck } = require("./db")
+const { registerUser, unregisterUser } = require("./db")
 const { send, createBot } = require("./utils")
 const fs = require('fs');
 
@@ -51,27 +51,6 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
     }
 }
 
-const runTimeEntriesForUser = async (mite, userId, start, end) => {
-    const userName = await getUserName(mite, userId)
-    const missingEntries = await getTimeEntries(
-        mite,
-        userId,
-        start,
-        end)
-    return { userName, missingEntries }
-}
-const runAllTimeEntries = async (context, start, end) => {
-    const ids = await loadUsersToCheck()
-    const message = (await Promise.all(
-        ids
-            .map(id => runTimeEntriesForUser(createMiteApi(context.db[context.user].miteApiKey), id, start, end))
-    ))
-        .filter(entry => entry.missingEntries.length > 0)
-        .map(entry => `${entry.userName}: ${entry.missingEntries.length}`)
-        .reduce((a, b) => a + "\n" + b, "")
-    await send(context, message)
-}
-
 const bot = createBot("mite-reminder")
 
 bot.on('start', () => {
@@ -96,12 +75,6 @@ bot.on('message', data => {
                         moment().subtract(40, "days").startOf("day"),
                         moment().startOf("day"),
                         () => send(context, "You completed all time entries!"))
-                } else if (data.text === "checkAll") {
-                    send(context, "Checking time entries for the last 40 days (exlcuding today)")
-                    runAllTimeEntries(
-                        context,
-                        moment().subtract(40, "days").startOf("day"),
-                        moment().startOf("day"))
                 } else {
                     send(context, "I don't know this command. Send `help` to find out what you can do.")
                 }
