@@ -40,12 +40,17 @@ const loadUsersToCheck = () =>
                 resolve(
                     data
                         .split(/\r?\n/)
-                        .map(entry => entry.split(",")[0])
+                        .map(line => line.split(",").map(entry => entry.trim()))
+                        .map(line => ({
+                            name: line[0],
+                            miteId: line[1],
+                            slackId: line[2]
+                        }))
                 )
             }
         })
     )
-        
+
 module.exports = {
     registerUser,
     unregisterUser,

@@ -1,9 +1,8 @@
-const SlackBot = require('slackbots');
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
 const { registerUser, unregisterUser, loadUsersToCheck } = require("./db")
-const { send } = require("./utils")
+const { send, createBot } = require("./utils")
 const fs = require('fs');
 
 if (!process.env.SLACK_TOKEN) {
@@ -73,10 +72,8 @@ const runAllTimeEntries = async (context, start, end) => {
     await send(context, message)
 }
 
-var bot = new SlackBot({
-    token: process.env.SLACK_TOKEN,
-    name: 'mite reminder'
-});
+const bot = createBot("mite-reminder")
+
 bot.on('start', () => {
     console.log("Bot started.")
 })

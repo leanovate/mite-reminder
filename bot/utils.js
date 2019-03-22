@@ -1,3 +1,5 @@
+const SlackBot = require('slackbots');
+
 const send = async (context, message) => {
     try {
         const { channel: { id: channelID } } = await context.bot.openIm(context.user);
@@ -7,6 +9,13 @@ const send = async (context, message) => {
     }
 }
 
+const createBot = (name, disconnect) => new SlackBot({
+    token: process.env.SLACK_TOKEN,
+    name,
+    disconnect
+});
+
 module.exports = {
-    send
+    send,
+    createBot
 }

@@ -1,6 +1,7 @@
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const { createMiteApi, getTimeEntries } = require("./mite/mite-api")
 const { loadUsersToCheck } = require("./bot/db")
+const { createBot } = require("./bot/utils")
 
 if (!process.env.MITE_API_KEY) {
     console.error("MITE_API_KEY environment variable not set.\n")
@@ -17,12 +18,23 @@ const startOfMonth = referenceDay.clone().startOf("month")
 const endOfMonth = referenceDay.clone().endOf("month")
 
 
-const getUsers = () => mite.getUsers(
-    {},
-    async (_, result) => {
-        const r = result.map(u => ({ id: u.user.id, name: u.user.name }))
-        console.log("Users:", r)
-    })
+const getUsers = async () => {
+    const miteUsers = (await new Promise(resolve => mite.getUsers(
+        {},
+        async (_, result) => {
+            const r = result.map(u => ({ id: u.user.id, name: u.user.name }))
+            resolve(r)
+        })
+    )).map(user => `${user.name}, ${user.id}`)
+    const slackUsers = (await createBot("mite-reminder-admin-bot", true).getUsers())
+        .members
+        .filter(user => !user.deleted)
+        .map(user => ({ id: user.id, name: user.real_name }))
+        .map(user => `${user.name}, ${user.id}`)
+    console.log("mite users:\n", miteUsers.join("\n"))
+    console.log("\n\n")
+    console.log("slack users:\n", slackUsers.join("\n"))
+}
 
 const runTimeEntries = async userId => {
     const userName = await getUserName(mite, userId)
@@ -35,8 +47,9 @@ const runTimeEntries = async userId => {
 }
 
 const runAllTimeEntires = async () => {
-    const ids = await loadUsersToCheck()
-    const results = await Promise.all(ids.map(id => runTimeEntries(id)))
+    const users = await loadUsersToCheck()
+    const miteIds = users.map(user => user.miteId)
+    const results = await Promise.all(miteIds.map(id => runTimeEntries(id)))
     console.log(results)
 }
 
