@@ -12,6 +12,13 @@ if (!process.env.SLACK_TOKEN) {
     process.exit()
 }
 
+const helpText = `
+Use \`register <your mite api key>\` to receive mite reminders in the future.
+    Your mite api key can be found here https://leanovate.mite.yo.lk/myself ).
+Use \`check\` to for missing time entries. Holidays and weekends are automatically excluded.
+Use \`unregister\` to undo your registration.
+`
+
 let db = {}
 fs.readFile('db.json', 'utf8', (err, data) => {
     if (err) {
@@ -62,7 +69,7 @@ bot.on('message', data => {
             if (im.channel.id === data.channel) {
                 const context = { bot, user: data.user, db }
                 if (data.text === "help") {
-                    send(context, "Use `register <your mite api key>` to receive mite reminders in the future (mite api key can be found here https://leanovate.mite.yo.lk/myself ). Use `check` to list missing times in the last 40 days. Use `unregister` to undo your registration.")
+                    send(context, helpText)
                 } else if (data.text.startsWith("register")) {
                     const parts = data.text.split(" ")
                     registerUser(context, parts[1])
