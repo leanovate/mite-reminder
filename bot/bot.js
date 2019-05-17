@@ -104,16 +104,16 @@ cron.schedule('30 9 1 * *', () => {
     }
 });
 
-cron.schedule('0 9 * * 5', () => {
-    console.log(`Running weekly cron for ${Object.keys(db).length} users.`)
+cron.schedule('0 9 * * 1-5', () => {
+    console.log(`Running daily cron for ${Object.keys(db).length} users.`)
     for (let user in db) {
         if (db.hasOwnProperty(user)) {
             const context = { bot, user, db }
 
             const referenceDay = moment()
-            const sevenDaysEarlier = referenceDay.clone().subtract(7, "days").startOf("day")
-            const today = referenceDay.clone().startOf("day")
-            runTimeEntries(context, sevenDaysEarlier, today)
+            const mostRecentThursday = referenceDay.clone().day(referenceDay.day() >= 4 ? 4 : -3);
+            const secondMostRecentThursday = mostRecentThursday.clone().subtract(1, "week")
+            runTimeEntries(context, secondMostRecentThursday, mostRecentThursday)
         }
     }
 });
