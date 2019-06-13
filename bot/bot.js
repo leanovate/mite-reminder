@@ -1,9 +1,8 @@
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
-const { registerUser, unregisterUser } = require("./db")
+const { registerUser, unregisterUser, getDb } = require("./db")
 const { send, createBot } = require("./utils")
-const fs = require('fs');
 
 if (!process.env.SLACK_TOKEN) {
     console.error("SLACK_TOKEN environment variable not set.\n")
@@ -19,15 +18,7 @@ Use \`check\` to for missing time entries. Holidays and weekends are automatical
 Use \`unregister\` to undo your registration.
 `
 
-let db = {}
-fs.readFile('db.json', 'utf8', (err, data) => {
-    if (err) {
-        console.error("Error when loading db", err)
-    }
-    if (data) {
-        db = JSON.parse(data)
-    }
-})
+const db = getDb()
 
 const runTimeEntries = async (context, start, end, onNothingToReport) => {
     if (!context.db[context.user]) {

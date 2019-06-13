@@ -1,9 +1,11 @@
 const fs = require('fs');
 const { send } = require("./utils")
 
+const dbPath = process.env.DB_PATH || "db.json"
+
 const updateDb = (context, value) => {
     context.db[context.user] = value
-    fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
+    fs.writeFile(dbPath, JSON.stringify(context.db), 'utf8', err => {
         if (err) {
             console.error("Failed to update db", err)
             send(context, "Sorry, there was an error completing your action")
@@ -13,7 +15,7 @@ const updateDb = (context, value) => {
 }
 const removeFromDb = (context) => {
     delete context.db[context.user]
-    fs.writeFile('db.json', JSON.stringify(context.db), 'utf8', err => {
+    fs.writeFile(dbPath, JSON.stringify(context.db), 'utf8', err => {
         if (err) {
             console.error("Failed to update db", err)
             sendToId(context, "Sorry, there was an error completing your action")
@@ -51,8 +53,22 @@ const loadUsersToCheck = () =>
         })
     )
 
+const getDb = () => {
+    let db = {}
+    fs.readFile(dbPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error("Error when loading db", err)
+        }
+        if (data) {
+            db = JSON.parse(data)
+        }
+        return db;
+    })
+}
+
 module.exports = {
     registerUser,
     unregisterUser,
-    loadUsersToCheck
+    loadUsersToCheck,
+    getDb
 }
