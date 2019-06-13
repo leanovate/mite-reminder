@@ -57,7 +57,7 @@ const getDb = callback => {
         let db = {}
         fs.readFile(dbPath, 'utf8', (err, data) => {
             if (err) {
-                console.err(`Error when loading db: '${err}'`)
+                console.log(`Error when loading db: '${err}'`)
             }
             if (data) {
                 db = JSON.parse(data)
