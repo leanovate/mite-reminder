@@ -18,7 +18,8 @@ Use \`check\` to for missing time entries. Holidays and weekends are automatical
 Use \`unregister\` to undo your registration.
 `
 
-const db = getDb()
+let db = {}
+getDb(result => db = result)
 
 const runTimeEntries = async (context, start, end, onNothingToReport) => {
     if (!context.db[context.user]) {

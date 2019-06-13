@@ -53,18 +53,18 @@ const loadUsersToCheck = () =>
         })
     )
 
-const getDb = () => {
-    let db = {}
-    fs.readFile(dbPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error("Error when loading db", err)
-        }
-        if (data) {
-            db = JSON.parse(data)
-        }
-        return db;
-    })
-}
+const getDb = callback => {
+        let db = {}
+        fs.readFile(dbPath, 'utf8', (err, data) => {
+            if (err) {
+                console.err(`Error when loading db: '${err}'`)
+            }
+            if (data) {
+                db = JSON.parse(data)
+            }
+            callback(db);
+        })
+    }
 
 module.exports = {
     registerUser,
