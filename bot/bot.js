@@ -51,7 +51,6 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
             start,
             end
         )
-        console.log(`found ${datesWithoutEntires.length} that need time entries`)
         if (datesWithoutEntires.length > 0) {
             const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + datesWithoutEntires.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
