@@ -1,7 +1,7 @@
 const moment = require("../moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
-const { registerUser, unregisterUser, getDb } = require("./db")
+const { registerUser, unregisterUser, getDb, loadUsers } = require("./db")
 const { getCommand } = require("./commands")
 const { send, createBot } = require("./utils")
 
@@ -13,7 +13,7 @@ if (!process.env.SLACK_TOKEN) {
 }
 
 const helpText = `
-Use \`register <your mite api key>\` to receive mite reminders in the future.
+Use \`register\` to receive mite reminders in the future.
     Your mite api key can be found here https://leanovate.mite.yo.lk/myself ).
 Use \`check\` to for missing time entries. Holidays and weekends are automatically excluded.
 Use \`unregister\` to undo your registration.
@@ -34,8 +34,12 @@ const commands = context => ({
     unknown: () => send(context, "I don't know this command. Send `help` to find out what you can do."),
 })
 
+// TODO make sure these are completed before the bot is responsive
 let db = {}
 getDb(result => db = result)
+let users = []
+loadUsers("users.csv")
+    .then(result => users = result)
 
 const runTimeEntries = async (context, start, end, onNothingToReport) => {
     if (!context.db[context.user]) {
@@ -43,11 +47,24 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
         console.log("Failed to get time entries because user was not found in db")
         return
     }
+    let miteApiKey = context.db[context.user].miteApiKey
+    let miteUserId = "current"
+    if (process.env.IS_MITE_API_KEY_ADMIN === "yes") {
+        const currentUserFromCsv = users.find(user => user.slackId === context.user)
+        if (currentUserFromCsv) {
+            userToCheck = currentUserFromCsv.miteId
+            miteApiKey = process.env.MITE_API_KEY
+        }
+    }
+    if (!miteApiKey) {
+        send(context, "Sorry, but I don't know you. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+        return
+    }
 
     try {
         const datesWithoutEntires = await getTimeEntries(
-            createMiteApi(context.db[context.user].miteApiKey),
-            "current",
+            createMiteApi(miteApiKey),
+            miteUserId,
             start,
             end
         )
