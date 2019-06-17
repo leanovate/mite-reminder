@@ -2,6 +2,7 @@ const moment = require("../moment-holiday-berlin.min"); // compiled with https:/
 const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
 const { registerUser, unregisterUser, getDb } = require("./db")
+const { getCommand } = require("./commands")
 const { send, createBot } = require("./utils")
 
 if (!process.env.SLACK_TOKEN) {
@@ -17,6 +18,21 @@ Use \`register <your mite api key>\` to receive mite reminders in the future.
 Use \`check\` to for missing time entries. Holidays and weekends are automatically excluded.
 Use \`unregister\` to undo your registration.
 `
+
+const commands = context => ({
+    register: ({ miteApiKey }) => registerUser(context, miteApiKey),
+    unregister: () => unregisterUser(context),
+    help: () => send(context, helpText),
+    check: () => {
+        send(context, "Checking time entries for the last 40 days (exlcuding today)")
+        runTimeEntries(
+            context,
+            moment().subtract(40, "days").startOf("day"),
+            moment().startOf("day"),
+            () => send(context, "You completed all time entries!"))
+    },
+    unknown: () => send(context, "I don't know this command. Send `help` to find out what you can do."),
+})
 
 let db = {}
 getDb(result => db = result)
@@ -60,23 +76,8 @@ bot.on('message', data => {
         bot.openIm(data.user).then(im => {
             if (im.channel.id === data.channel) {
                 const context = { bot, user: data.user, db }
-                if (data.text === "help") {
-                    send(context, helpText)
-                } else if (data.text.startsWith("register")) {
-                    const parts = data.text.split(" ")
-                    registerUser(context, parts[1])
-                } else if (data.text === "unregister") {
-                    unregisterUser(context)
-                } else if (data.text === "check") {
-                    send(context, "Checking time entries for the last 40 days (exlcuding today)")
-                    runTimeEntries(
-                        context,
-                        moment().subtract(40, "days").startOf("day"),
-                        moment().startOf("day"),
-                        () => send(context, "You completed all time entries!"))
-                } else {
-                    send(context, "I don't know this command. Send `help` to find out what you can do.")
-                }
+                const command = getCommand(data.text)
+                commands(context)[command.name](command)
             }
         })
     }

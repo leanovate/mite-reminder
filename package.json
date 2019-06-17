@@ -8,7 +8,8 @@
     "admin:users": "node admin.js users",
     "admin:times": "node admin.js times",
     "admin:remind": "node admin.js remind",
-    "bot": "node ./bot/bot.js"
+    "bot": "node ./bot/bot.js",
+    "test": "jest"
   },
   "author": "Moritz Rumpf",
   "license": "MIT",
@@ -17,6 +18,11 @@
     "moment": "^2.23.0",
     "node-cron": "^2.0.3",
     "prompts": "^2.0.1",
-    "slackbots": "^1.2.0"
+    "request": "^2.88.0",
+    "slackbots": "^1.2.0",
+    "string-argv": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^24.8.0"
   }
 }
