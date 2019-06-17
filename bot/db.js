@@ -32,9 +32,9 @@ const unregisterUser = (context) => {
     sendToId(context, "Ok, I successfully unregistered you.")
 }
 
-const loadUsersToCheck = () =>
+const loadUsers = csvPath => 
     new Promise(resolve =>
-        fs.readFile('users.csv', 'utf8', (err, data) => {
+        fs.readFile(csvPath, 'utf8', (err, data) => {
             if (err) {
                 console.error("Error when loading users to check", err)
             }
@@ -54,21 +54,21 @@ const loadUsersToCheck = () =>
     )
 
 const getDb = callback => {
-        let db = {}
-        fs.readFile(dbPath, 'utf8', (err, data) => {
-            if (err) {
-                console.log(`Error when loading db: '${err}'`)
-            }
-            if (data) {
-                db = JSON.parse(data)
-            }
-            callback(db);
-        })
-    }
+    let db = {}
+    fs.readFile(dbPath, 'utf8', (err, data) => {
+        if (err) {
+            console.log(`Error when loading db: '${err}'`)
+        }
+        if (data) {
+            db = JSON.parse(data)
+        }
+        callback(db);
+    })
+}
 
 module.exports = {
     registerUser,
     unregisterUser,
-    loadUsersToCheck,
+    loadUsers,
     getDb
 }

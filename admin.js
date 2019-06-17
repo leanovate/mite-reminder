@@ -1,6 +1,6 @@
 const moment = require("./moment-holiday-berlin.min"); // compiled with https://github.com/kodie/moment-holiday
 const { createMiteApi, getTimeEntries } = require("./mite/mite-api")
-const { loadUsersToCheck } = require("./bot/db")
+const { loadUsers } = require("./bot/db")
 const { createBot, send } = require("./bot/utils")
 
 if (!process.env.MITE_API_KEY) {
@@ -46,7 +46,7 @@ const runTimeEntries = async userId => {
 }
 
 const runAllTimeEntires = async () => {
-    const users = await loadUsersToCheck()
+    const users = await loadUsers("usersToCheck.csv")
     const miteIds = users.map(user => user.miteId)
     const results = (await Promise.all(miteIds.map(id => runTimeEntries(id))))
         .map(entry => `${entry.missingEntries.length} days missing: ${entry.userName}`)
@@ -54,7 +54,7 @@ const runAllTimeEntires = async () => {
 }
 
 const remindAll = async () => {
-    const users = await loadUsersToCheck()
+    const users = await loadUsers("usersToCheck.csv")
     const results = await Promise.all(users.map(async user => ({ user, missingEntries: await runTimeEntries(user.miteId).then(result => result.missingEntries) })))
     const bot = createBot("mite-reminder-admin-bot", true)
     results.forEach(result => {
