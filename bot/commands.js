@@ -8,19 +8,13 @@ const getCommand = input => {
                 miteApiKey: parsedArguments[1]
             }
         case "unregister":
-            return {
-                name: "unregister",
-            }
+            return { name: "unregister" }
         case "help":
-            return {
-                name: "help"
-            }
+            return { name: "help" }
         case "check":
-            return {
-                name: "check"
-            }
+            return { name: "check" }
         default:
-            return "unknown"
+            return { name: "unknown" }
     }
 }
 
