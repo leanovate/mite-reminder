@@ -38,7 +38,7 @@ const commands = context => ({
 let db = {}
 getDb(result => db = result)
 let users = []
-loadUsers("users.csv")
+loadUsers(process.env.USERS_CSV_PATH || "users.csv")
     .then(result => users = result)
 
 const runTimeEntries = async (context, start, end, onNothingToReport) => {
