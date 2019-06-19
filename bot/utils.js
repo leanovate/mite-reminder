@@ -1,4 +1,5 @@
 const SlackBot = require('slackbots');
+const { getConfig } = require('./config')
 
 const send = async (context, message) => {
     try {
@@ -10,7 +11,7 @@ const send = async (context, message) => {
 }
 
 const createBot = (name, disconnect) => new SlackBot({
-    token: process.env.SLACK_TOKEN,
+    token: getConfig().slackToken,
     name,
     disconnect
 });

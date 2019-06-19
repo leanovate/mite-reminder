@@ -4,13 +4,9 @@ const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
 const { registerUser, unregisterUser, getDb, loadUsers } = require("./db")
 const { getCommand } = require("./commands")
 const { send, createBot } = require("./utils")
+const { getConfig } = require("./config")
 
-if (!process.env.SLACK_TOKEN) {
-    console.error("SLACK_TOKEN environment variable not set.\n")
-    console.log("Either run 'export SLACK_TOKEN=<slack bot token>'")
-    console.log("or run again with 'SLACK_TOKEN=<slack bot token> npm run bot'")
-    process.exit()
-}
+const env = getConfig()
 
 const helpText = `
 Use \`register\` to receive mite reminders in the future.
@@ -49,11 +45,11 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
     }
     let miteApiKey = context.db[context.user].miteApiKey
     let miteUserId = "current"
-    if (process.env.IS_MITE_API_KEY_ADMIN === "yes") {
+    if (env.useMiteAdminKey) {
         const currentUserFromCsv = users.find(user => user.slackId === context.user)
         if (currentUserFromCsv) {
             userToCheck = currentUserFromCsv.miteId
-            miteApiKey = process.env.MITE_API_KEY
+            miteApiKey = env.miteApiKey
         }
     }
     if (!miteApiKey) {
