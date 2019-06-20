@@ -11,7 +11,6 @@ const { timezone } = env
 
 const helpText = `
 Use \`register\` to receive mite reminders in the future.
-    Your mite api key can be found here https://leanovate.mite.yo.lk/myself ).
 Use \`check\` to for missing time entries. Holidays and weekends are automatically excluded.
 Use \`unregister\` to undo your registration.
 `
