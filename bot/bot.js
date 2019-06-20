@@ -7,6 +7,7 @@ const { send, createBot } = require("./utils")
 const { getConfig } = require("./config")
 
 const env = getConfig()
+const { timezone } = env
 
 const helpText = `
 Use \`register\` to receive mite reminders in the future.
@@ -114,7 +115,7 @@ cron.schedule('30 9 1 * *', () => {
             runTimeEntries(context, startOfMonth, endOfMonth)
         }
     }
-});
+}, { timezone });
 
 cron.schedule('0 9 * * 1-5', () => {
     console.log(`Running daily cron for ${Object.keys(db).length} users.`)
@@ -128,4 +129,4 @@ cron.schedule('0 9 * * 1-5', () => {
             runTimeEntries(context, secondMostRecentThursday, mostRecentThursday)
         }
     }
-});
+}, { timezone });

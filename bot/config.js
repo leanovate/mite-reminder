@@ -2,6 +2,7 @@ const getConfig = () => {
     const miteApiKey = process.env.MITE_API_KEY
     const useMiteAdminKey = process.env.IS_MITE_API_KEY_ADMIN
     const slackToken = process.env.SLACK_TOKEN
+    const timezone = process.env.TIMEZONE
     if (useMiteAdminKey && !miteApiKey) {
         throw new Error("Bot should use the admin api key (IS_MITE_API_KEY_ADMIN=='yes') but no MITE_API_KEY is set!")
     }
@@ -11,7 +12,8 @@ const getConfig = () => {
     return {
         miteApiKey,
         slackToken,
-        useMiteAdminKey
+        useMiteAdminKey,
+        timezone
     }
 }
 
