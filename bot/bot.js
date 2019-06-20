@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const { createMiteApi, getTimeEntries } = require("../mite/mite-api")
 const { registerUser, unregisterUser, getDb, loadUsers } = require("./db")
 const { getCommand } = require("./commands")
-const { send, createBot } = require("./utils")
+const { send, createBot, lastWeekThursdayToThursday } = require("./utils")
 const { getConfig } = require("./config")
 
 const env = getConfig()
@@ -123,10 +123,8 @@ cron.schedule('0 9 * * 1-5', () => {
         if (db.hasOwnProperty(user)) {
             const context = { bot, user, db }
 
-            const referenceDay = moment()
-            const mostRecentThursday = referenceDay.clone().day(referenceDay.day() >= 4 ? 4 : -3);
-            const secondMostRecentThursday = mostRecentThursday.clone().subtract(1, "week")
-            runTimeEntries(context, secondMostRecentThursday, mostRecentThursday)
+            const { start, end } = lastWeekThursdayToThursday(moment())
+            runTimeEntries(context, start, end)
         }
     }
 }, { timezone });

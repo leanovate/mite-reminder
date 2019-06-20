@@ -16,7 +16,18 @@ const createBot = (name, disconnect) => new SlackBot({
     disconnect
 });
 
+const lastWeekThursdayToThursday = currentMoment => {
+    const mostRecentThursday = currentMoment.clone().day(currentMoment.day() > 4 ? 4 : -3);
+    const secondMostRecentThursday = mostRecentThursday.clone().subtract(1, "week")
+
+    return {
+        start: secondMostRecentThursday,
+        end: mostRecentThursday
+    }
+}
+
 module.exports = {
     send,
-    createBot
+    createBot,
+    lastWeekThursdayToThursday
 }
