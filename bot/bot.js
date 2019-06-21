@@ -48,7 +48,7 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
     if (env.useMiteAdminKey) {
         const currentUserFromCsv = users.find(user => user.slackId === context.user)
         if (currentUserFromCsv) {
-            userToCheck = currentUserFromCsv.miteId
+            miteUserId = currentUserFromCsv.miteId
             miteApiKey = env.miteApiKey
         }
     }
