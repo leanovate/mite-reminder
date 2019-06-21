@@ -1,9 +1,9 @@
-const { isTimeEnteredOnDay } = require("../../mite/time")
+const { isTimeEnteredOnDay, getDatesBetween } = require("../../mite/time")
 const moment = require("../../moment-holiday-berlin.min")
 
 describe("time.js", () => {
+    const dateFormat = "YYYY-MM-DD"
     describe("isTimeEnteredOnDay", () => {
-        const dateFormat = "YYYY-MM-DD"
         const miteEntries = [
             {
                 time_entry: {
@@ -50,6 +50,31 @@ describe("time.js", () => {
             const dayToCheck = moment("1980-01-01", dateFormat)
 
             expect(isTimeEnteredOnDay(miteEntries, dayToCheck)).toBeFalsy()
+        })
+    })
+
+    describe("getDatesBetween", () => {
+        it("should return 3 days between 2001-12-01 and 2001-12-03", () => {
+            const start = moment("2001-12-01", dateFormat)
+            const end = moment("2001-12-03", dateFormat)
+
+            const datesBetween = getDatesBetween(start, end)
+                .map(m => m.format(dateFormat))
+
+            expect(datesBetween).toContain("2001-12-01")
+            expect(datesBetween).toContain("2001-12-02")
+            expect(datesBetween).toContain("2001-12-03")
+        })
+
+        
+        it("should return 1 days between 2001-12-01 and 2001-12-01", () => {
+            const start = moment("2001-12-01", dateFormat)
+            const end = moment("2001-12-01", dateFormat)
+
+            const datesBetween = getDatesBetween(start, end)
+                .map(m => m.format(dateFormat))
+
+            expect(datesBetween).toContain("2001-12-01")
         })
     })
 })

@@ -10,7 +10,7 @@ const isTimeEnteredOnDay = (miteEntries, day) =>
 const getDatesBetween = (start, end) => {
     const datesToCheck = []
     let date = start.clone()
-    while (date.isBefore(end)) {
+    while (date.isSameOrBefore(end, "day")) {
         datesToCheck.push(date.clone())
         date.add(1, "day")
     }
