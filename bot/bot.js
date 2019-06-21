@@ -20,7 +20,7 @@ const commands = context => ({
     unregister: () => unregisterUser(context),
     help: () => send(context, helpText),
     check: () => {
-        send(context, "Checking time entries for the last 40 days (exlcuding today)")
+        send(context, "Checking time entries for the last 40 days (excluding today)")
         runTimeEntries(
             context,
             moment().subtract(40, "days").startOf("day"),
