@@ -47,7 +47,7 @@ const runTimeEntries = async (context, start, end, onNothingToReport) => {
     }
     let miteApiKey = context.db[context.user].miteApiKey
     let miteUserId = "current"
-    if (env.useMiteAdminKey) {
+    if (env.useMiteAdminKey && !miteApiKey) {
         const currentUserFromCsv = users.find(user => user.slackId === context.user)
         if (currentUserFromCsv) {
             miteUserId = currentUserFromCsv.miteId
