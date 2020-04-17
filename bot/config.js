@@ -1,6 +1,6 @@
 const getConfig = () => {
     const miteApiKey = process.env.MITE_API_KEY
-    const useMiteAdminKey = process.env.IS_MITE_API_KEY_ADMIN
+    const useMiteAdminKey = process.env.IS_MITE_API_KEY_ADMIN === "yes"
     const slackToken = process.env.SLACK_TOKEN
     const timezone = process.env.TIMEZONE
     if (useMiteAdminKey && !miteApiKey) {
