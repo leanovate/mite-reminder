@@ -13,8 +13,8 @@ describe("db.js", () => {
                 },
                 {
                     name: "Test Testing Junior",
-                    slackId: "slack-id-1",
-                    miteId: "mite-id-1"
+                    slackId: "slack-id-2",
+                    miteId: "mite-id-2"
                 }
             ])
         })
