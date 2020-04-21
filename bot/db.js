@@ -25,14 +25,17 @@ const removeFromDb = (context) => {
 }
 const registerUser = (context, miteApiKey) => {
     updateDb(context, { miteApiKey })
-    send(context, "Hi, I registered you. You can now check your times with `check`!")
+    const registerText = miteApiKey
+        ? "Hi, I registered your key `" + miteApiKey + "`."
+        : "Hi, I registered you."
+    send(context, registerText + " You can now check your times with `check`!")
 }
 const unregisterUser = (context) => {
     removeFromDb(context)
     sendToId(context, "Ok, I successfully unregistered you.")
 }
 
-const loadUsers = csvPath => 
+const loadUsers = csvPath =>
     new Promise(resolve =>
         fs.readFile(csvPath, 'utf8', (err, data) => {
             if (err) {
