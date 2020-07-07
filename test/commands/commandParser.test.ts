@@ -1,4 +1,4 @@
-import { parse } from "../../src/slack/commands"
+import { parse } from "../../src/commands/commandParser"
 
 describe("command parser", () => {
   it("should trim leading and trailing whitespaces", () => {

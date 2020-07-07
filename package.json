@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm run build && node -r dotenv/config build/src/index.js",
     "testing": "npm run build && node -r dotenv/config build/src/testing.js",
+    "cmd": "npm run build && node -r dotenv/config build/src/cmd/cmd.js",
     "build": "rm -rf build && tsc",
     "test": "jest",
     "coverage": "jest --coverage"

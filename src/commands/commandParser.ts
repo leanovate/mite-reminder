@@ -1,9 +1,9 @@
 import P, { Parser } from "parsimmon"
 
-type Command = Register | Check | Unregister
-type Register = "register" | { command: "register", miteApiKey: string }
-type Check = "check"
-type Unregister = "unregister"
+export type Command = Register | Check | Unregister
+export type Register = "register" | { command: "register", miteApiKey: string }
+export type Check = "check"
+export type Unregister = "unregister"
 
 const register: Parser<Register> =
   P.alt(
