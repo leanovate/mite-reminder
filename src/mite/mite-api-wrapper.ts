@@ -1,6 +1,5 @@
-import miteApi from "mite-api";
+import miteApi, { MiteApi, MiteApiError } from "mite-api";
 import { Moment } from "moment";
-import { MiteApi, MiteApiError } from "../external-types/mite-api";
 import { TimeEntries, Users } from "./types";
 import config from "../config";
 

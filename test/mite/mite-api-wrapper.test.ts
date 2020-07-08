@@ -1,7 +1,7 @@
 import { createMiteApi, getTimeEntries, getUser } from "../../src/mite/mite-api-wrapper"
 import moment from "moment";
 import { TimeEntry, TimeEntries, User, Users } from "../../src/mite/types";
-import { MiteApi } from "../../src/external-types/mite-api";
+import { MiteApi } from "mite-api";
 
 jest.mock("../../src/config", () => ({}))
 
