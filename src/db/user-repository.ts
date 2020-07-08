@@ -1,4 +1,5 @@
-import { FileHandle } from "fs/promises"
+import fs, { FileHandle } from "fs/promises"
+import config from "../config"
 
 export type User = {
     miteApiKey?: string
@@ -6,25 +7,36 @@ export type User = {
 
 export type DB = { [slackId: string]: User }
 
-export async function registerUser(db: DB, fileHandle: FileHandle, slackId: string, miteApiKey?: string): Promise<void> {
-    db[slackId] = { miteApiKey }
-    await updateDatabase(db, fileHandle)
+export const createRepository = async (): Promise<Repository> => {
+    const fileHandle = await fs.open(config.dbPath, "rw")
+    const db: DB = JSON.parse(await fileHandle.readFile({ encoding: 'utf-8' })) as DB
+
+    return new Repository(db, fileHandle)
 }
 
-export async function unregisterUser(db: DB, fileHandle: FileHandle, slackId: string): Promise<void> {
-    if (!db[slackId]) {
-        console.log(`User with slackId ${slackId} is unknown, hence cannot be unregistered.`)
-        return
+export class Repository {
+    constructor(private readonly db: DB, private readonly fileHandle: FileHandle) { }
+
+    async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
+        this.db[slackId] = { miteApiKey }
+        await this.updateDatabase()
     }
 
-    delete db[slackId]
-    await updateDatabase(db, fileHandle)
-}
+    async unregisterUser(slackId: string): Promise<void> {
 
-export function loadUser(db: DB, slackId: string): User | null {
-    return db[slackId] || null
-}
+        if (!this.db[slackId]) {
+            console.log(`User with slackId ${slackId} is unknown, hence cannot be unregistered.`)
+            return
+        }
 
-function updateDatabase(db: DB, fileHandle: FileHandle): Promise<void> {
-    return fileHandle.writeFile(JSON.stringify(db), { encoding: "utf-8" })
+        delete this.db[slackId]
+        await this.updateDatabase()
+    }
+    loadUser(slackId: string): User | null {
+        return this.db[slackId] || null
+    }
+
+    private updateDatabase(): Promise<void> {
+        return this.fileHandle.writeFile(JSON.stringify(this.db), { encoding: "utf-8" })
+    }
 }

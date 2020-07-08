@@ -1,8 +1,9 @@
 import { FileHandle } from "fs/promises"
-import { registerUser, loadUser, unregisterUser } from "../../src/db/user-repository"
+import { Repository } from "../../src/db/user-repository"
+
+jest.mock("../../src/config", () => ({}))
 
 describe("User Repository", () => {
-
     const fileHandleMock = {
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         writeFile: jest.fn(() => { })
@@ -16,7 +17,7 @@ describe("User Repository", () => {
         const testDb = {}
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
-        await registerUser(testDb, fileHandleMock, slackId, miteApiKey)
+        await new Repository(testDb, fileHandleMock).registerUser(slackId, miteApiKey)
 
         expect(fileHandleMock.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
@@ -30,14 +31,14 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        const user = loadUser(testDb, slackId)
+        const user =  new Repository(testDb, fileHandleMock).loadUser(slackId)
         expect(user?.miteApiKey).toEqual(miteApiKey)
     })
 
     it("should return null if the user cannot be found", () => {
         const testDb = {}
 
-        const user = loadUser(testDb, "slack-id")
+        const user =  new Repository(testDb, fileHandleMock).loadUser("slack-id")
         expect(user).toBeNull()
     })
 
@@ -48,7 +49,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await unregisterUser(testDb, fileHandleMock, slackId)
+        await  new Repository(testDb, fileHandleMock).unregisterUser(slackId)
 
         expect(testDb).toEqual({})
         expect(fileHandleMock.writeFile).toHaveBeenCalledTimes(1)
@@ -62,7 +63,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await unregisterUser(testDb, fileHandleMock, "unknown-slack-id")
+        await  new Repository(testDb, fileHandleMock).unregisterUser("unknown-slack-id")
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
         expect(fileHandleMock.writeFile).toHaveBeenCalledTimes(0)
     })
