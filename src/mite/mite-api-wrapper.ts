@@ -1,13 +1,13 @@
-import miteApi, { MiteApi, MiteApiError } from "mite-api";
-import { Moment } from "moment";
-import { TimeEntries, Users } from "./types";
-import config from "../config";
+import miteApi, { MiteApi, MiteApiError } from "mite-api"
+import { Moment } from "moment"
+import { TimeEntries, Users } from "./types"
+import config from "../config"
 
 const createMiteApi: (apiKey: string) => MiteApi = (apiKey: string) => miteApi({
     account: config.miteAccountName,
     apiKey: apiKey,
-    applicationName: 'mite-reminder'
-});
+    applicationName: "mite-reminder"
+})
 
 async function getTimeEntries(mite: MiteApi, userId: string | "current", from: Moment, to: Moment): Promise<TimeEntries> {
     return new Promise((resolve, reject) => mite.getTimeEntries({
@@ -24,4 +24,4 @@ const getUser = (mite: MiteApi, userId: string): Promise<Users> =>
         ? reject(<MiteApiError>result)
         : resolve(<Users>result)))
 
-export { createMiteApi, getTimeEntries, getUser };
+export { createMiteApi, getTimeEntries, getUser }

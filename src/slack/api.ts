@@ -1,5 +1,5 @@
-import { App } from "@slack/bolt";
-import { registerHello } from "./events";
+import { App } from "@slack/bolt"
+import { registerHello } from "./events"
 import config from "../config"
 
 interface SlackBotApi {
@@ -7,28 +7,28 @@ interface SlackBotApi {
 }
 
 const app = new App({
-  token: config.slackToken,
-  signingSecret: config.slackSigningSecret
-});
+    token: config.slackToken,
+    signingSecret: config.slackSigningSecret
+})
 
-const start = async () => {
-  // Start your app
-  await app.start(process.env.PORT || 3000);
+const start = async (): Promise<void> => {
+    // Start your app
+    await app.start(process.env.PORT || 3000)
 
-  registerHello(app);
+    registerHello(app)
 
-  console.log('⚡️ Bolt app is running!');
+    console.log("⚡️ Bolt app is running!")
 
-  // app.client.chat.postMessage({
-  //   text: "test",
-  //   channel: "<channel-id>",
-  //   token: config.slackToken
-  // })
+    // app.client.chat.postMessage({
+    //   text: "test",
+    //   channel: "<channel-id>",
+    //   token: config.slackToken
+    // })
 }
 
 
 const api: SlackBotApi = {
-  start
+    start
 }
 
 export default api
