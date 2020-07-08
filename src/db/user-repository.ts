@@ -1,4 +1,4 @@
-import { FileHandle } from 'fs/promises'
+import { FileHandle } from "fs/promises"
 
 export type User = {
     miteApiKey?: string
@@ -26,5 +26,5 @@ export function loadUser(db: DB, slackId: string): User | null {
 }
 
 function updateDatabase(db: DB, fileHandle: FileHandle): Promise<void> {
-    return fileHandle.writeFile(JSON.stringify(db), { encoding: 'utf-8' })
+    return fileHandle.writeFile(JSON.stringify(db), { encoding: "utf-8" })
 }

@@ -27,7 +27,7 @@ const start = async (): Promise<void> => {
 
     registerHello(app)
 
-    console.log('⚡️ Bolt app is running!')
+    console.log("⚡️ Bolt app is running!")
 
     // app.client.chat.postMessage({
     //   text: "test",

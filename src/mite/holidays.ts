@@ -1,5 +1,5 @@
-import { Moment } from 'moment'
-import Holidays from 'date-holidays'
+import { Moment } from "moment"
+import Holidays from "date-holidays"
 
 const hd = new Holidays("DE","BE")
 

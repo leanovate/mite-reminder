@@ -7,7 +7,7 @@ const rl = readline.createInterface({
     output: process.stdout
 })
 
-rl.question('Enter a command ', (answer) => {
+rl.question("Enter a command ", (answer) => {
   
     const parsedAnswer = parse(answer)
     if (parsedAnswer.status) {

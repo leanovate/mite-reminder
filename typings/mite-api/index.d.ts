@@ -1,4 +1,4 @@
-declare module 'mite-api' {
+declare module "mite-api" {
     export interface MiteApi {
         getTimeEntries: GetTimeEntries;
         getUser: GetUser;
