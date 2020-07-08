@@ -6,13 +6,13 @@ export type User = {
 
 export type DB = { [slackId: string]: User }
 
-export async function registerUser(db: DB, fileHandle: FileHandle, slackId: string, miteApiKey?: string) {
+export async function registerUser(db: DB, fileHandle: FileHandle, slackId: string, miteApiKey?: string): Promise<void> {
     db[slackId] = { miteApiKey }
     await updateDatabase(db, fileHandle)
 }
 
-export async function unregisterUser(db: DB, fileHandle: FileHandle, slackId: string) {
-    if(!db[slackId]) {
+export async function unregisterUser(db: DB, fileHandle: FileHandle, slackId: string): Promise<void> {
+    if (!db[slackId]) {
         console.log(`User with slackId ${slackId} is unknown, hence cannot be unregistered.`)
         return
     }

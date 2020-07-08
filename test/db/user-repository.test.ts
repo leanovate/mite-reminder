@@ -1,10 +1,10 @@
-import { BaseEncodingOptions } from 'fs'
 import { FileHandle } from 'fs/promises'
 import { registerUser, loadUser, unregisterUser } from '../../src/db/user-repository'
 
 describe('User Repository', () => {
 
     const fileHandleMock = {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         writeFile: jest.fn(() => { })
     } as unknown as FileHandle
 
@@ -63,7 +63,7 @@ describe('User Repository', () => {
         }
 
         await unregisterUser(testDb, fileHandleMock, 'unknown-slack-id')
-        expect(testDb).toEqual({[slackId]: { miteApiKey }})
+        expect(testDb).toEqual({ [slackId]: { miteApiKey } })
         expect(fileHandleMock.writeFile).toHaveBeenCalledTimes(0)
     })
 })

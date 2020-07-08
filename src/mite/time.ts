@@ -1,9 +1,9 @@
 import { Moment } from "moment"
 import { TimeEntries } from "./types"
 
-const isWeekend = (dateAsMoment: Moment) => [0, 6].includes(dateAsMoment.day())
+const isWeekend = (dateAsMoment: Moment): boolean => [0, 6].includes(dateAsMoment.day())
 
-const isTimeEnteredOnDay = (miteEntries: TimeEntries, day: Moment) =>
+const isTimeEnteredOnDay = (miteEntries: TimeEntries, day: Moment): boolean =>
     miteEntries
         .map(entry => entry.time_entry)
         .find(time_entry =>
@@ -12,7 +12,7 @@ const isTimeEnteredOnDay = (miteEntries: TimeEntries, day: Moment) =>
 
 const getDatesBetween = (start: Moment, end: Moment): Moment[] => {
     const datesToCheck = []
-    let date = start.clone()
+    const date = start.clone()
     while (date.isSameOrBefore(end, "day")) {
         datesToCheck.push(date.clone())
         date.add(1, "day")
@@ -21,7 +21,7 @@ const getDatesBetween = (start: Moment, end: Moment): Moment[] => {
 }
 
 export {
-  isWeekend,
-  isTimeEnteredOnDay,
-  getDatesBetween
+    isWeekend,
+    isTimeEnteredOnDay,
+    getDatesBetween
 }
