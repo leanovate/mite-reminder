@@ -18,8 +18,9 @@ export async function runCommand(command: Command): Promise<void> {
         console.log("unregister not implemented")
         return
     }
-    if (command.command === "register") {
-        console.log(`regiser with mite api key (${command.miteApiKey}) not implemented.`)
+    if (command.name === "register") {
+        console.log(`register with mite api key (${command.miteApiKey}) not implemented.`)
         return
     }
+    console.log("got nothing", command)
 }

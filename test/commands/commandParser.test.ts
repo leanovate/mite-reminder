@@ -21,7 +21,7 @@ describe("command parser", () => {
         const result = parse(`register ${testKey}`)
 
         expect(result.status).toBeTruthy()
-        expect((<Success<Command>>result).value).toEqual({ command: "register", miteApiKey: testKey })
+        expect((<Success<Command>>result).value).toEqual({ name: "register", miteApiKey: testKey })
     })
 
     it("should parse the 'check' command", () => {

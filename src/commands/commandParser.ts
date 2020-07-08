@@ -1,7 +1,7 @@
 import P, { Parser } from "parsimmon"
 
 export type Command = Register | Check | Unregister
-export type Register = "register" | { command: "register", miteApiKey: string }
+export type Register = "register" | { name: "register", miteApiKey: string }
 export type Check = "check"
 export type Unregister = "unregister"
 
@@ -10,7 +10,7 @@ const register: Parser<Register> =
       P.string("register")
           .then(P.whitespace)
           .then(P.all)
-          .map(result => ({ command: "register", miteApiKey: result })),
+          .map(result => ({ name: "register", miteApiKey: result }) as Register),
       P.string("register").result("register")
   )
 
