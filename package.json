@@ -15,18 +15,18 @@
   "license": "MIT",
   "dependencies": {
     "@slack/bolt": "^2.1.1",
-    "@types/parsimmon": "^1.10.2",
     "date-holidays": "^1.6.1",
     "dotenv": "^8.2.0",
     "mite-api": "^0.1.1",
     "moment": "^2.26.0",
-    "parsimmon": "^1.13.0",
-    "typescript": "^3.9.5"
+    "parsimmon": "^1.13.0"
   },
   "devDependencies": {
+    "@types/parsimmon": "^1.10.2",
     "@types/jest": "^26.0.0",
     "jest": "^26.0.1",
     "ts-jest": "^26.1.0",
-    "ts-node": "^8.10.2"
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
   }
 }
