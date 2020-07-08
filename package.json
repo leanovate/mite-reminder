@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run build && node -r dotenv/config build/src/index.js",
-    "testing": "npm run build && node -r dotenv/config build/src/testing.js",
-    "cmd": "npm run build && node -r dotenv/config build/src/cmd/cmd.js",
-    "build": "rm -rf build && tsc",
+    "start": "ts-node src/index.ts",
+    "testing": "ts-node -r dotenv/config src/testing.ts",
+    "cmd": "ts-node -r dotenv/config src/cmd/cmd.ts",
+    "build": "rimraf build && tsc",
     "test": "jest",
     "coverage": "jest --coverage"
   },
@@ -22,9 +22,10 @@
     "parsimmon": "^1.13.0"
   },
   "devDependencies": {
-    "@types/parsimmon": "^1.10.2",
     "@types/jest": "^26.0.0",
+    "@types/parsimmon": "^1.10.2",
     "jest": "^26.0.1",
+    "rimraf": "^3.0.2",
     "ts-jest": "^26.1.0",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
