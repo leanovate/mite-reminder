@@ -9,7 +9,7 @@ export type DB = { [slackId: string]: User }
 
 export const createRepository = async (): Promise<Repository> => {
     const fileHandle = await fs.open(config.dbPath, "rw")
-    const db: DB = JSON.parse(await fileHandle.readFile({ encoding: 'utf-8' })) as DB
+    const db = JSON.parse(await fileHandle.readFile({ encoding: "utf-8" })) as DB
 
     return new Repository(db, fileHandle)
 }
@@ -32,6 +32,7 @@ export class Repository {
         delete this.db[slackId]
         await this.updateDatabase()
     }
+
     loadUser(slackId: string): User | null {
         return this.db[slackId] || null
     }
