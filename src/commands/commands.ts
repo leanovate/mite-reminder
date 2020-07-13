@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */ // TODO Remove this line
 import { MiteCommand } from "./commandParser"
 import { getMissingTimeEntries } from "../reminder/reminder"
 import moment, { Moment } from "moment"
@@ -18,14 +17,18 @@ export const runMiteCommand = (executor: CommandExecutor, repository: Repository
     case "unregister":
         return repository.unregisterUser(executor.slackId)
     case "check":
-        const user = repository.loadUser(executor.slackId)
-        const api = createMiteApi(user?.miteApiKey ?? config.miteApiKey ?? "mite-api-key") // TODO
-
-        return getMissingTimeEntries(
-            "current",
-            moment().subtract(40, "day"),
-            moment(),
-            api
-        )
+        return doCheck(executor, repository)
     }
+}
+
+const doCheck = (executor: CommandExecutor, repository: Repository):Promise<Moment[]> => {
+    const user = repository.loadUser(executor.slackId)
+    const api = createMiteApi(user?.miteApiKey ?? config.miteApiKey ?? "mite-api-key") // TODO
+
+    return getMissingTimeEntries(
+        "current",
+        moment().subtract(40, "day"),
+        moment(),
+        api
+    )
 }
