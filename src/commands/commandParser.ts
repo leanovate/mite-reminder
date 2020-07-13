@@ -1,27 +1,43 @@
 import P, { Parser } from "parsimmon"
 
-export type Command = Register | Check | Unregister
-export type Register = "register" | { name: "register", miteApiKey: string }
-export type Check = "check"
-export type Unregister = "unregister"
+export type CommandName = "register" | "check" | "unregister"
 
-const register: Parser<Register> =
+export interface BaseMiteCommand  {
+    name: CommandName
+}
+
+export interface RegisterCommand extends BaseMiteCommand {
+    name : "register" 
+    miteApiKey?: string
+}
+
+export interface CheckCommand extends BaseMiteCommand {
+    name : "check"
+}
+
+export interface UnregisterCommand extends BaseMiteCommand {
+    name: "unregister"
+}
+
+export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand
+
+const register: Parser<RegisterCommand> =
   P.alt(
       P.string("register")
           .then(P.whitespace)
           .then(P.all)
-          .map(result => ({ name: "register", miteApiKey: result }) as Register),
-      P.string("register").result("register")
+          .map(result => ({ name: "register", miteApiKey: result }) as RegisterCommand),
+      P.string("register").result( {name: "register"} as RegisterCommand)
   )
 
-const unregister: Parser<Unregister> = P.string("unregister").result("unregister")
-const check: Parser<Check> = P.string("check").result("check")
-const all: Parser<Command> = P.alt(register, unregister, check)
+const unregister: Parser<UnregisterCommand> = P.string("unregister").result({name: "unregister"} as UnregisterCommand)
+const check: Parser<CheckCommand> = P.string("check").result({name: "check"} as CheckCommand)
+const all: Parser<MiteCommand> = P.alt(register, unregister, check)
 
-export function parse(commandString: string): P.Result<Command> {
+export function parse(commandString: string): P.Result<MiteCommand> {
     return all.parse(commandString.trim().toLowerCase())
 }
 
-export function tryParse(commandString: string): Command {
+export function tryParse(commandString: string): MiteCommand {
     return all.tryParse(commandString.trim().toLowerCase())
 }

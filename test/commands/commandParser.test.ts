@@ -1,4 +1,4 @@
-import { parse, Command } from "../../src/commands/commandParser"
+import { parse, MiteCommand } from "../../src/commands/commandParser"
 import { Success } from "parsimmon"
 
 describe("command parser", () => {
@@ -13,7 +13,7 @@ describe("command parser", () => {
         const result = parse("register")
 
         expect(result.status).toBeTruthy()
-        expect((<Success<Command>>result).value).toEqual("register")
+        expect((<Success<MiteCommand>>result).value).toEqual({name: "register"})
     })
 
     it("should parse the 'register' command with a miteApiKey", () => {
@@ -21,7 +21,7 @@ describe("command parser", () => {
         const result = parse(`register ${testKey}`)
 
         expect(result.status).toBeTruthy()
-        expect((<Success<Command>>result).value).toEqual({ name: "register", miteApiKey: testKey })
+        expect((<Success<MiteCommand>>result).value).toEqual({ name: "register", miteApiKey: testKey })
     })
 
     it("should parse the 'check' command", () => {
