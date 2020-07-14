@@ -21,6 +21,6 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
 })
 
 function sayHelp(say: SayFn): Promise<void> {
-    return say("I will response with a proper 'help' message.")
+    return say("I will respond with a proper 'help' message.")
         .then(() => undefined)
 }
