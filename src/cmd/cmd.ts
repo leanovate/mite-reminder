@@ -8,21 +8,21 @@ const rl = readline.createInterface({
     output: process.stdout
 })
 
-const requestAndRunCommand = async (repository: Repository) => new Promise((resolve, reject) => {
+const requestAndRunCommand = async (repository: Repository): Promise<void> => {
     rl.question("Enter a command ", async (answer) => {  
         const parsedAnswer = parse(answer)
 
         if (parsedAnswer.status) {
-            await runMiteCommand({slackId: "cmd-user"}, repository)(parsedAnswer.value)
+            const result = await runMiteCommand({slackId: "cmd-user"}, repository)(parsedAnswer.value)
+            console.log(`Finished running command ${parsedAnswer.value.name}. Result: ${JSON.stringify(result, null, 3)}`)
         } else {
             console.log("I don't understand")
-            reject("Unknown command")
+            throw new Error("Unknown command")
         }
 
         rl.close()
-        resolve()
     })
-})
+}
 
 createRepository()
     .then(repository => requestAndRunCommand(repository))
