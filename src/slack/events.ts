@@ -1,56 +1,26 @@
-import { App } from "@slack/bolt"
-import { datesWithoutEntries } from "./bot"
+import { App, SayFn } from "@slack/bolt"
+import { parse } from "../commands/commandParser"
+import { runMiteCommand } from "../commands/commands"
+import { Repository } from "../db/user-repository"
 
-export const registerHello = (app: App): void => app.message(async ({ message, say }): Promise<void> => {
-    // say() sends a message to the channel where the event was triggered
-
-    console.log("received ", message)
-    if (message.text === "register") {
-        await say({
-            text: "I don't know you, please enter your mite api key.",
-            blocks: [
-                {
-                    "type": "input",
-                    "block_id": "input123",
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Label of input"
-                    },
-                    "element": {
-                        "type": "plain_text_input",
-                        "action_id": "plain_input",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": "Enter some plain text"
-                        }
-                    }
-                }
-            ]
-        })
-        return
+export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({message, say}): Promise<void> => {
+    if(!message.text) {
+        // TODO How to handle? This should not event be possible in our case.
+        console.warn("Received an empty message. Will respond with 'help' message.", message)
+        return sayHelp(say)
     }
 
-    const missingEntriesMessage: string = await datesWithoutEntries()
-    await say({
-        text: "Some of your time entries is missing",
-        blocks: [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text":
-            `Hey *there* <@${message.user}>!
-            ${missingEntriesMessage}`
-                },
-                "accessory": {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Click Me"
-                    },
-                    "action_id": "button_click"
-                }
-            }
-        ]
-    })
+
+    const parserResult = parse(message.text)
+    if(!parserResult.status) {
+        console.warn("Failed to parse received message. Will respond with 'help' message.", message.text)
+        return sayHelp(say)
+    }
+    
+    await runMiteCommand({slackId: message.user}, repository)(parserResult.value)
 })
+
+function sayHelp(say: SayFn): Promise<void> {
+    return say("I will respond with a proper 'help' message.")
+        .then(() => undefined)
+}

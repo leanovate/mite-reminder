@@ -1,13 +1,14 @@
-import { FileHandle } from "fs/promises"
+jest.mock("../../src/config", () => ({}))
+jest.mock("fs/promises", () =>  {
+    return {
+        writeFile: jest.fn()
+    }
+})
+
+import fs from "fs/promises"
 import { Repository } from "../../src/db/user-repository"
 
-jest.mock("../../src/config", () => ({}))
-
 describe("User Repository", () => {
-    const fileHandleMock = {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        writeFile: jest.fn(() => { })
-    } as unknown as FileHandle
 
     afterEach(() => {
         jest.clearAllMocks()
@@ -17,11 +18,12 @@ describe("User Repository", () => {
         const testDb = {}
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
-        await new Repository(testDb, fileHandleMock).registerUser(slackId, miteApiKey)
+        const path = "path"
+        await new Repository(testDb, path).registerUser(slackId, miteApiKey)
 
-        expect(fileHandleMock.writeFile).toBeCalledTimes(1)
+        expect(fs.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
-        expect(fileHandleMock.writeFile).toBeCalledWith(JSON.stringify(testDb), { encoding: "utf-8" })
+        expect(fs.writeFile).toBeCalledWith(path, JSON.stringify(testDb), { encoding: "utf-8" })
     })
 
     it("should load information about a user", () => {
@@ -31,29 +33,30 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        const user =  new Repository(testDb, fileHandleMock).loadUser(slackId)
+        const user =  new Repository(testDb, "path").loadUser(slackId)
         expect(user?.miteApiKey).toEqual(miteApiKey)
     })
 
     it("should return null if the user cannot be found", () => {
         const testDb = {}
 
-        const user =  new Repository(testDb, fileHandleMock).loadUser("slack-id")
+        const user =  new Repository(testDb, "path").loadUser("slack-id")
         expect(user).toBeNull()
     })
 
     it("should remove a user from the storage", async () => {
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
+        const path = "path"
         const testDb = {
             [slackId]: { miteApiKey }
         }
 
-        await  new Repository(testDb, fileHandleMock).unregisterUser(slackId)
+        await  new Repository(testDb, path).unregisterUser(slackId)
 
         expect(testDb).toEqual({})
-        expect(fileHandleMock.writeFile).toHaveBeenCalledTimes(1)
-        expect(fileHandleMock.writeFile).toBeCalledWith(JSON.stringify(testDb), { encoding: "utf-8" })
+        expect(fs.writeFile).toHaveBeenCalledTimes(1)
+        expect(fs.writeFile).toBeCalledWith(path, JSON.stringify(testDb), { encoding: "utf-8" })
     })
 
     it("should do nothing when user to be unregistered cannot be found", async () => {
@@ -63,8 +66,8 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await  new Repository(testDb, fileHandleMock).unregisterUser("unknown-slack-id")
+        await  new Repository(testDb, "path").unregisterUser("unknown-slack-id")
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
-        expect(fileHandleMock.writeFile).toHaveBeenCalledTimes(0)
+        expect(fs.writeFile).toHaveBeenCalledTimes(0)
     })
 })

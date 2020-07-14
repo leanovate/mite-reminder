@@ -1,9 +1,10 @@
 import { App } from "@slack/bolt"
-import { registerHello } from "./events"
+import { setupEventHandling } from "./events"
 import config from "../config"
+import { Repository } from "../db/user-repository"
 
 interface SlackBotApi {
-  start: () => void
+  start: (repository: Repository) => void
 }
 
 const app = new App({
@@ -11,21 +12,12 @@ const app = new App({
     signingSecret: config.slackSigningSecret
 })
 
-const start = async (): Promise<void> => {
-    // Start your app
+const start = async (repository: Repository): Promise<void> => {
     await app.start(process.env.PORT || 3000)
-
-    registerHello(app)
+    await setupEventHandling(app, repository)
 
     console.log("⚡️ Bolt app is running!")
-
-    // app.client.chat.postMessage({
-    //   text: "test",
-    //   channel: "<channel-id>",
-    //   token: config.slackToken
-    // })
 }
-
 
 const api: SlackBotApi = {
     start

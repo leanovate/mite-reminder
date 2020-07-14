@@ -1,4 +1,4 @@
-import fs, { FileHandle } from "fs/promises"
+import fs from "fs/promises"
 import config from "../config"
 
 export type User = {
@@ -8,14 +8,18 @@ export type User = {
 export type DB = { [slackId: string]: User }
 
 export const createRepository = async (): Promise<Repository> => {
-    const fileHandle = await fs.open(config.dbPath, "rw")
-    const db: DB = JSON.parse(await fileHandle.readFile({ encoding: 'utf-8' })) as DB
+    try {
+        await fs.writeFile(config.dbPath, "{}", {flag: "wx"})
+    } catch {
+        //  This is thrown if the file already exists. We do not need to handle that case.
+    }
 
-    return new Repository(db, fileHandle)
+    const db = JSON.parse(await fs.readFile(config.dbPath, { encoding: "utf-8" })) as DB
+    return new Repository(db, config.dbPath)
 }
 
 export class Repository {
-    constructor(private readonly db: DB, private readonly fileHandle: FileHandle) { }
+    constructor(private readonly db: DB, private readonly path: string) { }
 
     async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
         this.db[slackId] = { miteApiKey }
@@ -32,11 +36,12 @@ export class Repository {
         delete this.db[slackId]
         await this.updateDatabase()
     }
+
     loadUser(slackId: string): User | null {
         return this.db[slackId] || null
     }
 
-    private updateDatabase(): Promise<void> {
-        return this.fileHandle.writeFile(JSON.stringify(this.db), { encoding: "utf-8" })
+    private async updateDatabase(): Promise<void> {
+        await fs.writeFile(this.path, JSON.stringify(this.db), {encoding: "utf-8"})
     }
 }
