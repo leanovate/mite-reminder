@@ -23,12 +23,15 @@ export const runMiteCommand = (executor: CommandExecutor, repository: Repository
 
 const doCheck = (executor: CommandExecutor, repository: Repository):Promise<Moment[]> => {
     const user = repository.loadUser(executor.slackId)
-    const api = createMiteApi(user?.miteApiKey ?? config.miteApiKey ?? "mite-api-key") // TODO
+    const apiKey = user?.miteApiKey ?? config.miteApiKey
+    if(!apiKey) {
+        throw new Error("Unable to find api key. Please register as a user or provide an admin api key.")
+    }
 
     return getMissingTimeEntries(
         "current",
         moment().subtract(40, "day"),
         moment(),
-        api
+        createMiteApi(apiKey)
     )
 }
