@@ -11,7 +11,7 @@ jest.mock("../../src/config", () => ({
 }))
 
 import { RegisterCommand, UnregisterCommand, CheckCommand } from "../../src/commands/commandParser"
-import { runMiteCommand } from "../../src/commands/commands"
+import { CommandRunner } from "../../src/commands/commands"
 import { Repository } from "../../src/db/user-repository"
 
 describe("Commands", () => {
@@ -32,7 +32,7 @@ describe("Commands", () => {
         const registerCommand: RegisterCommand = {name: "register"}
         const slackId = "abc"
 
-        await runMiteCommand({slackId}, userRepository)(registerCommand)
+        await new CommandRunner({slackId}, userRepository).runMiteCommand(registerCommand)
 
         expect(userRepository.registerUser).toBeCalledTimes(1)
         expect(userRepository.registerUser).toBeCalledWith(slackId, undefined)
@@ -43,7 +43,7 @@ describe("Commands", () => {
         const miteApiKey = "mite-api-key"
         const registerCommand: RegisterCommand = {name: "register", miteApiKey}
 
-        await runMiteCommand({slackId}, userRepository)(registerCommand)
+        await new CommandRunner({slackId}, userRepository).runMiteCommand(registerCommand)
 
         expect(userRepository.registerUser).toBeCalledTimes(1)
         expect(userRepository.registerUser).toBeCalledWith(slackId, miteApiKey)
@@ -53,7 +53,7 @@ describe("Commands", () => {
         const slackId = "slack-id"
         const unregisterCommand: UnregisterCommand = {name: "unregister"}
     
-        await runMiteCommand({slackId}, userRepository)(unregisterCommand)
+        await new CommandRunner({slackId}, userRepository).runMiteCommand(unregisterCommand)
 
         expect(userRepository.unregisterUser).toHaveBeenCalledTimes(1)
         expect(userRepository.unregisterUser).toHaveBeenCalledWith(slackId)
@@ -65,7 +65,7 @@ describe("Commands", () => {
 
         getTimeEntriesMock.mockReturnValue([])
 
-        await runMiteCommand({slackId}, userRepository)(checkCommand)
+        await new CommandRunner({slackId}, userRepository).runMiteCommand(checkCommand)
 
         expect(userRepository.loadUser).toHaveBeenCalledTimes(1)
         expect(userRepository.loadUser).toHaveBeenCalledWith(slackId)

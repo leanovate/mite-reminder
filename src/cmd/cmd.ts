@@ -1,5 +1,5 @@
 import readline from "readline"
-import { runMiteCommand } from "../commands/commands"
+import { CommandRunner } from "../commands/commands"
 import { parse } from "../commands/commandParser"
 import { createRepository, Repository } from "../db/user-repository"
 
@@ -9,12 +9,24 @@ const rl = readline.createInterface({
 })
 
 const requestAndRunCommand = async (repository: Repository): Promise<void> => {
-    rl.question("Enter a command ", async (answer) => {  
+    rl.question("Enter a command ", async (answer) => {
         const parsedAnswer = parse(answer)
 
         if (parsedAnswer.status) {
-            const result = await runMiteCommand({slackId: "cmd-user"}, repository)(parsedAnswer.value)
-            console.log(`Finished running command ${parsedAnswer.value.name}. Result: ${JSON.stringify(result, null, 3)}`)
+            const command = parsedAnswer.value
+            const runner = new CommandRunner({ slackId: "cmd-user" }, repository)
+
+            if (command.name === "check") {
+                const result = await runner.runMiteCommand(command)
+                console.log(`Finished running command ${parsedAnswer.value.name}`)
+
+                const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
+                    + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                        .join("\n")
+                console.log(message)
+            } else {
+                await runner.runMiteCommand(command)
+            }
         } else {
             console.log("I don't understand")
             throw new Error("Unknown command")
