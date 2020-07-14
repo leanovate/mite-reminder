@@ -18,6 +18,7 @@ export async function getMissingTimeEntries(miteUserId: string, from: Moment, to
     }
     catch (error) {
         console.error("Failed to get time entries: ", error)
+        return []
     }
 
     const datesToCheck = getDatesBetween(from, to)
