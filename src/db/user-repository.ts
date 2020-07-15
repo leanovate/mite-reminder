@@ -1,22 +1,10 @@
 import fs from "fs/promises"
-import config from "../config"
 
 export type User = {
     miteApiKey?: string
 }
 
 export type DB = { [slackId: string]: User }
-
-export const createRepository = async (): Promise<Repository> => {
-    try {
-        await fs.writeFile(config.dbPath, "{}", {flag: "wx"})
-    } catch {
-        //  This is thrown if the file already exists. We do not need to handle that case.
-    }
-
-    const db = JSON.parse(await fs.readFile(config.dbPath, { encoding: "utf-8" })) as DB
-    return new Repository(db, config.dbPath)
-}
 
 export class Repository {
     constructor(private readonly db: DB, private readonly path: string) { }
@@ -39,6 +27,13 @@ export class Repository {
 
     loadUser(slackId: string): User | null {
         return this.db[slackId] || null
+    }
+
+    getMiteId(slackId: string): string | null {
+        console.warn("************************************************************")
+        console.warn("getMiteId is currently mocked and will always return 'null'.")
+        console.warn("************************************************************")
+        return null
     }
 
     private async updateDatabase(): Promise<void> {

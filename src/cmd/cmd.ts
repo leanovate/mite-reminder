@@ -18,7 +18,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
             if (command.name === "check") {
                 const result = await runner.runMiteCommand(command)
-                console.log(`Finished running command ${parsedAnswer.value.name}`)
+                console.log(`Finished running command ${command.name}`)
 
                 const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
                     + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)

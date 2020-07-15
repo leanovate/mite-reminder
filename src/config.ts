@@ -1,5 +1,13 @@
+export type Config = {
+    miteApiKey?: string
+    slackToken: string
+    slackSigningSecret: string
+    useMiteAdminKey: boolean
+    miteAccountName: string
+    dbPath: string
+}
 
-const getConfig = () => {
+const getConfig = (): Config => {
     const miteApiKey = process.env.MITE_API_KEY
     const useMiteAdminKey = process.env.IS_MITE_API_KEY_ADMIN === "yes"
     const slackToken = process.env.SLACK_TOKEN

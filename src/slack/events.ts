@@ -1,7 +1,8 @@
-import { App, SayFn } from "@slack/bolt"
+import { App } from "@slack/bolt"
 import { parse } from "../commands/commandParser"
 import { CommandRunner } from "../commands/commands"
 import { Repository } from "../db/user-repository"
+import { sayHelp } from "./help"
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({message, say}): Promise<void> => {
     if(!message.text) {
@@ -17,10 +18,19 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         return sayHelp(say)
     }
     
-    await new CommandRunner({slackId: message.user}, repository).runMiteCommand(parserResult.value)
-})
+    const commandRunner = new CommandRunner({slackId: message.user}, repository)
+    const command = parserResult.value
 
-function sayHelp(say: SayFn): Promise<void> {
-    return say("I will respond with a proper 'help' message.")
-        .then(() => undefined)
-}
+    if (command.name === "check") {
+        const result = await commandRunner.runMiteCommand(command)
+        console.log(`Finished running command ${command.name}`)
+
+        const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
+            + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                .join("\n")
+        say(message)
+    } else {
+        await commandRunner.runMiteCommand(command)
+        await say("Erfolg :)")
+    }
+})
