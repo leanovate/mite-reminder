@@ -1,6 +1,6 @@
 import { App, SayFn } from "@slack/bolt"
 import { parse } from "../commands/commandParser"
-import { runMiteCommand } from "../commands/commands"
+import { CommandRunner } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({message, say}): Promise<void> => {
@@ -17,7 +17,7 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         return sayHelp(say)
     }
     
-    await runMiteCommand({slackId: message.user}, repository)(parserResult.value)
+    await new CommandRunner({slackId: message.user}, repository).runMiteCommand(parserResult.value)
 })
 
 function sayHelp(say: SayFn): Promise<void> {
