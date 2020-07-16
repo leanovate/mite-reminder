@@ -1,7 +1,9 @@
 import readline from "readline"
 import { CommandRunner } from "../commands/commands"
 import { parse } from "../commands/commandParser"
-import { createRepository, Repository } from "../db/user-repository"
+import { Repository } from "../db/user-repository"
+import config from "../config"
+import { createRepository } from "../db/create-user-repository"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -14,7 +16,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
         if (parsedAnswer.status) {
             const command = parsedAnswer.value
-            const runner = new CommandRunner({ slackId: "cmd-user" }, repository)
+            const runner = new CommandRunner({ slackId: "cmd-user" }, repository, config)
 
             if (command.name === "check") {
                 const result = await runner.runMiteCommand(command)
