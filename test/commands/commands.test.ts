@@ -22,7 +22,6 @@ describe("Commands", () => {
         unregisterUser: jest.fn(() => { }),
         loadUser: loadUserMock,
         getMiteId: getMiteIdMock
-        /* eslint-enable @typescript-eslint/no-empty-function */
     } as unknown as Repository
 
     afterEach(() => {
