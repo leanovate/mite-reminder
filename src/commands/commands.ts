@@ -55,7 +55,6 @@ export class CommandRunner {
             moment().subtract(40, "day"),
             moment(),
             createMiteApi(apiKey),
-            // TODO: Hier wird vermutl. auch die config übergeben? Tests schlagen gerade fehl, weil diese methode "config" importiert.
         )
     }
 }
