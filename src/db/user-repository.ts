@@ -5,8 +5,10 @@ export type User = {
 }
 
 export type DB = { [slackId: string]: User }
+export type Users = Array<User & {slackId: string}>
 
 export class Repository {
+    
     constructor(private readonly db: DB, private readonly path: string) { }
 
     async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
@@ -34,6 +36,11 @@ export class Repository {
         console.warn("getMiteId is currently mocked and will always return 'null'.")
         console.warn("************************************************************")
         return null
+    }
+
+    loadAllUsers(): Users  {
+        return Object.keys(this.db)
+            .map(key => ({ slackId: key, ...this.db[key] }))
     }
 
     private async updateDatabase(): Promise<void> {
