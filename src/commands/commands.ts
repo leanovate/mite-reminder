@@ -29,26 +29,11 @@ export class CommandRunner {
     }
 
     private doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[]> {
-        const user = repository.loadUser(slackUser.slackId)
+        
 
-        let apiKey: string | undefined
-        let miteId: string
+    
 
-        if(user?.miteApiKey) {
-            miteId = "current"
-            apiKey = user.miteApiKey
-        } else {
-            const mId = repository.getMiteId(slackUser.slackId)
-            if(!mId) {
-                throw new Error("User is unknown and needs to register with his/her own api key.")
-            }
-            miteId = mId
-            apiKey = this.config.miteApiKey
-        }
-
-        if (!apiKey) {
-            throw new Error("Unable to find api key. Please register as a user or provide an admin api key.")
-        }
+        const {apiKey, miteId} = getMiteCredentials(repository, slackUser.slackId, this.config)
 
         return getMissingTimeEntries(
             miteId,
@@ -58,3 +43,36 @@ export class CommandRunner {
         )
     }
 }
+
+function getMiteCredentials(repository: Repository, slackId: string, config: Config) : {apiKey: string, miteId: string} {
+    let apiKey: string | undefined
+    let miteId: string
+
+    const user = repository.loadUser(slackId)
+
+    if(user?.miteApiKey) {
+        miteId = "current"
+        apiKey = user.miteApiKey
+    } else {
+        const mId = repository.getMiteId(slackId)
+        if(!mId) {
+            throw new Error("User is unknown and needs to register with his/her own api key.")
+        }
+        miteId = mId
+        apiKey = config.miteApiKey
+    }
+
+    if (!apiKey) {
+        throw new Error("Unable to find api key. Please register as a user or provide an admin api key.")
+    }
+
+    return {apiKey, miteId}
+}
+
+export class MissingApiKeyError extends Error {
+
+    constructor() {
+        super.
+    }
+} 
+
