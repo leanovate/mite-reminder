@@ -37,7 +37,7 @@ declare module "mite-api" {
 
     export interface MiteApi {
         getTimeEntries: GetTimeEntries;
-        getUser: GetUser;
+        getUsers: GetUsers;
     }
 
     export type MiteApiError = { error: string }
@@ -46,8 +46,13 @@ declare module "mite-api" {
         { from: string, to: string, user_id: string },
         callback: GetTimeEntriesCallBack) => void
 
-    export type GetUser = (
-        userId: string,
+    export type GetUsers = (
+        options: {
+            email?: string,
+            name?: string,
+            limit?: number,
+            page?: number
+        },
         callback: GetUserCallback) => void
 
     export type GetTimeEntriesCallBack = (error: unknown, result: TimeEntries | MiteApiError) => void
