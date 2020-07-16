@@ -1,8 +1,9 @@
 const miteApiMock = {}
 const getTimeEntriesMock = jest.fn()
+const mockCreateMiteApi = jest.fn(() => miteApiMock)
 jest.mock("../../src/mite/mite-api-wrapper", () => ({
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    createMiteApi: () => miteApiMock,
+    createMiteApi: mockCreateMiteApi,
     getTimeEntries: getTimeEntriesMock
 }))
 
@@ -87,6 +88,23 @@ describe("Commands", () => {
         expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, "current", expect.anything(), expect.anything())
     })
 
+    it("should users the users personal api key if present instead of the config api key", async () => {
+        const slackId = "slack-id"
+        const checkCommand: CheckCommand = {name: "check"}
+        const config = {
+            miteApiKey : "admin-mite-api-key"
+        } as unknown as Config
+
+        getTimeEntriesMock.mockReturnValue([])
+        loadUserMock.mockReturnValue({miteApiKey: "personal-mite-api-key"})
+
+        await new CommandRunner({slackId}, userRepository, config).runMiteCommand(checkCommand)
+
+        expect(getTimeEntriesMock).toHaveBeenCalledTimes(1)
+        expect(mockCreateMiteApi).toHaveBeenLastCalledWith()
+        expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, "current", expect.anything(), expect.anything())
+    })
+
     it("should detect missing time entries for a user without a personal api key", async () => {
         const slackId = "slack-id"
         const miteId = "mite-id"
@@ -127,12 +145,17 @@ describe("Commands", () => {
     })
 
     it("should throw an error if no api key is present", async () => {
+        expect.assertions(1)
         const config = {} as unknown as Config
         const checkCommand: CheckCommand = {name: "check"}
         
         loadUserMock.mockReturnValue({})
         getMiteIdMock.mockReturnValue("mite-id")
 
-        await new CommandRunner({slackId: "slackId"}, userRepository, config).runMiteCommand(checkCommand)
+        try {
+            await new CommandRunner({slackId: "slackId"}, userRepository, config).runMiteCommand(checkCommand)
+        } catch(e) {
+            expect(e).toEqual(new Error("Unable to find api key. Please register as a user or provide an admin api key."))
+        }
     })
 })
