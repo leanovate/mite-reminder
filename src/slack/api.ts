@@ -4,7 +4,7 @@ import config from "../config"
 import { Repository } from "../db/user-repository"
 
 interface SlackBotApi {
-  start: (repository: Repository) => void
+  start: (repository: Repository) => Promise<void>
 }
 
 const app = new App({
@@ -14,7 +14,7 @@ const app = new App({
 
 const start = async (repository: Repository): Promise<void> => {
     await app.start(process.env.PORT || 3000)
-    await setupEventHandling(app, repository)
+    setupEventHandling(app, repository)
 
     console.log("⚡️ Bolt app is running!")
 }

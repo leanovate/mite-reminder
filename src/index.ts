@@ -1,5 +1,5 @@
 import SlackApi from "./slack/api"
-import { createRepository } from "./db/user-repository"
+import { createRepository } from "./db/create-user-repository"
 
 createRepository()
     .then(repository => SlackApi.start(repository))
