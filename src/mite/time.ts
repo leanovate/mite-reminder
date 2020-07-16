@@ -1,5 +1,5 @@
 import { Moment } from "moment"
-import { TimeEntries } from "./types"
+import { TimeEntries } from "mite-api"
 
 const isWeekend = (dateAsMoment: Moment): boolean => [0, 6].includes(dateAsMoment.day())
 

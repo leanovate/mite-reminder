@@ -2,8 +2,7 @@ import { Moment } from "moment"
 import { isHoliday } from "../mite/holidays"
 import { getTimeEntries } from "../mite/mite-api-wrapper"
 import { getDatesBetween, isTimeEnteredOnDay, isWeekend } from "../mite/time"
-import { TimeEntries } from "../mite/types"
-import { MiteApi } from "mite-api"
+import { MiteApi, TimeEntries } from "mite-api"
 
 export async function getMissingTimeEntries(
     miteUserId: string, 
