@@ -29,22 +29,28 @@ export class CommandRunner {
     }
 
     private doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[]> {
-        
+        const result = getMiteCredentials(repository, slackUser.slackId, this.config)
 
-    
+        switch(result) {
+        case Failures.ApiKeyIsMissing:
+            console.log(result)    
+            return Promise.resolve([])
+        case Failures.UserIsUnknown:
+            console.log(result)
+            return Promise.resolve([])
+        default:
+            return getMissingTimeEntries(
+                result.miteId,
+                moment().subtract(40, "day"),
+                moment(),
+                createMiteApi(result.apiKey),
+            )
+        }
 
-        const {apiKey, miteId} = getMiteCredentials(repository, slackUser.slackId, this.config)
-
-        return getMissingTimeEntries(
-            miteId,
-            moment().subtract(40, "day"),
-            moment(),
-            createMiteApi(apiKey),
-        )
     }
 }
 
-function getMiteCredentials(repository: Repository, slackId: string, config: Config) : {apiKey: string, miteId: string} {
+function getMiteCredentials(repository: Repository, slackId: string, config: Config) : {apiKey: string, miteId: string} | Failures.ApiKeyIsMissing | Failures.UserIsUnknown {
     let apiKey: string | undefined
     let miteId: string
 
@@ -56,23 +62,21 @@ function getMiteCredentials(repository: Repository, slackId: string, config: Con
     } else {
         const mId = repository.getMiteId(slackId)
         if(!mId) {
-            throw new Error("User is unknown and needs to register with his/her own api key.")
+            return Failures.UserIsUnknown
         }
         miteId = mId
         apiKey = config.miteApiKey
     }
 
     if (!apiKey) {
-        throw new Error("Unable to find api key. Please register as a user or provide an admin api key.")
+        return Failures.ApiKeyIsMissing
     }
 
     return {apiKey, miteId}
 }
 
-export class MissingApiKeyError extends Error {
-
-    constructor() {
-        super.
-    }
-} 
+export enum Failures {
+    ApiKeyIsMissing = "User is known but no app wide admin-api key is specified.", 
+    UserIsUnknown = "User is unknown and needs to register with his/her own api key."
+}
 
