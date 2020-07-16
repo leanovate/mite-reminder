@@ -8,7 +8,7 @@ const createMiteApi: (apiKey: string) => MiteApi = (apiKey: string) => miteApi({
     applicationName: "mite-reminder"
 })
 
-async function getTimeEntries(mite: MiteApi, userId: string | "current", from: Moment, to: Moment): Promise<TimeEntries> {
+async function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment, to: Moment): Promise<TimeEntries> {
     return new Promise((resolve, reject) => mite.getTimeEntries({
         from: from.format("YYYY-MM-DD"),
         to: to.format("YYYY-MM-DD"),

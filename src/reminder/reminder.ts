@@ -5,7 +5,7 @@ import { getDatesBetween, isTimeEnteredOnDay, isWeekend } from "../mite/time"
 import { MiteApi, TimeEntries } from "mite-api"
 
 export async function getMissingTimeEntries(
-    miteUserId: string, 
+    miteUserId: number | "current", 
     from: Moment, 
     to: Moment, 
     api: MiteApi): Promise<Moment[]> {

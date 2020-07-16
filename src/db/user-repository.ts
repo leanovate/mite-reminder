@@ -1,4 +1,6 @@
 import fs from "fs/promises"
+import { MiteApi } from "mite-api"
+import { getUserByEmail } from "../mite/mite-api-wrapper"
 
 export type User = {
     miteApiKey?: string
@@ -7,7 +9,7 @@ export type User = {
 export type DB = { [slackId: string]: User }
 
 export class Repository {
-    constructor(private readonly db: DB, private readonly path: string) { }
+    constructor(private readonly db: DB, private readonly path: string, private miteApi: MiteApi) { }
 
     async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
         this.db[slackId] = { miteApiKey }
@@ -27,13 +29,10 @@ export class Repository {
 
     loadUser(slackId: string): User | null {
         return this.db[slackId] || null
-    }
+    } 
 
-    getMiteId(slackId: string): string | null {
-        console.warn("************************************************************")
-        console.warn("getMiteId is currently mocked and will always return 'null'.")
-        console.warn("************************************************************")
-        return null
+    async getMiteId(email: string): Promise<number | null> {
+        return (await getUserByEmail(this.miteApi, email))?.id ?? null
     }
 
     private async updateDatabase(): Promise<void> {

@@ -28,17 +28,17 @@ export class CommandRunner {
         }
     }
 
-    private doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[]> {
+    private async doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[]> {
         const user = repository.loadUser(slackUser.slackId)
 
         let apiKey: string | undefined
-        let miteId: string
+        let miteId: number | "current"
 
         if(user?.miteApiKey) {
             miteId = "current"
             apiKey = user.miteApiKey
         } else {
-            const mId = repository.getMiteId(slackUser.slackId)
+            const mId = await repository.getMiteId(slackUser.slackId)
             if(!mId) {
                 throw new Error("User is unknown and needs to register with his/her own api key.")
             }

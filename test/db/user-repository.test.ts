@@ -7,8 +7,11 @@ jest.mock("fs/promises", () =>  {
 
 import fs from "fs/promises"
 import { Repository } from "../../src/db/user-repository"
+import { MiteApi } from "mite-api"
 
 describe("User Repository", () => {
+
+    const miteApiMock = <MiteApi>{}
 
     afterEach(() => {
         jest.clearAllMocks()
@@ -19,7 +22,7 @@ describe("User Repository", () => {
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
         const path = "path"
-        await new Repository(testDb, path).registerUser(slackId, miteApiKey)
+        await new Repository(testDb, path, miteApiMock).registerUser(slackId, miteApiKey)
 
         expect(fs.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
@@ -33,14 +36,14 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        const user =  new Repository(testDb, "path").loadUser(slackId)
+        const user =  new Repository(testDb, "path", miteApiMock).loadUser(slackId)
         expect(user?.miteApiKey).toEqual(miteApiKey)
     })
 
     it("should return null if the user cannot be found", () => {
         const testDb = {}
 
-        const user =  new Repository(testDb, "path").loadUser("slack-id")
+        const user =  new Repository(testDb, "path", miteApiMock).loadUser("slack-id")
         expect(user).toBeNull()
     })
 
@@ -52,7 +55,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await  new Repository(testDb, path).unregisterUser(slackId)
+        await  new Repository(testDb, path, miteApiMock).unregisterUser(slackId)
 
         expect(testDb).toEqual({})
         expect(fs.writeFile).toHaveBeenCalledTimes(1)
@@ -66,7 +69,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await  new Repository(testDb, "path").unregisterUser("unknown-slack-id")
+        await  new Repository(testDb, "path", miteApiMock).unregisterUser("unknown-slack-id")
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
         expect(fs.writeFile).toHaveBeenCalledTimes(0)
     })
