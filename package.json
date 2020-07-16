@@ -20,10 +20,12 @@
     "dotenv": "^8.2.0",
     "mite-api": "^0.1.1",
     "moment": "^2.26.0",
+    "node-cron": "^2.0.3",
     "parsimmon": "^1.13.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.0",
+    "@types/node-cron": "^2.0.3",
     "@types/parsimmon": "^1.10.2",
     "@typescript-eslint/eslint-plugin": "^3.6.0",
     "@typescript-eslint/parser": "^3.6.0",
