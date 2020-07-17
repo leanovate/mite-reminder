@@ -47,7 +47,8 @@ export class CommandRunner {
     }
 }
 
-async function getMiteCredentials(repository: Repository, slackId: string, config: Config): Promise<{ apiKey: string, miteId: number | "current" } | Failures.ApiKeyIsMissing | Failures.UserIsUnknown> {
+//TODO move to different file
+export async function getMiteCredentials(repository: Repository, slackId: string, config: Config): Promise<{ apiKey: string, miteId: number | "current" } | Failures.ApiKeyIsMissing | Failures.UserIsUnknown> {
     let apiKey: string | undefined
     let miteId: number | "current"
 
