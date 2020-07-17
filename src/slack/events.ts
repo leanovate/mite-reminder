@@ -37,6 +37,7 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
             console.warn(result)
             say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
         } else {
+            // TODO show a different message if no entries are missing
             say("Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n"))
