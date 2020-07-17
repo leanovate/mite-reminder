@@ -7,7 +7,7 @@ jest.mock("../../src/mite/mite-api-wrapper", () => ({
 }))
 
 import { RegisterCommand, UnregisterCommand, CheckCommand } from "../../src/commands/commandParser"
-import { CommandRunner } from "../../src/commands/commands"
+import { CommandRunner, Failures } from "../../src/commands/commands"
 import { Repository } from "../../src/db/user-repository"
 import { Config } from "../../src/config"
 
@@ -123,7 +123,7 @@ describe("Commands", () => {
         expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, miteId, expect.anything(), expect.anything())
     })
 
-    it("should throw an error if the user has no api key and is unknown", async () => {
+    it("should return a failure if the user has no api key and is unknown", async () => {
         expect.assertions(1)
         const slackId = "slack-id"
         const checkCommand: CheckCommand = { name: "check" }
@@ -135,25 +135,20 @@ describe("Commands", () => {
         loadUserMock.mockReturnValue({})
         getMiteIdMock.mockReturnValue(null)
 
-        try {
-            await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
-        } catch (e) {
-            expect(e).toEqual(new Error("User is unknown and needs to register with his/her own api key."))
-        }
+        const result = await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
+
+        expect(result).toEqual(Failures.UserIsUnknown)
     })
 
-    it("should throw an error if no api key is present", async () => {
-        expect.assertions(1)
+    it("return a failure if no api key is present", async () => {
         const config = {} as unknown as Config
         const checkCommand: CheckCommand = { name: "check" }
 
         loadUserMock.mockReturnValue({})
         getMiteIdMock.mockReturnValue("mite-id")
 
-        try {
-            await new CommandRunner({ slackId: "slackId" }, userRepository, config).runMiteCommand(checkCommand)
-        } catch (e) {
-            expect(e).toEqual(new Error("Unable to find api key. Please register as a user or provide an admin api key."))
-        }
+        const result = await new CommandRunner({ slackId: "slackId" }, userRepository, config).runMiteCommand(checkCommand)
+
+        expect(result).toEqual(Failures.ApiKeyIsMissing)
     })
 })
