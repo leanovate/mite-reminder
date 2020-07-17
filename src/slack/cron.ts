@@ -1,12 +1,12 @@
+import { App } from "@slack/bolt"
+import moment from "moment"
 import cron from "node-cron"
+import { Failures, getMiteId } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
-import { getMissingTimeEntries } from "../reminder/reminder"
-import { createMiteApi } from "../mite/mite-api-wrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
-import moment from "moment"
-import { App } from "@slack/bolt"
-import { getMiteCredentials, Failures } from "../commands/commands"
+import { getMissingTimeEntries } from "../reminder/reminder"
+import { createUserContext } from "./events"
 
 const { timezone } = config
 
@@ -20,9 +20,10 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
         console.log(`Running daily cron for ${users.length} users.`)
         users.forEach(async user => { // for (const user in users) gets the type wrong for some reason (it is not string)
             const { start, end } = lastWeekThursdayToThursday(moment())
-            const result = await getMiteCredentials(repository, user.slackId, config)
+            const context = createUserContext(repository, user.slackId)
+            const miteId = await getMiteId(context)
 
-            if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+            if (miteId === Failures.UserIsUnknown) {
                 app.client.chat.postMessage({
                     token: config.slackToken,
                     channel: user.slackId,
@@ -30,8 +31,9 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                 })
                 return
             }
-            const miteApi = createMiteApi(result.apiKey)
-            getMissingTimeEntries(result.miteId, start, end, miteApi)
+            
+
+            getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
                     // if (times.length > 0) {
 

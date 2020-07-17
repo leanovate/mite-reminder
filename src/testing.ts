@@ -1,5 +1,4 @@
-import { getTimeEntries, createMiteApi } from "./mite/mite-api-wrapper"
-import moment from "moment"
+import { createMiteApi } from "./mite/mite-api-wrapper"
 import config from "./config"
 import { Repository } from "./db/user-repository"
 
@@ -8,7 +7,7 @@ if (!config.miteApiKey) {
 }
 // const result = getTimeEntries(createMiteApi(config.miteApiKey), "current", moment().subtract(10, "days"), moment())
 
-const result = new Repository({}, "users.json", createMiteApi(config.miteApiKey)).getMiteId("moritz.rumpf@leanovate.de")
+const result = new Repository({}, "users.json", createMiteApi(config.miteApiKey, config.miteAccountName)).getMiteId("moritz.rumpf@leanovate.de")
 
 const start = async () => {
     try {

@@ -1,9 +1,8 @@
 import miteApi, { MiteApi, MiteApiError, TimeEntries, Users, User } from "mite-api"
 import { Moment } from "moment"
-import config from "../config"
 
-const createMiteApi: (apiKey: string) => MiteApi = (apiKey: string) => miteApi({
-    account: config.miteAccountName,
+const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (apiKey, miteAccountName) => miteApi({
+    account: miteAccountName,
     apiKey: apiKey,
     applicationName: "mite-reminder"
 })

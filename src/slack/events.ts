@@ -3,7 +3,17 @@ import { parse, CheckCommand, MiteCommand } from "../commands/commandParser"
 import { CommandRunner, Failures } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { sayHelp } from "./help"
-import config from "../config"
+import config, { Config } from "../config"
+import { MiteApi } from "mite-api"
+import { createMiteApi } from "../mite/mite-api-wrapper"
+
+// TODO move to different file
+export interface UserContext {
+    repository: Repository,
+    slackId: string,
+    miteApi: MiteApi,
+    config: Config
+}
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
@@ -18,7 +28,9 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         return sayHelp(say)
     }
 
-    const commandRunner = new CommandRunner({ slackId: message.user }, repository, config)
+    const context: UserContext = createUserContext(repository, message.user)
+
+    const commandRunner = new CommandRunner(context)
     const command = parserResult.value
 
     if (command.name === "check") {
@@ -27,6 +39,23 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         await handleMiteCommand(say, commandRunner, command)
     }
 })
+
+// TODO Move to different file
+export function createUserContext(repository: Repository, slackId: string): UserContext {
+    const user = repository.loadUser(slackId)
+    const miteApiKey = user?.miteApiKey ?? config.miteApiKey
+    if (!miteApiKey) {
+        // TODO inform user that a mite api key needs to be provided
+        throw new Error(Failures.ApiKeyIsMissing)
+    }
+
+    return {
+        repository,
+        slackId,
+        miteApi: createMiteApi(miteApiKey, config.miteAccountName),
+        config
+    }
+}
 
 async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, command: CheckCommand) {
     try {

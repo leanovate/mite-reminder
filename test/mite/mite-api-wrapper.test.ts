@@ -1,4 +1,4 @@
-import { MiteApi, TimeEntry, TimeEntries, User, Users } from "mite-api"
+import { MiteApi, TimeEntry, TimeEntries, User } from "mite-api"
 import moment from "moment"
 import { createMiteApi, getTimeEntries, getUserByEmail } from "../../src/mite/mite-api-wrapper"
 
@@ -6,7 +6,7 @@ jest.mock("../../src/config", () => ({}))
 
 describe("createMiteApi", () => {
     it("create a MiteApi that can 'getTimeEntries'", () => {
-        const miteApi = createMiteApi("apiKey")
+        const miteApi = createMiteApi("apiKey", "test")
 
         expect(miteApi.getTimeEntries).not.toBeUndefined
     })

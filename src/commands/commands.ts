@@ -2,15 +2,22 @@ import { MiteCommand, RegisterCommand, UnregisterCommand, CheckCommand } from ".
 import { getMissingTimeEntries } from "../reminder/reminder"
 import moment, { Moment } from "moment"
 import { Repository } from "../db/user-repository"
-import { createMiteApi } from "../mite/mite-api-wrapper"
-import { Config } from "../config"
+import { UserContext } from "../slack/events"
+import { MiteApi } from "mite-api"
 
 export type SlackUser = {
     slackId: string
 }
 
 export class CommandRunner {
-    constructor(private readonly slackUser: SlackUser, private readonly repository: Repository, private readonly config: Config) {
+    private readonly repository: Repository
+    private readonly slackId: string
+    private readonly miteApi: MiteApi
+
+    constructor(private readonly context: UserContext) {
+        this.repository = context.repository
+        this.slackId = context.slackId
+        this.miteApi = context.miteApi
     }
 
     runMiteCommand(c: RegisterCommand): Promise<void>
@@ -19,58 +26,48 @@ export class CommandRunner {
     runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures>
     runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures> {
         switch (c.name) {
-            case "register":
-                return this.repository.registerUser(this.slackUser.slackId, c.miteApiKey)
-            case "unregister":
-                return this.repository.unregisterUser(this.slackUser.slackId)
-            case "check":
-                return this.doCheck(this.slackUser, this.repository)
+        case "register":
+            return this.repository.registerUser(this.slackId, c.miteApiKey)
+        case "unregister":
+            return this.repository.unregisterUser(this.slackId)
+        case "check":
+            return this.doCheck(this.context)
         }
     }
 
-    private async doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[] | Failures> {
-        const result = await getMiteCredentials(repository, slackUser.slackId, this.config)
+    private async doCheck(context: UserContext): Promise<Moment[] | Failures> {
+        const result = await getMiteId(context)
 
-        switch (result) {
-            case Failures.ApiKeyIsMissing:
-            case Failures.UserIsUnknown:
-                return result
-            default:
-                return getMissingTimeEntries(
-                    result.miteId,
-                    moment().subtract(40, "day"),
-                    moment(),
-                    createMiteApi(result.apiKey),
-                )
+        if(result === Failures.UserIsUnknown) {
+            return result
         }
 
+        return getMissingTimeEntries(
+            result,
+            moment().subtract(40, "day"),
+            moment(),
+            this.miteApi,
+        )
     }
 }
 
 //TODO move to different file
-export async function getMiteCredentials(repository: Repository, slackId: string, config: Config): Promise<{ apiKey: string, miteId: number | "current" } | Failures.ApiKeyIsMissing | Failures.UserIsUnknown> {
-    let apiKey: string | undefined
+export async function getMiteId(context: UserContext): Promise<number | "current" | Failures.UserIsUnknown> {
     let miteId: number | "current"
 
-    const user = repository.loadUser(slackId)
+    const user = context.repository.loadUser(context.slackId)
 
     if (user?.miteApiKey) {
         miteId = "current"
-        apiKey = user.miteApiKey
     } else {
-        const mId = await repository.getMiteId(slackId)
+        const mId = await context.repository.getMiteId(context.slackId)
         if (!mId) {
             return Failures.UserIsUnknown
         }
         miteId = mId
-        apiKey = config.miteApiKey
     }
 
-    if (!apiKey) {
-        return Failures.ApiKeyIsMissing
-    }
-
-    return { apiKey, miteId }
+    return miteId
 }
 
 export enum Failures {
