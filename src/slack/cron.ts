@@ -4,8 +4,8 @@ import { Repository } from "../db/user-repository"
 import { getMissingTimeEntries } from "../reminder/reminder"
 import { createMiteApi } from "../mite/mite-api-wrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
-import moment from "moment"
-import { SayFn } from "@slack/bolt"
+import moment, { Moment } from "moment"
+import { SayFn, ChatPostMessageArguments, SayArguments } from "@slack/bolt"
 
 const { timezone } = config
 
@@ -39,4 +39,45 @@ const scheduleDailyCron = (repository: Repository, say: SayFn) => {
                 })
         })
     }, { timezone })
+}
+
+const createSlackBlocks = (times: Moment[]): SayArguments  =>  {
+    const header = {
+        type: "section",
+        text: {
+            "type": "mrkdwn",
+            "text": ":clock1: Your time entries for the following dates are _missing_ or contain _0 minutes_:"
+        }
+    }
+    
+    const divider = {
+        type: "divider"
+    }
+
+    const timeBlocks = times.map(time => (
+        {
+            type: "section",
+            text: {
+                type: "mrkdwn",
+                text: `*${time.toISOString()}*`
+            },
+            accessory: {
+                type: "button",
+                text: {
+                    type: "plain_text",
+                    text: "Buchen"
+                },
+                url: `https://leanovate.mite.yo.lk/#${time.format("YYYY/MM/DD")}`
+            }
+        })
+    )
+
+
+    return {
+        blocks: [
+            header,
+            divider,
+            ...timeBlocks
+        ]
+    }
 }
