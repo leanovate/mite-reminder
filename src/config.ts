@@ -1,3 +1,5 @@
+import { Timezone } from "tz-offset"
+
 export type Config = {
     miteApiKey?: string
     slackToken: string
@@ -5,6 +7,7 @@ export type Config = {
     useMiteAdminKey: boolean
     miteAccountName: string
     dbPath: string
+    timezone: Timezone
 }
 
 const getConfig = (): Config => {
@@ -13,6 +16,7 @@ const getConfig = (): Config => {
     const slackToken = process.env.SLACK_TOKEN
     const slackSigningSecret = process.env.SLACK_SIGNING_SECRET
     const dbPath = process.env.DB_PATH || "db.json"
+    const timezone: Timezone = <Timezone>process.env.timezone || "Europe/Berlin"
 
     if (useMiteAdminKey && !miteApiKey) { // useMiteAdminKey is probably redundant, could be just !!MITE_API_KEY
         throw new Error("Bot should use the admin api key (IS_MITE_API_KEY_ADMIN=='yes') but no MITE_API_KEY is set!")
@@ -33,7 +37,8 @@ const getConfig = (): Config => {
         slackSigningSecret,
         useMiteAdminKey,
         miteAccountName,
-        dbPath
+        dbPath,
+        timezone
     }
 }
 

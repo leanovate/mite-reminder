@@ -10,51 +10,70 @@ export type SlackUser = {
 }
 
 export class CommandRunner {
-    constructor(private readonly slackUser: SlackUser, private readonly  repository: Repository, private readonly config: Config) {
+    constructor(private readonly slackUser: SlackUser, private readonly repository: Repository, private readonly config: Config) {
     }
 
     runMiteCommand(c: RegisterCommand): Promise<void>
     runMiteCommand(c: UnregisterCommand): Promise<void>
-    runMiteCommand(c: CheckCommand): Promise<Moment[]>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[]>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[]> {
+    runMiteCommand(c: CheckCommand): Promise<Moment[] | Failures>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures> {
         switch (c.name) {
-        case "register":
-            return this.repository.registerUser(this.slackUser.slackId, c.miteApiKey)
-        case "unregister":
-            return this.repository.unregisterUser(this.slackUser.slackId)
-        case "check":
-            return this.doCheck(this.slackUser, this.repository)
+            case "register":
+                return this.repository.registerUser(this.slackUser.slackId, c.miteApiKey)
+            case "unregister":
+                return this.repository.unregisterUser(this.slackUser.slackId)
+            case "check":
+                return this.doCheck(this.slackUser, this.repository)
         }
     }
 
-    private async doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[]> {
-        const user = repository.loadUser(slackUser.slackId)
+    private async doCheck(slackUser: SlackUser, repository: Repository): Promise<Moment[] | Failures> {
+        const result = await getMiteCredentials(repository, slackUser.slackId, this.config)
 
-        let apiKey: string | undefined
-        let miteId: number | "current"
-
-        if(user?.miteApiKey) {
-            miteId = "current"
-            apiKey = user.miteApiKey
-        } else {
-            const mId = await repository.getMiteId(slackUser.slackId)
-            if(!mId) {
-                throw new Error("User is unknown and needs to register with his/her own api key.")
-            }
-            miteId = mId
-            apiKey = this.config.miteApiKey
+        switch (result) {
+            case Failures.ApiKeyIsMissing:
+            case Failures.UserIsUnknown:
+                return result
+            default:
+                return getMissingTimeEntries(
+                    result.miteId,
+                    moment().subtract(40, "day"),
+                    moment(),
+                    createMiteApi(result.apiKey),
+                )
         }
 
-        if (!apiKey) {
-            throw new Error("Unable to find api key. Please register as a user or provide an admin api key.")
-        }
-
-        return getMissingTimeEntries(
-            miteId,
-            moment().subtract(40, "day"),
-            moment(),
-            createMiteApi(apiKey),
-        )
     }
 }
+
+async function getMiteCredentials(repository: Repository, slackId: string, config: Config): Promise<{ apiKey: string, miteId: number | "current" } | Failures.ApiKeyIsMissing | Failures.UserIsUnknown> {
+    let apiKey: string | undefined
+    let miteId: number | "current"
+
+    const user = repository.loadUser(slackId)
+
+    if (user?.miteApiKey) {
+        miteId = "current"
+        apiKey = user.miteApiKey
+    } else {
+        const mId = await repository.getMiteId(slackId)
+        if (!mId) {
+            return Failures.UserIsUnknown
+        }
+        miteId = mId
+        apiKey = config.miteApiKey
+    }
+
+    if (!apiKey) {
+        return Failures.ApiKeyIsMissing
+    }
+
+    return { apiKey, miteId }
+}
+
+export enum Failures {
+    ApiKeyIsMissing = "User is known but no app wide admin-api key is specified.",
+    UserIsUnknown = "User is unknown and needs to register with his/her own api key."
+}
+

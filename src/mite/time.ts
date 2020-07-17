@@ -20,8 +20,19 @@ const getDatesBetween = (start: Moment, end: Moment): Moment[] => {
     return datesToCheck
 }
 
+const lastWeekThursdayToThursday = (currentMoment: Moment): { start: Moment, end: Moment } => {
+    const mostRecentThursday = currentMoment.clone().day(currentMoment.day() > 4 ? 4 : -3)
+    const secondMostRecentThursday = mostRecentThursday.clone().subtract(1, "week")
+
+    return {
+        start: secondMostRecentThursday,
+        end: mostRecentThursday
+    }
+}
+
 export {
     isWeekend,
     isTimeEnteredOnDay,
-    getDatesBetween
+    getDatesBetween,
+    lastWeekThursdayToThursday
 }

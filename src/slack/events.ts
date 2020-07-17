@@ -1,6 +1,6 @@
 import { App, SayFn } from "@slack/bolt"
 import { parse, CheckCommand, MiteCommand } from "../commands/commandParser"
-import { CommandRunner } from "../commands/commands"
+import { CommandRunner, Failures } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { sayHelp } from "./help"
 import config from "../config"
@@ -33,10 +33,15 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
         const result = await commandRunner.runMiteCommand(command)
         console.log(`Finished running command ${command.name}`)
 
-        const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
-            + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                .join("\n")
-        say(message)
+        if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+            console.warn(result)
+            say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+        } else {
+            // TODO show a different message if no entries are missing
+            say("Your time entries for the following dates are missing or contain 0 minutes:\n"
+                + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                    .join("\n"))
+        }
     } catch (e) {
         reportError(say)(e)
     }

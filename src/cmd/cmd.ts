@@ -1,5 +1,5 @@
 import readline from "readline"
-import { CommandRunner } from "../commands/commands"
+import { CommandRunner, Failures } from "../commands/commands"
 import { parse } from "../commands/commandParser"
 import { Repository } from "../db/user-repository"
 import config from "../config"
@@ -22,10 +22,13 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                 const result = await runner.runMiteCommand(command)
                 console.log(`Finished running command ${command.name}`)
 
-                const message = "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                    + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                        .join("\n")
-                console.log(message)
+                if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+                    console.log("Could not check because ", result)
+                } else {
+                    console.log("Your time entries for the following dates are missing or contain 0 minutes:\n"
+                        + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                            .join("\n"))
+                }
             } else {
                 await runner.runMiteCommand(command)
             }

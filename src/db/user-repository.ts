@@ -7,6 +7,7 @@ export type User = {
 }
 
 export type DB = { [slackId: string]: User }
+export type Users = Array<User & {slackId: string}>
 
 export class Repository {
     constructor(private readonly db: DB, private readonly path: string, private miteApi: MiteApi) { }
@@ -33,6 +34,11 @@ export class Repository {
 
     async getMiteId(email: string): Promise<number | null> {
         return (await getUserByEmail(this.miteApi, email))?.id ?? null
+    }
+
+    loadAllUsers(): Users  {
+        return Object.keys(this.db)
+            .map(key => ({ slackId: key, ...this.db[key] }))
     }
 
     private async updateDatabase(): Promise<void> {
