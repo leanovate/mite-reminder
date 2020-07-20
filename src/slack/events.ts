@@ -1,10 +1,17 @@
 import { App, SayFn } from "@slack/bolt"
-import { parse, CheckCommand, MiteCommand } from "../commands/commandParser"
-import { CommandRunner, Failures } from "../commands/commands"
-import { Repository } from "../db/user-repository"
-import { sayHelp } from "./help"
-import { createUserContext } from "./createUserContext"
+import { WebAPICallResult } from "@slack/web-api"
 import { MiteApiError } from "mite-api"
+import { Moment } from "moment"
+import { parse } from "../commands/commandParser"
+import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
+import config from "../config"
+import { Repository } from "../db/user-repository"
+import { createUserContext } from "./createUserContext"
+import { sayHelp } from "./help"
+
+export type SlackApiUser = {
+    user?: {profile?: {email?: string}}
+} & WebAPICallResult
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
@@ -19,21 +26,32 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
     }
 
     const context = createUserContext(repository, message.user)
-    const commandRunner = new CommandRunner(context)
     const command = parserResult.value
 
-    if (command.name === "check") {
-        await handleCheckCommand(say, commandRunner, command)
-    } else {
-        await handleMiteCommand(say, commandRunner, command)
+    switch(command.name) {
+    case "check":
+        await doCheck(context).then(result => displayCheckResult(say, result))
+        break
+    case "register":
+        await doRegister(command, context, slackUserResolver(app)).then(result => displayRegisterResult(say, result))
+        break
+    case "unregister":
+        await doUnregister(context).then(() => displayUnregisterResult(say))
     }
 })
 
-async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, command: CheckCommand) {
-    try {
-        const result = await commandRunner.runMiteCommand(command)
-        console.log(`Finished running command ${command.name}`)
+// TODO Move
+export const slackUserResolver: (app: App) => (id: string) => Promise<{email: string| undefined}> = app => async id => {
+    const apiCallResult: SlackApiUser = await app.client.users.info({
+        user: id,
+        token: config.slackToken
+    })
+    return { email: apiCallResult.user?.profile?.email }
+}
 
+// TODO Move to the rest of the check functionality
+async function displayCheckResult(say: SayFn, result: Moment[] | Failures) {
+    try {
         if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
             console.warn(result)
             await sayMissingApiKey(say)
@@ -50,13 +68,16 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
     }
 }
 
-async function handleMiteCommand(say: SayFn, commandRunner: CommandRunner, command: Exclude<MiteCommand, CheckCommand>) {
-    try {
-        await commandRunner.runMiteCommand(command)
-        await say("Success!")
-    } catch (e) {
-        await reportError(say, e)
-    }
+async function displayRegisterResult(say: SayFn, result: void|Failures): Promise<void> {
+    if(result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+        return sayMissingApiKey(say)  
+    } 
+
+    await say("Success!")
+}
+
+async function displayUnregisterResult(say: SayFn): Promise<void> {
+    await say("Success!")   
 }
 
 async function reportError(say: SayFn, error: Error | MiteApiError) : Promise<void> {

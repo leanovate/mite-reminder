@@ -1,8 +1,9 @@
 import fs from "fs/promises"
 
-export type User = {
-    miteApiKey?: string
-}
+export type User = Partial<UserWithMiteId & UserWithMiteApiKey>
+
+type UserWithMiteId = { miteId: number }
+type UserWithMiteApiKey = { miteApiKey: string }
 
 export type DB = { [slackId: string]: User }
 export type Users = Array<User & {slackId: string}>
@@ -10,8 +11,13 @@ export type Users = Array<User & {slackId: string}>
 export class Repository {
     constructor(private readonly db: DB, private readonly path: string) { }
 
-    async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
+    async registerUserWithMiteApiKey(slackId: string, miteApiKey: string): Promise<void> {
         this.db[slackId] = { miteApiKey }
+        await this.updateDatabase()
+    }
+
+    async registerUserWithMiteId(slackId: string, miteId: number) : Promise<void> {
+        this.db[slackId] = { miteId }
         await this.updateDatabase()
     }
 
