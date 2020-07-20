@@ -7,6 +7,7 @@ import config from "../config"
 import { Repository } from "../db/user-repository"
 import { lastWeekThursdayToThursday, getMissingTimeEntries } from "../mite/time"
 import { createUserContext } from "./createUserContext"
+import { isCheckContext } from "./userContext"
 
 const { timezone } = config
 
@@ -22,7 +23,7 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
             const { start, end } = lastWeekThursdayToThursday(moment())
             const context = createUserContext(repository, user.slackId)
 
-            if(context === Failures.ApiKeyIsMissing) {
+            if(!isCheckContext(context)) {
                 return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
             }
 

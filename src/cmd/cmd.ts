@@ -16,10 +16,6 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
         if (parsedAnswer.status) {
             const context = createUserContext(repository, "cmd-user")
-            if(context === Failures.ApiKeyIsMissing) {
-                throw new Error("Provide an api key.")
-            }
-
             const command = parsedAnswer.value
             const runner = new CommandRunner(context)
 
@@ -27,7 +23,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                 const result = await runner.runMiteCommand(command)
                 console.log(`Finished running command ${command.name}`)
 
-                if (result === Failures.UserIsUnknown) {
+                if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
                     console.log("Could not check because ", result)
                 } else {
                     console.log("Your time entries for the following dates are missing or contain 0 minutes:\n"

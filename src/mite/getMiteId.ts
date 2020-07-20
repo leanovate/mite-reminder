@@ -1,8 +1,8 @@
-import { UserContext } from "../slack/userContext"
 import { Failures } from "../commands/commands"
+import { CheckContext } from "../slack/userContext"
 import { getMiteIdByEmail } from "./mite-api-wrapper"
 
-export async function getMiteId(context: UserContext): Promise<number | "current" | Failures.UserIsUnknown> {
+export async function getMiteId(context: CheckContext): Promise<number | "current" | Failures.UserIsUnknown> {
     let miteId: number | "current"
 
     const user = context.repository.loadUser(context.slackId)

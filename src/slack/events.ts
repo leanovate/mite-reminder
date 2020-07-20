@@ -19,10 +19,6 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
     }
 
     const context = createUserContext(repository, message.user)
-    if(context === Failures.ApiKeyIsMissing) {
-        return sayMissingApiKey(say)
-    }
-
     const commandRunner = new CommandRunner(context)
     const command = parserResult.value
 
@@ -38,7 +34,7 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
         const result = await commandRunner.runMiteCommand(command)
         console.log(`Finished running command ${command.name}`)
 
-        if (result === Failures.UserIsUnknown) {
+        if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
             console.warn(result)
             await sayMissingApiKey(say)
         } else {

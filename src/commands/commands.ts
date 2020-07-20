@@ -1,10 +1,9 @@
-import { MiteCommand, RegisterCommand, UnregisterCommand, CheckCommand } from "./commandParser"
 import moment, { Moment } from "moment"
 import { Repository } from "../db/user-repository"
-import { UserContext } from "../slack/userContext"
-import { MiteApi } from "mite-api"
-import { getMissingTimeEntries } from "../mite/time"
 import { getMiteId } from "../mite/getMiteId"
+import { getMissingTimeEntries } from "../mite/time"
+import { isCheckContext, UserContext } from "../slack/userContext"
+import { CheckCommand, MiteCommand, RegisterCommand, UnregisterCommand } from "./commandParser"
 
 export type SlackUser = {
     slackId: string
@@ -13,19 +12,17 @@ export type SlackUser = {
 export class CommandRunner {
     private readonly repository: Repository
     private readonly slackId: string
-    private readonly miteApi: MiteApi
 
     constructor(private readonly context: UserContext) {
         this.repository = context.repository
         this.slackId = context.slackId
-        this.miteApi = context.miteApi
     }
 
     runMiteCommand(c: RegisterCommand): Promise<void>
     runMiteCommand(c: UnregisterCommand): Promise<void>
-    runMiteCommand(c: CheckCommand): Promise<Moment[] | Failures.UserIsUnknown>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures.UserIsUnknown>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures.UserIsUnknown> {
+    runMiteCommand(c: CheckCommand): Promise<Moment[] | Failures>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures> {
         switch (c.name) {
         case "register":
             return this.repository.registerUser(this.slackId, c.miteApiKey)
@@ -36,18 +33,23 @@ export class CommandRunner {
         }
     }
 
-    private async doCheck(context: UserContext): Promise<Moment[] | Failures.UserIsUnknown> {
+    private async doCheck(context: UserContext): Promise<Moment[] | Failures> {
+        if(!isCheckContext(context)) {
+            return Failures.ApiKeyIsMissing
+        }
+
         const result = await getMiteId(context)
 
         if(result === Failures.UserIsUnknown) {
             return result
         }
 
+
         return getMissingTimeEntries(
             result,
             moment().subtract(40, "day"),
             moment(),
-            this.miteApi,
+            context.miteApi
         )
     }
 }
