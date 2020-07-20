@@ -4,10 +4,10 @@ import { MiteApiError } from "mite-api"
 import { Moment } from "moment"
 import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
-import config from "../config"
 import { Repository } from "../db/user-repository"
 import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
+import { slackUserResolver } from "./slackUserResolver"
 
 export type SlackApiUser = {
     user?: {profile?: {email?: string}}
@@ -40,16 +40,6 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
     }
 })
 
-// TODO Move
-export const slackUserResolver: (app: App) => (id: string) => Promise<{email: string| undefined}> = app => async id => {
-    const apiCallResult: SlackApiUser = await app.client.users.info({
-        user: id,
-        token: config.slackToken
-    })
-    return { email: apiCallResult.user?.profile?.email }
-}
-
-// TODO Move to the rest of the check functionality
 async function displayCheckResult(say: SayFn, result: Moment[] | Failures) {
     try {
         if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
