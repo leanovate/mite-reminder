@@ -62,7 +62,7 @@ async function handleMiteCommand(say: SayFn, commandRunner: CommandRunner, comma
 
 function reportError(say: SayFn): (error: Error) => Promise<void> {
     return async (error: Error) => {
-        console.error("Failed to execute command because of ", error) // TODO also reports error "User is unknown and needs to register with his/her own api key.", which isn't really an error case here
+        console.error("Failed to execute command because of ", error)
         await say(`Sorry, I couldn't to that because of ${error.message}`)
     }
 }
