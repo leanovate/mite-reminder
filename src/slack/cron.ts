@@ -35,21 +35,24 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
 
             getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
-                    // if (times.length > 0) {
+                    if (times.length > 0) {
+                        const text = "Your time entries for the following dates are missing or contain 0 minutes:\n"
+                        + times.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                            .join("\n")
 
+                        app.client.chat.postMessage({
+                            token: config.slackToken,
+                            channel: user.slackId,
+                            text
+                        })
+                    }
+                }).catch(e => {
+                    console.log("Error when running daily cron:", e)
                     app.client.chat.postMessage({
                         token: config.slackToken,
                         channel: user.slackId,
-                        text: "Yay cron job ran"
+                        text: "I tried check your mite time entries, but something went wrong. Please inform the mite bot admin."
                     })
-
-                    // say("Your time entries for the following dates are missing or contain 0 minutes:\n"
-                    //     + times.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                    //         .join("\n"))
-                    // }
-                }).catch(e => {
-                    console.log("Error when running daily cron:", e)
-                    // TODO also send an error via slack?
                 })
         })
     }, { timezone })
