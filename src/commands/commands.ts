@@ -4,6 +4,7 @@ import { Repository } from "../db/user-repository"
 import { UserContext } from "../slack/events"
 import { MiteApi } from "mite-api"
 import { getMissingTimeEntries } from "../mite/time"
+import { getMiteId } from "../mite/getMiteId"
 
 export type SlackUser = {
     slackId: string
@@ -49,25 +50,6 @@ export class CommandRunner {
             this.miteApi,
         )
     }
-}
-
-//TODO move to different file
-export async function getMiteId(context: UserContext): Promise<number | "current" | Failures.UserIsUnknown> {
-    let miteId: number | "current"
-
-    const user = context.repository.loadUser(context.slackId)
-
-    if (user?.miteApiKey) {
-        miteId = "current"
-    } else {
-        const mId = await context.repository.getMiteId(context.slackId)
-        if (!mId) {
-            return Failures.UserIsUnknown
-        }
-        miteId = mId
-    }
-
-    return miteId
 }
 
 export enum Failures {
