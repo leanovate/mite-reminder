@@ -1,6 +1,6 @@
 import { MiteApi, TimeEntry, TimeEntries, User } from "mite-api"
 import moment from "moment"
-import { createMiteApi, getTimeEntries, getUserByEmail } from "../../src/mite/mite-api-wrapper"
+import { createMiteApi, getTimeEntries, getMiteIdByEmail } from "../../src/mite/mite-api-wrapper"
 
 jest.mock("../../src/config", () => ({}))
 
@@ -51,9 +51,10 @@ describe("miteApi", () => {
         })
     })
 
-    describe("getUserByEmail", () => {
+    describe("getMiteIdByEmail", () => {
         it("returns a promise with the result", async () => {
             const testEntry: User = <User>{
+                id: 12,
                 name: "name",
                 email: "email@provider.com"
             }
@@ -62,17 +63,20 @@ describe("miteApi", () => {
                 getUsers: (_, callback) => callback(null, [{ user: testEntry }])
             }
 
-            const entries = await getUserByEmail(mite, "email@provider.com")
+            const id = await getMiteIdByEmail(mite, "email@provider.com")
 
-            expect(entries).toEqual(testEntry)
+            expect(id).toEqual(testEntry.id)
         })
 
         it("it only returns user with an exact email match", async () => {
             const emailToFind = "email@test.co"
+            const expectedId = 1
             const testEntries: User[] = <User[]>[{
+                id: expectedId,
                 name: "match me",
                 email: emailToFind
             }, {
+                id: 2,
                 name: "don't match me",
                 email: "email@test.com"
             }
@@ -82,10 +86,10 @@ describe("miteApi", () => {
                 getUsers: (_, callback) => callback(null, testEntries.map(user => ({ user })))
             }
 
-            const entry = await getUserByEmail(mite, emailToFind)
+            const id = await getMiteIdByEmail(mite, emailToFind)
 
-            expect(entry).not.toBeNull()
-            expect(entry?.name).toEqual("match me")
+            expect(id).not.toBeNull()
+            expect(id).toEqual(expectedId)
         })
 
         it("throws an exception with the error when there is one", async () => {
@@ -96,7 +100,7 @@ describe("miteApi", () => {
             }
 
             try {
-                await getUserByEmail(mite, "email")
+                await getMiteIdByEmail(mite, "email")
                 fail()
             } catch (error) {
                 expect(error).toEqual({ error: "Access denied. Please check your credentials." })

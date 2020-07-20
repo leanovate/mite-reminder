@@ -1,6 +1,8 @@
 const getTimeEntriesMock = jest.fn()
+const getMiteIdMock = jest.fn()
 jest.mock("../../src/mite/mite-api-wrapper", () => ({
-    getTimeEntries: getTimeEntriesMock
+    getTimeEntries: getTimeEntriesMock,
+    getMiteIdByEmail: getMiteIdMock
 }))
 
 import { RegisterCommand, UnregisterCommand, CheckCommand } from "../../src/commands/commandParser"
@@ -11,16 +13,14 @@ import { UserContext } from "../../src/slack/events"
 import { MiteApi } from "mite-api"
 
 describe("Commands", () => {
-
-    const getMiteIdMock = jest.fn()
     const loadUserMock = jest.fn()
 
     const userRepository: Repository = {
         /* eslint-disable @typescript-eslint/no-empty-function */
         registerUser: jest.fn(() => { }),
         unregisterUser: jest.fn(() => { }),
-        loadUser: loadUserMock,
-        getMiteId: getMiteIdMock
+        loadUser: loadUserMock
+        /* eslint-enable @typescript-eslint/no-empty-function */
     } as unknown as Repository
 
     const miteApiMock = {} as unknown as MiteApi

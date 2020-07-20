@@ -1,4 +1,4 @@
-import miteApi, { MiteApi, MiteApiError, TimeEntries, Users, User } from "mite-api"
+import miteApi, { MiteApi, MiteApiError, TimeEntries, Users } from "mite-api"
 import { Moment } from "moment"
 
 const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (apiKey, miteAccountName) => miteApi({
@@ -17,11 +17,13 @@ async function getTimeEntries(mite: MiteApi, userId: number | "current", from: M
         : resolve(<TimeEntries>result)))
 }
 
-const getUserByEmail = (mite: MiteApi, email: string): Promise<User | null> =>
+const getMiteIdByEmail = (mite: MiteApi, email: string): Promise<number | null> =>
     new Promise((resolve, reject) => mite.getUsers({ email }, (err, result) => err
         ? reject(<MiteApiError>result)
         : resolve((<Users>result)
             .map(user => user.user)
-            .find(user => user.email === email))))
+            .find(user => user.email === email)?.id)))
 
-export { createMiteApi, getTimeEntries, getUserByEmail }
+
+
+export { createMiteApi, getTimeEntries, getMiteIdByEmail }

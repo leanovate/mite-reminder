@@ -1,5 +1,6 @@
 import { UserContext } from "../slack/events"
 import { Failures } from "../commands/commands"
+import { getMiteIdByEmail } from "./mite-api-wrapper"
 
 export async function getMiteId(context: UserContext): Promise<number | "current" | Failures.UserIsUnknown> {
     let miteId: number | "current"
@@ -10,7 +11,7 @@ export async function getMiteId(context: UserContext): Promise<number | "current
         miteId = "current"
     }
     else {
-        const mId = await context.repository.getMiteId(context.slackId)
+        const mId = await getMiteIdByEmail(context.miteApi, context.slackId)
         if (!mId) {
             return Failures.UserIsUnknown
         }

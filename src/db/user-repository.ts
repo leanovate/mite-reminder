@@ -1,6 +1,4 @@
 import fs from "fs/promises"
-import { MiteApi } from "mite-api"
-import { getUserByEmail } from "../mite/mite-api-wrapper"
 
 export type User = {
     miteApiKey?: string
@@ -10,7 +8,7 @@ export type DB = { [slackId: string]: User }
 export type Users = Array<User & {slackId: string}>
 
 export class Repository {
-    constructor(private readonly db: DB, private readonly path: string, private miteApi: MiteApi) { }
+    constructor(private readonly db: DB, private readonly path: string) { }
 
     async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
         this.db[slackId] = { miteApiKey }
@@ -31,10 +29,6 @@ export class Repository {
     loadUser(slackId: string): User | null {
         return this.db[slackId] || null
     } 
-
-    async getMiteId(email: string): Promise<number | null> {
-        return (await getUserByEmail(this.miteApi, email))?.id ?? null
-    }
 
     loadAllUsers(): Users  {
         return Object.keys(this.db)

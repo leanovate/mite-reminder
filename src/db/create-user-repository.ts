@@ -1,7 +1,6 @@
 import config from "../config"
 import fs from "fs/promises"
 import { Repository, DB } from "./user-repository"
-import { MiteApi } from "mite-api"
 
 export const createRepository = async (): Promise<Repository> => {
     try {
@@ -11,5 +10,5 @@ export const createRepository = async (): Promise<Repository> => {
     }
 
     const db = JSON.parse(await fs.readFile(config.dbPath, { encoding: "utf-8" })) as DB
-    return new Repository(db, config.dbPath, null as any as MiteApi) // FIXME: make miteApi a non-requirement
+    return new Repository(db, config.dbPath)
 }
