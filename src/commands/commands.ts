@@ -1,6 +1,5 @@
 import { Context } from "@slack/bolt"
 import moment, { Moment } from "moment"
-import { getMiteId } from "../mite/getMiteId"
 import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
 import { getMissingTimeEntries } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
@@ -47,14 +46,15 @@ export async function doCheck(context: UserContext): Promise<Moment[] | Failures
         return Failures.ApiKeyIsMissing
     }
 
-    const result = await getMiteId(context)
-
-    if(result === Failures.UserIsUnknown) {
-        return result
+    const user = context.repository.loadUser(context.slackId) 
+    if(!user) {
+        return Failures.UserIsUnknown
     }
 
+    const miteId = user.miteId ?? "current" 
+
     return getMissingTimeEntries(
-        result,
+        miteId,
         moment().subtract(40, "day"),
         moment(),
         context.miteApi

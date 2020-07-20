@@ -33,7 +33,13 @@ export class Repository {
     }
 
     loadUser(slackId: string): User | null {
-        return this.db[slackId] || null
+        const user = this.db[slackId] || null
+        if(!user?.miteApiKey && !user?.miteId) {
+            console.warn(`User [${slackId}] is in an invalid state. Neither miteId nor miteApiKey is present. Telling user to re-register to fix the issue.`)
+            return null
+        }
+
+        return user
     } 
 
     loadAllUsers(): Users  {

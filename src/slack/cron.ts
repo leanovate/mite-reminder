@@ -1,11 +1,9 @@
 import { App } from "@slack/bolt"
 import moment from "moment"
 import cron from "node-cron"
-import { Failures } from "../commands/commands"
-import { getMiteId } from "../mite/getMiteId"
 import config from "../config"
 import { Repository } from "../db/user-repository"
-import { lastWeekThursdayToThursday, getMissingTimeEntries } from "../mite/time"
+import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
 import { createUserContext } from "./createUserContext"
 import { isCheckContext } from "./userContext"
 
@@ -27,11 +25,11 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                 return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
             }
 
-            const miteId = await getMiteId(context)
-
-            if (miteId === Failures.UserIsUnknown) {
-                return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
+            if(!user.miteId && !user.miteApiKey) {
+                return sayPleaseRegister(app, config.slackToken, user.slackId)
             }
+
+            const miteId = user.miteId ?? "current"
 
             getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
@@ -56,6 +54,14 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                 })
         })
     }, { timezone })
+}
+
+async function sayPleaseRegister(app: App, token: string, channel: string): Promise<void> {
+    app.client.chat.postMessage({
+        token,
+        channel,
+        text: "I cannot remind you because I can't find your mite account. Please register again by sending `register`."
+    })
 }
 
 async function sayPleaseRegisterWithApiKey(app: App, token: string, channel: string): Promise<void> {

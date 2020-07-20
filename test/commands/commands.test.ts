@@ -84,8 +84,7 @@ describe("Commands", () => {
         const miteId = "mite-id"
 
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({})
-        getMiteIdMock.mockReturnValue(miteId)
+        loadUserMock.mockReturnValue({miteId})
 
         await doCheck(defaultUserContext)
 
@@ -97,8 +96,7 @@ describe("Commands", () => {
 
     it("should return a failure if the user has no api key and is unknown", async () => {
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({})
-        getMiteIdMock.mockReturnValue(null)
+        loadUserMock.mockReturnValue(null)
 
         const result = await doCheck(defaultUserContext)
 
