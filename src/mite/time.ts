@@ -1,5 +1,7 @@
 import { Moment } from "moment"
-import { TimeEntries } from "mite-api"
+import { TimeEntries, MiteApi } from "mite-api"
+import { getTimeEntries } from "./mite-api-wrapper"
+import { isHoliday } from "./holidays"
 
 const isWeekend = (dateAsMoment: Moment): boolean => [0, 6].includes(dateAsMoment.day())
 
@@ -30,9 +32,32 @@ const lastWeekThursdayToThursday = (currentMoment: Moment): { start: Moment, end
     }
 }
 
+async function getMissingTimeEntries(
+    miteUserId: number | "current", 
+    from: Moment, 
+    to: Moment, 
+    api: MiteApi): Promise<Moment[]> {
+    let timeEntries: TimeEntries = []
+    try {
+        timeEntries = await getTimeEntries(api, miteUserId, from, to)
+    }
+    catch (error) {
+        console.error("Failed to get time entries: ", error)
+        return []
+    }
+
+    const datesToCheck = getDatesBetween(from, to)
+
+    return datesToCheck
+        .filter(date => !isHoliday(date))
+        .filter(date => !isWeekend(date))
+        .filter(date => !isTimeEnteredOnDay(timeEntries, date))
+}
+
 export {
     isWeekend,
     isTimeEnteredOnDay,
     getDatesBetween,
-    lastWeekThursdayToThursday
+    lastWeekThursdayToThursday,
+    getMissingTimeEntries
 }

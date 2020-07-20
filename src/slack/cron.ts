@@ -4,8 +4,7 @@ import cron from "node-cron"
 import { Failures, getMiteId } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
-import { lastWeekThursdayToThursday } from "../mite/time"
-import { getMissingTimeEntries } from "../reminder/reminder"
+import { lastWeekThursdayToThursday, getMissingTimeEntries } from "../mite/time"
 import { createUserContext } from "./events"
 
 const { timezone } = config
