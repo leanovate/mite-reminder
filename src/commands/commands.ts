@@ -23,9 +23,9 @@ export class CommandRunner {
 
     runMiteCommand(c: RegisterCommand): Promise<void>
     runMiteCommand(c: UnregisterCommand): Promise<void>
-    runMiteCommand(c: CheckCommand): Promise<Moment[] | Failures>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures>
-    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures> {
+    runMiteCommand(c: CheckCommand): Promise<Moment[] | Failures.UserIsUnknown>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures.UserIsUnknown>
+    runMiteCommand(c: MiteCommand): Promise<void | Moment[] | Failures.UserIsUnknown> {
         switch (c.name) {
         case "register":
             return this.repository.registerUser(this.slackId, c.miteApiKey)
@@ -36,7 +36,7 @@ export class CommandRunner {
         }
     }
 
-    private async doCheck(context: UserContext): Promise<Moment[] | Failures> {
+    private async doCheck(context: UserContext): Promise<Moment[] | Failures.UserIsUnknown> {
         const result = await getMiteId(context)
 
         if(result === Failures.UserIsUnknown) {

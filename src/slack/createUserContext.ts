@@ -4,12 +4,11 @@ import config from "../config"
 import { createMiteApi } from "../mite/mite-api-wrapper"
 import { UserContext } from "./userContext"
 
-export function createUserContext(repository: Repository, slackId: string): UserContext {
+export function createUserContext(repository: Repository, slackId: string): UserContext | Failures.ApiKeyIsMissing {
     const user = repository.loadUser(slackId)
     const miteApiKey = user?.miteApiKey ?? config.miteApiKey
     if (!miteApiKey) {
-        // TODO inform user that a mite api key needs to be provided
-        throw new Error(Failures.ApiKeyIsMissing)
+        return Failures.ApiKeyIsMissing
     }
 
     return {

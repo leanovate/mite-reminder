@@ -21,17 +21,16 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
         users.forEach(async user => { // for (const user in users) gets the type wrong for some reason (it is not string)
             const { start, end } = lastWeekThursdayToThursday(moment())
             const context = createUserContext(repository, user.slackId)
+
+            if(context === Failures.ApiKeyIsMissing) {
+                return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
+            }
+
             const miteId = await getMiteId(context)
 
             if (miteId === Failures.UserIsUnknown) {
-                app.client.chat.postMessage({
-                    token: config.slackToken,
-                    channel: user.slackId,
-                    text: "I cannot remind you because I can't find your mite account. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`."
-                })
-                return
+                return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
             }
-            
 
             getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
@@ -56,4 +55,12 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                 })
         })
     }, { timezone })
+}
+
+async function sayPleaseRegisterWithApiKey(app: App, token: string, channel: string): Promise<void> {
+    app.client.chat.postMessage({
+        token,
+        channel,
+        text: "I cannot remind you because I can't find your mite account. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`."
+    })
 }
