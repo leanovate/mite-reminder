@@ -1,7 +1,7 @@
 import { MiteCommand, RegisterCommand, UnregisterCommand, CheckCommand } from "./commandParser"
 import moment, { Moment } from "moment"
 import { Repository } from "../db/user-repository"
-import { UserContext } from "../slack/events"
+import { UserContext } from "../slack/userContext"
 import { MiteApi } from "mite-api"
 import { getMissingTimeEntries } from "../mite/time"
 import { getMiteId } from "../mite/getMiteId"

@@ -9,7 +9,7 @@ import { RegisterCommand, UnregisterCommand, CheckCommand } from "../../src/comm
 import { CommandRunner, Failures } from "../../src/commands/commands"
 import { Repository } from "../../src/db/user-repository"
 import { Config } from "../../src/config"
-import { UserContext } from "../../src/slack/events"
+import { UserContext } from "../../src/slack/userContext"
 import { MiteApi } from "mite-api"
 
 describe("Commands", () => {

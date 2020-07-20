@@ -1,4 +1,4 @@
-import { UserContext } from "../slack/events"
+import { UserContext } from "../slack/userContext"
 import { Failures } from "../commands/commands"
 import { getMiteIdByEmail } from "./mite-api-wrapper"
 
