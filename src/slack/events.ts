@@ -37,12 +37,14 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
 
         if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
             console.warn(result)
-            say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+            await say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
         } else {
-            // TODO show a different message if no entries are missing
-            say("Your time entries for the following dates are missing or contain 0 minutes:\n"
+            const message = result.length > 0
+                ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                    .join("\n"))
+                    .join("\n")
+                : "You completed all your time entries."
+            await say(message)
         }
     } catch (e) {
         reportError(say)(e)
