@@ -12,7 +12,7 @@ Use \`check\` to for missing time entries. Holidays and weekends are automatical
 Use \`unregister\` to undo your registration.
 `
 
-const helpText = config.useMiteAdminKey ? helpTextAdmin : helpTextNoAdmin
+const helpText = config.miteApiKey ? helpTextAdmin : helpTextNoAdmin
 
 export const sayHelp = async (say: SayFn) : Promise<void> => {
     await say(helpText)
