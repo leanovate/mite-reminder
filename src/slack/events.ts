@@ -9,7 +9,6 @@ import { UserContext } from "./userContext"
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
-        // TODO How to handle? This should not event be possible in our case.
         console.warn("Received an empty message. Will respond with 'help' message.", message)
         return sayHelp(say)
     }
