@@ -6,7 +6,7 @@ import { getMiteId } from "../mite/getMiteId"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { lastWeekThursdayToThursday, getMissingTimeEntries } from "../mite/time"
-import { createUserContext } from "./events"
+import { createUserContext } from "./createUserContext"
 
 const { timezone } = config
 

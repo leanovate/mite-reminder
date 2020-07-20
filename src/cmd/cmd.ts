@@ -3,7 +3,7 @@ import { parse } from "../commands/commandParser"
 import { CommandRunner, Failures } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
-import { createUserContext } from "../slack/events"
+import { createUserContext } from "../slack/createUserContext"
 
 const rl = readline.createInterface({
     input: process.stdin,
