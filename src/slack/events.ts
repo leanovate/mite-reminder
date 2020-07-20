@@ -56,7 +56,7 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
 async function handleMiteCommand(say: SayFn, commandRunner: CommandRunner, command: Exclude<MiteCommand, CheckCommand>) {
     try {
         await commandRunner.runMiteCommand(command)
-        await say("Erfolg :)") // TODO
+        await say("Success!")
     } catch (e) {
         await reportError(say)(e)
     }
