@@ -11,7 +11,7 @@ export async function getMiteId(context: UserContext): Promise<number | "current
         miteId = "current"
     }
     else {
-        const mId = await getMiteIdByEmail(context.miteApi, context.slackId)
+        const mId = await getMiteIdByEmail(context.miteApi, context.slackId) // FIXME This should be an email
         if (!mId) {
             return Failures.UserIsUnknown
         }

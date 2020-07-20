@@ -4,6 +4,7 @@ import { CommandRunner, Failures } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { sayHelp } from "./help"
 import { createUserContext } from "./createUserContext"
+import { MiteApiError } from "mite-api"
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
@@ -49,7 +50,7 @@ async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, comm
             await say(message)
         }
     } catch (e) {
-        reportError(say)(e)
+        reportError(say, e)
     }
 }
 
@@ -58,15 +59,19 @@ async function handleMiteCommand(say: SayFn, commandRunner: CommandRunner, comma
         await commandRunner.runMiteCommand(command)
         await say("Success!")
     } catch (e) {
-        await reportError(say)(e)
+        await reportError(say, e)
     }
 }
 
-function reportError(say: SayFn): (error: Error) => Promise<void> {
-    return async (error: Error) => {
-        console.error("Failed to execute command because of ", error)
-        await say(`Sorry, I couldn't to that because of ${error.message}`)
-    }
+async function reportError(say: SayFn, error: Error | MiteApiError) : Promise<void> {
+    console.error("Failed to execute command because of ", error)
+    const message = isMiteApiError(error) ? error.error : error.message
+    await say(`Sorry, I couldn't to that because of: "${message}"`)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isMiteApiError(candidate: any) : candidate is MiteApiError {
+    return !!candidate.error
 }
 
 async function sayMissingApiKey(say: SayFn): Promise<void> {
