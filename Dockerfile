@@ -1,17 +1,17 @@
-FROM node:14
+FROM node:14-alpine
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
+# optimization to have the install as a separate stage
+RUN npm ci
 
 # Bundle app source
 COPY . .
 
+RUN npm build:prod
+
 EXPOSE 3000
 
-# TODO use precompiled js instead of ts-node here?
-CMD [ "npm", "start" ]
+CMD [ "node", "dist/main.js" ]
