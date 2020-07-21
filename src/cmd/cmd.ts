@@ -1,9 +1,10 @@
+import { Moment } from "moment"
 import readline from "readline"
-import { CommandRunner, Failures } from "../commands/commands"
 import { parse } from "../commands/commandParser"
-import { Repository } from "../db/user-repository"
-import config from "../config"
+import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
+import { Repository } from "../db/user-repository"
+import { createUserContext } from "../slack/createUserContext"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -15,22 +16,18 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
         const parsedAnswer = parse(answer)
 
         if (parsedAnswer.status) {
+            const context = createUserContext(repository, "cmd-user")
             const command = parsedAnswer.value
-            const runner = new CommandRunner({ slackId: "cmd-user" }, repository, config)
 
-            if (command.name === "check") {
-                const result = await runner.runMiteCommand(command)
-                console.log(`Finished running command ${command.name}`)
-
-                if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-                    console.log("Could not check because ", result)
-                } else {
-                    console.log("Your time entries for the following dates are missing or contain 0 minutes:\n"
-                        + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                            .join("\n"))
-                }
-            } else {
-                await runner.runMiteCommand(command)
+            switch(command.name) {
+            case "check":
+                await doCheck(context).then(result => displayCheckResult(result))
+                break
+            case "register":
+                await doRegister(command, context, () => Promise.resolve({email: undefined})).then(result => displayRegisterResult(result))
+                break
+            case "unregister":
+                await doUnregister(context).then(displayUnregisterResult)
             }
         } else {
             console.log("I don't understand")
@@ -39,6 +36,31 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
         rl.close()
     })
+}
+
+function displayCheckResult(result: Moment[] | Failures) {
+    if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
+        throw result
+    } else {
+        const message = result.length > 0
+            ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
+                + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                    .join("\n")
+            : "You completed all your time entries."
+        console.log(message)
+    }
+}
+
+function displayRegisterResult(result: void|Failures) {
+    if(result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+        throw result  
+    } 
+
+    console.log("Success!")
+}
+
+function displayUnregisterResult() {
+    console.log("Success!")   
 }
 
 createRepository()

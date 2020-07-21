@@ -1,13 +1,20 @@
 import { App, SayFn } from "@slack/bolt"
-import { parse, CheckCommand, MiteCommand } from "../commands/commandParser"
-import { CommandRunner, Failures } from "../commands/commands"
+import { WebAPICallResult } from "@slack/web-api"
+import { MiteApiError } from "mite-api"
+import { Moment } from "moment"
+import { parse } from "../commands/commandParser"
+import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
 import { Repository } from "../db/user-repository"
+import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
-import config from "../config"
+import { slackUserResolver } from "./slackUserResolver"
+
+export type SlackApiUser = {
+    user?: {profile?: {email?: string}}
+} & WebAPICallResult
 
 export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
-        // TODO How to handle? This should not event be possible in our case.
         console.warn("Received an empty message. Will respond with 'help' message.", message)
         return sayHelp(say)
     }
@@ -18,47 +25,62 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         return sayHelp(say)
     }
 
-    const commandRunner = new CommandRunner({ slackId: message.user }, repository, config)
+    const context = createUserContext(repository, message.user)
     const command = parserResult.value
 
-    if (command.name === "check") {
-        await handleCheckCommand(say, commandRunner, command)
-    } else {
-        await handleMiteCommand(say, commandRunner, command)
+    switch(command.name) {
+    case "check":
+        await doCheck(context).then(result => displayCheckResult(say, result))
+        break
+    case "register":
+        await doRegister(command, context, slackUserResolver(app)).then(result => displayRegisterResult(say, result))
+        break
+    case "unregister":
+        await doUnregister(context).then(() => displayUnregisterResult(say))
     }
 })
 
-async function handleCheckCommand(say: SayFn, commandRunner: CommandRunner, command: CheckCommand) {
+async function displayCheckResult(say: SayFn, result: Moment[] | Failures) {
     try {
-        const result = await commandRunner.runMiteCommand(command)
-        console.log(`Finished running command ${command.name}`)
-
-        if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+        if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
             console.warn(result)
-            say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+            await sayMissingApiKey(say)
         } else {
-            // TODO show a different message if no entries are missing
-            say("Your time entries for the following dates are missing or contain 0 minutes:\n"
+            const message = result.length > 0
+                ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                    .join("\n"))
+                    .join("\n")
+                : "You completed all your time entries."
+            await say(message)
         }
     } catch (e) {
-        reportError(say)(e)
+        reportError(say, e)
     }
 }
 
-async function handleMiteCommand(say: SayFn, commandRunner: CommandRunner, command: Exclude<MiteCommand, CheckCommand>) {
-    try {
-        await commandRunner.runMiteCommand(command)
-        await say("Erfolg :)")
-    } catch (e) {
-        await reportError(say)(e)
-    }
+async function displayRegisterResult(say: SayFn, result: void|Failures): Promise<void> {
+    if(result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
+        return sayMissingApiKey(say)  
+    } 
+
+    await say("Success!")
 }
 
-function reportError(say: SayFn): (error: Error) => Promise<void> {
-    return async (error: Error) => {
-        console.error("Failed to execute command because of ", error) // TODO also reports error "User is unknown and needs to register with his/her own api key.", which isn't really an error case here
-        await say(`Sorry, I couldn't to that because of ${error.message}`)
-    }
+async function displayUnregisterResult(say: SayFn): Promise<void> {
+    await say("Success!")   
+}
+
+async function reportError(say: SayFn, error: Error | MiteApiError) : Promise<void> {
+    console.error("Failed to execute command because of ", error)
+    const message = isMiteApiError(error) ? error.error : error.message
+    await say(`Sorry, I couldn't to that because of: "${message}"`)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isMiteApiError(candidate: any) : candidate is MiteApiError {
+    return !!candidate.error
+}
+
+async function sayMissingApiKey(say: SayFn): Promise<void> {
+    await say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
 }

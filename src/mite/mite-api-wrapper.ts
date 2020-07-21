@@ -1,14 +1,13 @@
-import miteApi, { MiteApi, MiteApiError, TimeEntries, Users, User } from "mite-api"
+import miteApi, { MiteApi, MiteApiError, TimeEntries, Users } from "mite-api"
 import { Moment } from "moment"
-import config from "../config"
 
-const createMiteApi: (apiKey: string) => MiteApi = (apiKey: string) => miteApi({
-    account: config.miteAccountName,
+const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (apiKey, miteAccountName) => miteApi({
+    account: miteAccountName,
     apiKey: apiKey,
     applicationName: "mite-reminder"
 })
 
-async function getTimeEntries(mite: MiteApi, userId: string | "current", from: Moment, to: Moment): Promise<TimeEntries> {
+async function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment, to: Moment): Promise<TimeEntries> {
     return new Promise((resolve, reject) => mite.getTimeEntries({
         from: from.format("YYYY-MM-DD"),
         to: to.format("YYYY-MM-DD"),
@@ -18,11 +17,13 @@ async function getTimeEntries(mite: MiteApi, userId: string | "current", from: M
         : resolve(<TimeEntries>result)))
 }
 
-const getUserByEmail = (mite: MiteApi, email: string): Promise<User | null> =>
+const getMiteIdByEmail = (mite: MiteApi, email: string): Promise<number | null> =>
     new Promise((resolve, reject) => mite.getUsers({ email }, (err, result) => err
         ? reject(<MiteApiError>result)
         : resolve((<Users>result)
             .map(user => user.user)
-            .find(user => user.email === email))))
+            .find(user => user.email === email)?.id)))
 
-export { createMiteApi, getTimeEntries, getUserByEmail }
+
+
+export { createMiteApi, getTimeEntries, getMiteIdByEmail }

@@ -8,7 +8,7 @@ describe("Help", () => {
 
     it("should respond with default help text, when mite admin key should not be used", async () => {
         jest.mock("../../src/config", () => ({
-            useMiteAdminKey: false
+            miteApiKey: undefined    
         }))
 
         const expectedText = `
@@ -33,7 +33,7 @@ Use \`unregister\` to undo your registration.
 `
 
         jest.mock("../../src/config", () => ({
-            useMiteAdminKey: true
+            miteApiKey: "mite-api-key"
         }))
 
         sayMock.mockReturnValue(Promise.resolve())

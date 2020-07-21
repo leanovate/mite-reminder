@@ -14,15 +14,28 @@ describe("User Repository", () => {
         jest.clearAllMocks()
     })
 
-    it("should save information about a user", async () => {
+    it("should save mite api key along with a user", async () => {
         const testDb = {}
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
         const path = "path"
-        await new Repository(testDb, path).registerUser(slackId, miteApiKey)
+        await new Repository(testDb, path).registerUserWithMiteApiKey(slackId, miteApiKey)
 
         expect(fs.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
+        expect(fs.writeFile).toBeCalledWith(path, JSON.stringify(testDb), { encoding: "utf-8" })
+    })
+
+    it("should save mite id along with a user", async () => {
+        const testDb = {}
+        const slackId = "slack-id"
+        const miteId = 12
+        const path = "path"
+        
+        await new Repository(testDb, path).registerUserWithMiteId(slackId, miteId)
+
+        expect(fs.writeFile).toBeCalledTimes(1)
+        expect(testDb).toEqual({ [slackId]: { miteId } })
         expect(fs.writeFile).toBeCalledWith(path, JSON.stringify(testDb), { encoding: "utf-8" })
     })
 

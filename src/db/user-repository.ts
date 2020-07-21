@@ -1,18 +1,23 @@
 import fs from "fs/promises"
 
-export type User = {
-    miteApiKey?: string
-}
+export type User = Partial<UserWithMiteId & UserWithMiteApiKey>
+
+type UserWithMiteId = { miteId: number }
+type UserWithMiteApiKey = { miteApiKey: string }
 
 export type DB = { [slackId: string]: User }
 export type Users = Array<User & {slackId: string}>
 
 export class Repository {
-    
     constructor(private readonly db: DB, private readonly path: string) { }
 
-    async registerUser(slackId: string, miteApiKey?: string): Promise<void> {
+    async registerUserWithMiteApiKey(slackId: string, miteApiKey: string): Promise<void> {
         this.db[slackId] = { miteApiKey }
+        await this.updateDatabase()
+    }
+
+    async registerUserWithMiteId(slackId: string, miteId: number) : Promise<void> {
+        this.db[slackId] = { miteId }
         await this.updateDatabase()
     }
 
@@ -28,15 +33,14 @@ export class Repository {
     }
 
     loadUser(slackId: string): User | null {
-        return this.db[slackId] || null
-    }
+        const user = this.db[slackId] || null
+        if(!user?.miteApiKey && !user?.miteId) {
+            console.warn(`User [${slackId}] is in an invalid state. Neither miteId nor miteApiKey is present. Telling user to re-register to fix the issue.`)
+            return null
+        }
 
-    getMiteId(slackId: string): string | null {
-        console.warn("************************************************************")
-        console.warn("getMiteId is currently mocked and will always return 'null'.")
-        console.warn("************************************************************")
-        return null
-    }
+        return user
+    } 
 
     loadAllUsers(): Users  {
         return Object.keys(this.db)

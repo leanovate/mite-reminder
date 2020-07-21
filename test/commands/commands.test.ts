@@ -1,28 +1,39 @@
-const miteApiMock = {}
 const getTimeEntriesMock = jest.fn()
-const mockCreateMiteApi = jest.fn(() => miteApiMock)
+const getMiteIdMock = jest.fn()
 jest.mock("../../src/mite/mite-api-wrapper", () => ({
-    createMiteApi: mockCreateMiteApi,
-    getTimeEntries: getTimeEntriesMock
+    getTimeEntries: getTimeEntriesMock,
+    getMiteIdByEmail: getMiteIdMock
 }))
 
-import { RegisterCommand, UnregisterCommand, CheckCommand } from "../../src/commands/commandParser"
-import { CommandRunner, Failures } from "../../src/commands/commands"
-import { Repository } from "../../src/db/user-repository"
+import { MiteApi } from "mite-api"
+import { RegisterCommand } from "../../src/commands/commandParser"
+import { doCheck, doRegister, doUnregister, Failures } from "../../src/commands/commands"
 import { Config } from "../../src/config"
+import { Repository } from "../../src/db/user-repository"
+import { UserContext } from "../../src/slack/userContext"
 
 describe("Commands", () => {
-
-    const getMiteIdMock = jest.fn()
     const loadUserMock = jest.fn()
 
     const userRepository: Repository = {
         /* eslint-disable @typescript-eslint/no-empty-function */
-        registerUser: jest.fn(() => { }),
+        registerUserWithMiteApiKey: jest.fn(() => { }),
+        registerUserWithMiteId: jest.fn(() => { }),
         unregisterUser: jest.fn(() => { }),
-        loadUser: loadUserMock,
-        getMiteId: getMiteIdMock
+        loadUser: loadUserMock
+        /* eslint-enable @typescript-eslint/no-empty-function */
     } as unknown as Repository
+
+    const miteApiMock = {} as unknown as MiteApi
+
+    const defaultUserContext: UserContext = {
+        repository: userRepository,
+        config: {
+            miteApiKey: "mite-api-key"
+        } as unknown as Config,
+        miteApi: miteApiMock,
+        slackId: "slack-id"
+    }
 
     afterEach(() => {
         jest.clearAllMocks()
@@ -30,92 +41,52 @@ describe("Commands", () => {
 
     it("should register a user without api key in the database", async () => {
         const registerCommand: RegisterCommand = { name: "register" }
-        const slackId = "abc"
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
+        const miteId = "mite-id"
+        getMiteIdMock.mockReturnValue(miteId)
 
-        await new CommandRunner({ slackId }, userRepository, config as Config).runMiteCommand(registerCommand)
+        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
 
-        expect(userRepository.registerUser).toBeCalledTimes(1)
-        expect(userRepository.registerUser).toBeCalledWith(slackId, undefined)
+        expect(userRepository.registerUserWithMiteId).toBeCalledTimes(1)
+        expect(userRepository.registerUserWithMiteId).toBeCalledWith(defaultUserContext.slackId, miteId)
     })
 
     it("should register a user with api key in the database", async () => {
-        const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
         const registerCommand: RegisterCommand = { name: "register", miteApiKey }
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
 
-        await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(registerCommand)
+        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
 
-        expect(userRepository.registerUser).toBeCalledTimes(1)
-        expect(userRepository.registerUser).toBeCalledWith(slackId, miteApiKey)
+        expect(userRepository.registerUserWithMiteApiKey).toBeCalledTimes(1)
+        expect(userRepository.registerUserWithMiteApiKey).toBeCalledWith(defaultUserContext.slackId, miteApiKey)
     })
 
     it("should unregister a user", async () => {
-        const slackId = "slack-id"
-        const unregisterCommand: UnregisterCommand = { name: "unregister" }
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
-
-        await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(unregisterCommand)
+        await doUnregister(defaultUserContext)
 
         expect(userRepository.unregisterUser).toHaveBeenCalledTimes(1)
-        expect(userRepository.unregisterUser).toHaveBeenCalledWith(slackId)
+        expect(userRepository.unregisterUser).toHaveBeenCalledWith(defaultUserContext.slackId)
     })
 
     it("should detect missing time entries for the current user", async () => {
-        const slackId = "slack-id"
-        const checkCommand: CheckCommand = { name: "check" }
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
-
         getTimeEntriesMock.mockReturnValue([])
         loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
 
-        await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
+        await doCheck(defaultUserContext)
 
         expect(userRepository.loadUser).toHaveBeenCalledTimes(1)
-        expect(userRepository.loadUser).toHaveBeenCalledWith(slackId)
+        expect(userRepository.loadUser).toHaveBeenCalledWith(defaultUserContext.slackId)
         expect(getTimeEntriesMock).toHaveBeenCalledTimes(1)
-        expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, "current", expect.anything(), expect.anything())
-    })
-
-    it("should users the users personal api key if present instead of the config api key", async () => {
-        const slackId = "slack-id"
-        const checkCommand: CheckCommand = { name: "check" }
-        const config = {
-            miteApiKey: "admin-mite-api-key"
-        } as unknown as Config
-
-        getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({ miteApiKey: "personal-mite-api-key" })
-
-        await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
-
-        expect(getTimeEntriesMock).toHaveBeenCalledTimes(1)
-        expect(mockCreateMiteApi).toHaveBeenLastCalledWith("personal-mite-api-key")
         expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, "current", expect.anything(), expect.anything())
     })
 
     it("should detect missing time entries for a user without a personal api key", async () => {
         const slackId = "slack-id"
         const miteId = "mite-id"
-        const checkCommand: CheckCommand = { name: "check" }
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
 
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({})
-        getMiteIdMock.mockReturnValue(miteId)
+        loadUserMock.mockReturnValue({miteId})
 
-        await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
+        await doCheck(defaultUserContext)
 
         expect(userRepository.loadUser).toHaveBeenCalledTimes(1)
         expect(userRepository.loadUser).toHaveBeenCalledWith(slackId)
@@ -124,31 +95,11 @@ describe("Commands", () => {
     })
 
     it("should return a failure if the user has no api key and is unknown", async () => {
-        expect.assertions(1)
-        const slackId = "slack-id"
-        const checkCommand: CheckCommand = { name: "check" }
-        const config = {
-            miteApiKey: "mite-api-key"
-        } as unknown as Config
-
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({})
-        getMiteIdMock.mockReturnValue(null)
+        loadUserMock.mockReturnValue(null)
 
-        const result = await new CommandRunner({ slackId }, userRepository, config).runMiteCommand(checkCommand)
+        const result = await doCheck(defaultUserContext)
 
         expect(result).toEqual(Failures.UserIsUnknown)
-    })
-
-    it("return a failure if no api key is present", async () => {
-        const config = {} as unknown as Config
-        const checkCommand: CheckCommand = { name: "check" }
-
-        loadUserMock.mockReturnValue({})
-        getMiteIdMock.mockReturnValue("mite-id")
-
-        const result = await new CommandRunner({ slackId: "slackId" }, userRepository, config).runMiteCommand(checkCommand)
-
-        expect(result).toEqual(Failures.ApiKeyIsMissing)
     })
 })
