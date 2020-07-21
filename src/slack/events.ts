@@ -8,6 +8,7 @@ import { Repository } from "../db/user-repository"
 import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
 import { slackUserResolver } from "./slackUserResolver"
+import { missingTimeEntriesBlock } from "./blocks"
 
 export type SlackApiUser = {
     user?: {profile?: {email?: string}}
@@ -40,18 +41,13 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
     }
 })
 
-async function displayCheckResult(say: SayFn, result: Moment[] | Failures) {
+async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failures) {
     try {
-        if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
-            console.warn(result)
+        if (timesOrFailure === Failures.UserIsUnknown || timesOrFailure === Failures.ApiKeyIsMissing) {
+            console.warn(timesOrFailure)
             await sayMissingApiKey(say)
         } else {
-            const message = result.length > 0
-                ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                    .join("\n")
-                : "You completed all your time entries."
-            await say(message)
+            await say(missingTimeEntriesBlock(timesOrFailure))
         }
     } catch (e) {
         reportError(say, e)

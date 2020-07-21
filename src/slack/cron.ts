@@ -1,9 +1,10 @@
-import { App, SayArguments } from "@slack/bolt"
-import moment, { Moment } from "moment"
+import { App } from "@slack/bolt"
+import moment from "moment"
 import cron from "node-cron"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
+import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
 import { isCheckContext } from "./userContext"
 
@@ -34,14 +35,10 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
             getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
                     if (times.length > 0) {
-                        const text = "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                        + times.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                            .join("\n")
-
                         app.client.chat.postMessage({
                             token: config.slackToken,
                             channel: user.slackId,
-                            text
+                            ...missingTimeEntriesBlock(times)
                         })
                     }
                 }).catch(e => {
@@ -54,47 +51,6 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                 })
         })
     }, { timezone })
-}
-
-
-const createSlackBlocks = (times: Moment[]): SayArguments  =>  {
-    const header = {
-        type: "section",
-        text: {
-            "type": "mrkdwn",
-            "text": ":clock1: Your time entries for the following dates are _missing_ or contain _0 minutes_:"
-        }
-    }
-    
-    const divider = {
-        type: "divider"
-    }
-
-    const timeBlocks = times.map(time => (
-        {
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: `*${time.toISOString()}*`
-            },
-            accessory: {
-                type: "button",
-                text: {
-                    type: "plain_text",
-                    text: "Buchen"
-                },
-                url: `https://leanovate.mite.yo.lk/#${time.format("YYYY/MM/DD")}`
-            }
-        })
-    )
-
-    return {
-        blocks: [
-            header,
-            divider,
-            ...timeBlocks
-        ]
-    } as unknown as SayArguments // TODO
 }
 
 async function sayPleaseRegister(app: App, token: string, channel: string): Promise<void> {
