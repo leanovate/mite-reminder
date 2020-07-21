@@ -1,4 +1,3 @@
-import { Context } from "@slack/bolt"
 import moment, { Moment } from "moment"
 import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
 import { getMissingTimeEntries } from "../mite/time"
@@ -61,6 +60,6 @@ export async function doCheck(context: UserContext): Promise<Moment[] | Failures
     )
 }
 
-export async function doUnregister(context: Context): Promise<void> {
+export async function doUnregister(context: UserContext): Promise<void> {
     return context.repository.unregisterUser(context.slackId)
 }
