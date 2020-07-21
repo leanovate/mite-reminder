@@ -4,6 +4,7 @@ import cron from "node-cron"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
+import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
 import { isCheckContext } from "./userContext"
 
@@ -34,14 +35,10 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
             getMissingTimeEntries(miteId, start, end, context.miteApi)
                 .then(times => {
                     if (times.length > 0) {
-                        const text = "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                        + times.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
-                            .join("\n")
-
                         app.client.chat.postMessage({
                             token: config.slackToken,
                             channel: user.slackId,
-                            text
+                            ...missingTimeEntriesBlock(times)
                         })
                     }
                 }).catch(e => {
