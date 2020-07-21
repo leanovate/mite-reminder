@@ -1,10 +1,10 @@
 import { App } from "@slack/bolt"
-import { KnownBlock, View } from "@slack/web-api"
+import { KnownBlock } from "@slack/web-api"
+import { doCheck, Failures } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
-import { doCheck, Failures } from "../commands/commands"
-import { createUserContext } from "./createUserContext"
 import { missingTimeEntriesBlock } from "./blocks"
+import { createUserContext } from "./createUserContext"
 
 export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => void = async (app, slackId, repository) => {
     const user = repository.loadUser(slackId)
