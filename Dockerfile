@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:14
 
 WORKDIR /usr/src/app
 
@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 3000
 
 # TODO use precompiled js instead of ts-node here?
-CMD [ "node", "start" ]
+CMD [ "npm", "start" ]
