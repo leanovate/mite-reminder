@@ -1,11 +1,17 @@
-FROM node:10
+FROM node:14
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
 RUN npm install
+# If you are building your code for production
+# RUN npm ci --only=production
 
+# Bundle app source
 COPY . .
 
-CMD [ "npm", "run", "bot" ]
+EXPOSE 3000
+
+# TODO use precompiled js instead of ts-node here?
+CMD [ "npm", "start" ]
