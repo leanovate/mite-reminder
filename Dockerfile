@@ -10,7 +10,7 @@ RUN npm ci
 # Bundle app source
 COPY . .
 
-RUN npm build:prod
+RUN npm run build:prod
 
 EXPOSE 3000
 
