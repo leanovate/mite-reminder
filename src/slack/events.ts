@@ -62,8 +62,7 @@ export const setupActionHandling : (app: App, repository: Repository) => void = 
         console.log("Register action received.", action)
         await ack()
 
-        // await doRegister({name: "register"}, createUserContext(repository, body.user.id), slackUserResolver(app))
-        await doRegister({name: "register"}, createUserContext(repository, body.user.id), async () => ({email: "kai.noffke@leanovate.de"})) // TODO Handle failures
+        await doRegister({name: "register"}, createUserContext(repository, body.user.id), slackUserResolver(app))
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
