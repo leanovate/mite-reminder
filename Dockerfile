@@ -11,6 +11,7 @@ RUN npm ci
 COPY . .
 
 RUN npm run build:prod
+RUN rm -rf node_modules
 
 EXPOSE 3000
 
