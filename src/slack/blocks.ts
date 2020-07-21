@@ -1,8 +1,8 @@
+import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
 import { Moment } from "moment"
-import { SayArguments } from "@slack/bolt"
 
-export const missingTimeEntriesBlock = (times: Moment[]): Pick<SayArguments, "blocks" | "text">  =>  {
-    const header = {
+export const missingTimeEntriesBlock = (times: Moment[]): {text: string, blocks: KnownBlock[]}  =>  {
+    const header: SectionBlock = {
         type: "section",
         text: {
             "type": "mrkdwn",
@@ -10,11 +10,11 @@ export const missingTimeEntriesBlock = (times: Moment[]): Pick<SayArguments, "bl
         }
     }
     
-    const divider = {
+    const divider: DividerBlock = {
         type: "divider"
     }
 
-    const timeBlock = {
+    const timeBlock: SectionBlock = {
         type: "section",
         text: {
             type: "mrkdwn",
