@@ -9,12 +9,13 @@ import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
 import { slackUserResolver } from "./slackUserResolver"
 import { missingTimeEntriesBlock } from "./blocks"
+import { publishDefaultHomeTab } from "./home"
 
 export type SlackApiUser = {
     user?: {profile?: {email?: string}}
 } & WebAPICallResult
 
-export const setupEventHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
+export const setupMessageHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
         console.warn("Received an empty message. Will respond with 'help' message.", message)
         return sayHelp(say)
@@ -40,6 +41,20 @@ export const setupEventHandling = (app: App, repository: Repository): void => ap
         await doUnregister(context).then(() => displayUnregisterResult(say))
     }
 })
+
+export const setupHomeTabHandling : (app: App, repository: Repository) => void = (app, repository) => {
+    console.log("Setting up home tab event handling")
+    
+
+    app.event("app_home_opened", async ({event, context}) => {
+        console.log("Event", event, context)
+        if(event.tab !== "home") {
+            return
+        }
+
+        await publishDefaultHomeTab(app, event.user, repository)
+    })
+}
 
 async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failures) {
     try {

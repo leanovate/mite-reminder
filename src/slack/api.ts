@@ -1,5 +1,5 @@
 import { App } from "@slack/bolt"
-import { setupEventHandling } from "./events"
+import { setupMessageHandling, setupHomeTabHandling } from "./events"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { scheduleCronJobs } from "./cron"
@@ -15,7 +15,8 @@ const app = new App({
 
 const start = async (repository: Repository): Promise<void> => {
     await app.start(process.env.PORT || 3000)
-    setupEventHandling(app, repository)
+    setupMessageHandling(app, repository)
+    setupHomeTabHandling(app, repository)
     scheduleCronJobs(app, repository)
 
     console.log("⚡️ Bolt app is running!")
