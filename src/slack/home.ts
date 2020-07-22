@@ -70,7 +70,7 @@ const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
 const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Promise<KnownBlock[]> = async (slackId, repository) => {
     const result = await doCheck(createUserContext(repository, slackId))
     if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-        console.log("Please handle this error properly")
+        console.log("Please handle this error properly") // FIXME
         return [{
             type: "section",
             text: {

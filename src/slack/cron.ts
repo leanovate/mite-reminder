@@ -42,7 +42,7 @@ const scheduleDailyCron = (repository: Repository, app: App) => {
                         })
                     }
                 }).catch(e => {
-                    console.log("Error when running daily cron:", e)
+                    console.error("Error when running daily cron:", e)
                     app.client.chat.postMessage({
                         token: config.slackToken,
                         channel: user.slackId,
