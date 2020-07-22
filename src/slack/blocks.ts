@@ -1,6 +1,7 @@
 import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
 import { Moment } from "moment"
 
+// TODO: Display something like "You completed all your time entries" when there are no missing times
 export const missingTimeEntriesBlock = (times: Moment[]): {text: string, blocks: KnownBlock[]}  =>  {
     const header: SectionBlock = {
         type: "section",
