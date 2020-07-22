@@ -1,11 +1,12 @@
+import { Either, map , fromNullable} from "fp-ts/lib/Either"
+import { pipe } from "fp-ts/lib/function"
+import { fold, isSome, Option } from "fp-ts/lib/Option"
+import { MiteApiError } from "mite-api"
 import moment, { Moment } from "moment"
 import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
 import { getMissingTimeEntries } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
-import { Either, map, filterOrElse, left } from "fp-ts/lib/Either"
-import { Option } from "fp-ts/lib/Option"
-import { MiteApiError } from "mite-api"
 
 export type SlackUser = {
     slackId: string
@@ -33,22 +34,30 @@ export async function doRegister(command: RegisterCommand, context: UserContext,
         return Failures.UserIsUnknown
     }
 
-    const miteId: Either<MiteApiError, Option<number>>  = await getMiteIdByEmail(context.miteApi, email)
+    const miteId: Either<Error, Option<number>>  = getMiteIdByEmail(context.miteApi, email)
     //export declare const map: <A, B>(f: (a: A) => B) => <E>(fa: Either<E, A>) => Either<E, B>
 
-    
-    miteId
-        .flatMap(maybeId => 
-            maybeId
-                .map(id => toEither(Failures.UserIsUnknown))
 
-            // Either<MiteApiError, Option<number>>
-            // Either<UnknownError | Failures, number>
+    // miteId
+    //     .flatMap(maybeId => 
+    //         maybeId
+    //             .map(id => toEither(Failures.UserIsUnknown))
+
+    //         // Either<MiteApiError, Option<number>>
+    //         // Either<UnknownError | Failures, number>
 
 
-    map(maybeNumber => {
-        if(maybeNumber) {
-            return context.repository.registerUserWithMiteId(context.slackId, miteId)
+
+    map((maybeNumber: Option<number>) => {
+        fold(() => {
+            console.log("received non")
+        }, a => {
+            console.log("received some", a)
+            
+        })(maybeNumber)
+
+        if(isSome(maybeNumber)) {
+            return context.repository.registerUserWithMiteId(context.slackId, getSome)
         } else {
             return Failures.UserIsUnknown
         }
