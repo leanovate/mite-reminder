@@ -1,3 +1,5 @@
+![Node.js CI](https://github.com/leanovate/mite-reminder/workflows/Node.js%20CI/badge.svg)
+
 # mite-reminder
 This is a slack app for reminding mite users about missing time entries.
 
