@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:14-alpine AS builder
 
 WORKDIR /usr/src/app
 
@@ -11,8 +11,11 @@ RUN npm ci
 COPY . .
 
 RUN npm run build:prod
-RUN rm -rf node_modules
 
+FROM node:14-alpine
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/dist/main.js .
 EXPOSE 3000
 
-CMD [ "node", "dist/main.js" ]
+CMD [ "node", "main.js" ]
