@@ -19,6 +19,7 @@
     "@slack/bolt": "^2.1.1",
     "date-holidays": "^1.6.1",
     "dotenv": "^8.2.0",
+    "fp-ts": "^2.7.0",
     "mite-api": "^0.1.1",
     "moment": "^2.26.0",
     "node-cron": "^2.0.3",
