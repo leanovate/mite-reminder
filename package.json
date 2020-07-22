@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node -r dotenv/config src/index.ts",
-    "testing": "ts-node -r dotenv/config src/testing.ts",
     "cmd": "ts-node -r dotenv/config src/cmd/cmd.ts",
     "build": "webpack --mode development",
     "pretest": "npm run lint",
