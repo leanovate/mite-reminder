@@ -1,5 +1,5 @@
 import { App } from "@slack/bolt"
-import { KnownBlock } from "@slack/web-api"
+import { KnownBlock, View, WebAPICallResult } from "@slack/web-api"
 import { doCheck, Failures } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
@@ -12,6 +12,7 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
     let blocks: KnownBlock[]
 
     if (user) {
+        // FIXME this can throw but we do not catch it
         blocks = await buildMissingTimesBlocks(slackId, repository)
     } else {
         blocks = await buildRegisterBlocks()
@@ -30,7 +31,7 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
 export enum Actions {
     Register = "register",
     Unregister = "unregister",
-    Refresh = "refresh"
+    Refresh = "refresh",
 }
 
 const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
@@ -110,4 +111,55 @@ const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Prom
                 text: `_Update at: ${moment().format("LLL")}_`
             }
         }]
+}
+
+export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<WebAPICallResult> {
+    return app.client.views.open({
+        token: config.slackToken,
+        trigger_id: triggerId,
+        view: registerWithApiKeyModalView
+    })
+}
+
+export const registerWithApiKeyModal = {
+    id: "registerWithApiKeyModal",
+    inputBlockId: "miteApiKeyInputBlockId",
+    inputBlockActionId: "miteApiKeyInputActionId"
+}
+export const registerWithApiKeyModalView: View = {
+    callback_id: registerWithApiKeyModal.id,
+    title: {
+        type: "plain_text",
+        text: "Register"
+    },
+    submit: {
+        type: "plain_text",
+        text: "Register"
+    },
+    blocks: [
+        {
+            type: "section",
+            text: {
+                type: "mrkdwn",
+                text: "Sorry, I can't find your mite account. Please register with your mite api key from https://leanovate.mite.yo.lk/myself"
+            }
+        },
+        {
+            type: "input",
+            block_id: registerWithApiKeyModal.inputBlockId,
+            element: {
+                type: "plain_text_input",
+                placeholder: {
+                    type: "plain_text",
+                    text: "mite api key"
+                },
+                action_id: registerWithApiKeyModal.inputBlockActionId
+            },
+            label: {
+                type: "plain_text",
+                text: "Enter your mite api key"
+            }
+        }
+    ],
+    type: "modal"
 }
