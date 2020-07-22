@@ -5,6 +5,7 @@ import config from "../config"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
+import moment from "moment"
 
 export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => void = async (app, slackId, repository) => {
     const user = repository.loadUser(slackId)
@@ -28,7 +29,8 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
 
 export enum Actions {
     Register = "register",
-    Unregister = "unregister"
+    Unregister = "unregister",
+    Refresh = "refresh"
 }
 
 const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
@@ -80,31 +82,33 @@ const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Prom
 
     return [
         {
-            type: "section",
-            text: {
-                type: "plain_text",
-                text: "To not receive reminders in the future:"
-            }
-        },
-        {
             type: "actions",
-            elements: [{
-                type: "button",
-                action_id: Actions.Unregister,
-                text: {
-                    type: "plain_text",
-                    text: "Unregister"
+            elements: [
+                {
+                    type: "button",
+                    action_id: Actions.Refresh,
+                    text: {
+                        type: "plain_text",
+                        text: "Refresh"
+                    }
                 },
-                style: "danger",
-                value: "Unregister"
-            }]
+                {
+                    type: "button",
+                    action_id: Actions.Unregister,
+                    style: "danger",
+                    text: {
+                        type: "plain_text",
+                        text: "Stop receiving notifications"
+                    }
+                }
+            ]
         },
         ...missingTimeEntriesBlock(result).blocks,
         {
             type: "section",
             text: {
                 type: "mrkdwn",
-                text: `_Update at: ${new Date().toISOString()}_`
+                text: `_Update at: ${moment().format("LLL")}_`
             }
         }]
 }

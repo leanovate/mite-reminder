@@ -73,6 +73,13 @@ export const setupActionHandling : (app: App, repository: Repository) => void = 
         await doUnregister(createUserContext(repository, body.user.id)) // TODO Handle failures
         publishDefaultHomeTab(app, body.user.id, repository)
     })
+
+    app.action(Actions.Refresh, async ({body, action, ack})  =>  {
+        console.log("Refresh action received.", action)
+        await ack()
+
+        publishDefaultHomeTab(app, body.user.id, repository)
+    })
 }
 
 async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failures) {
