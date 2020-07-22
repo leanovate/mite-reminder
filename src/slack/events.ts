@@ -65,7 +65,7 @@ export const setupActionHandling : (app: App, repository: Repository) => void = 
         console.log("Unregister action received.")
         await ack()
 
-        await doUnregister(createUserContext(repository, body.user.id)) // TODO Handle failures
+        await doUnregister(createUserContext(repository, body.user.id))
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
