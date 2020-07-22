@@ -39,14 +39,13 @@ const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
             "type": "actions",
             "elements": [
                 {
-                    "type": "button",
+                    type: "button",
                     action_id: Actions.Register,
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Register"
+                    text: {
+                        type: "plain_text",
+                        text: "Start using mite reminder"
                     },
-                    "style": "primary",
-                    "value": "Register"
+                    style: "primary"
                 }
             ]
         },
