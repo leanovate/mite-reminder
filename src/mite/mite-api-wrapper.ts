@@ -1,9 +1,10 @@
-import miteApi, { MiteApi, MiteApiError, TimeEntries, Users } from "mite-api"
-import { Moment } from "moment"
-import { Either, left, right, toError } from "fp-ts/lib/Either"
-import { Option, fromNullable, tryCatch } from "fp-ts/lib/Option"
-import { either, taskEither } from "fp-ts"
+import { taskEither } from "fp-ts"
+import { fromNullable, Option } from "fp-ts/lib/Option"
+import { pipe } from "fp-ts/lib/pipeable"
 import { TaskEither } from "fp-ts/lib/TaskEither"
+import miteApi, { MiteApi, MiteApiError, TimeEntries } from "mite-api"
+import { Moment } from "moment"
+import { AppError, UnknownAppError } from "../app/errors"
 
 const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (apiKey, miteAccountName) => miteApi({
     account: miteAccountName,
@@ -17,26 +18,17 @@ async function getTimeEntries(mite: MiteApi, userId: number | "current", from: M
         to: to.format("YYYY-MM-DD"),
         user_id: userId
     }, (err, result) => err
-        ? reject(<MiteApiError>result)
+        ? reject(result as any as MiteApiError)
         : resolve(<TimeEntries>result)))
 }
 
-const getMiteIdByEmail = (mite: MiteApi, email: string): TaskEither<Error, Option<number>> => { 
-    const p: Promise<Option<number>> =  new Promise((resolve, reject) => mite.getUsers({ email }, (err, result) => err
-        ? reject(new Error((<MiteApiError>result).error))
-        : resolve(
-            fromNullable(
-                    (<Users>result)
-                        .map(user => user.user)
-                        .find(user => user.email === email)?.id
-            )
-        )
+const getMiteIdByEmail = (mite: MiteApi, email: string): TaskEither<AppError, Option<number>> => pipe(
+    taskEither.taskify(mite.getUsers)({email}),
+    taskEither.mapLeft(error => new UnknownAppError(error)),
+    taskEither.map(users => fromNullable(users
+        .map(user => user.user)
+        .find(user => user.email === email)?.id)
     ))
 
-    return taskEither.tryCatch(
-        () => p,
-        either.toError
-    )
-}
 
 export { createMiteApi, getTimeEntries, getMiteIdByEmail }

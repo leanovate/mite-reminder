@@ -7,7 +7,7 @@ import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
 import moment from "moment"
 
-export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => void = async (app, slackId, repository) => {
+export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => Promise<void> = async (app, slackId, repository) => {
     const user = repository.loadUser(slackId)
     let blocks: KnownBlock[]
 
@@ -113,8 +113,8 @@ const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Prom
         }]
 }
 
-export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<WebAPICallResult> {
-    return app.client.views.open({
+export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<void> {
+    await app.client.views.open({
         token: config.slackToken,
         trigger_id: triggerId,
         view: registerWithApiKeyModalView

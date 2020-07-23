@@ -1,5 +1,7 @@
+import { either, taskEither } from "fp-ts"
 import { Moment } from "moment"
 import readline from "readline"
+import { UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
@@ -24,7 +26,8 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                 await doCheck(context).then(result => displayCheckResult(result))
                 break
             case "register":
-                await doRegister(command, context, () => Promise.resolve({email: undefined})).then(result => displayRegisterResult(result))
+                await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
+                    .then(displayRegisterResult)
                 break
             case "unregister":
                 await doUnregister(context).then(displayUnregisterResult)
@@ -51,13 +54,7 @@ function displayCheckResult(result: Moment[] | Failures) {
     }
 }
 
-function displayRegisterResult(result: void|Failures) {
-    if(result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-        throw result  
-    } 
-
-    console.log("Success!")
-}
+const displayRegisterResult = either.fold(e => {throw e}, () => {console.log("Success!")})
 
 function displayUnregisterResult() {
     console.log("Success!")   
