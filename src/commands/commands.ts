@@ -37,14 +37,14 @@ export function doRegister(command: RegisterCommand, context: UserContext, getEm
     )
 }
 
-export async function doCheck(context: UserContext): Promise<Moment[] | Failures> {
+export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
     if (!isCheckContext(context)) {
-        return Failures.ApiKeyIsMissing
+        return T.left(new ApiKeyIsMissing(context.slackId))
     }
 
     const user = context.repository.loadUser(context.slackId)
     if (!user) {
-        return Failures.UserIsUnknown
+        return T.left(new UserIsUnknown(context.slackId))
     }
 
     const miteId = user.miteId ?? "current"

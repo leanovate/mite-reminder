@@ -12,6 +12,8 @@ import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
+import { Either } from "fp-ts/lib/Either"
+import { AppError } from "../app/errors"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
@@ -36,7 +38,8 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
 
     switch (command.name) {
     case "check":
-        await doCheck(context).then(result => displayCheckResult(say, result))
+        await doCheck(context)()
+            .then(result => displayCheckResult(say, result))
         break
     case "register":
         await doRegister(command, context, slackUserResolver(app))()
@@ -100,24 +103,20 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
     })
 }
 
-async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failures) {
-    try {
-        if (timesOrFailure === Failures.UserIsUnknown || timesOrFailure === Failures.ApiKeyIsMissing) {
-            console.warn(timesOrFailure)
-            await sayMissingApiKey(say)
-        } else {
-            await say(missingTimeEntriesBlock(timesOrFailure))
-        }
-    } catch (e) {
-        reportError(say, e)
-    }
+function displayCheckResult(say: SayFn, timesOrFailure: Either<AppError, Moment[]>) {
+    pipe(
+        timesOrFailure,
+        either.fold(
+            e => () => reportError(say, e), 
+            timeEntries => () => say(missingTimeEntriesBlock(timeEntries)).then(null))
+    )
 }
 
 async function displayUnregisterResult(say: SayFn): Promise<void> {
     await say("Success!")
 }
 
-async function reportError(say: SayFn, error: Error | MiteApiError): Promise<void> {
+async function reportError(say: SayFn, error: AppError): Promise<void> { // TODO Revamp
     console.error("Failed to execute command because of ", error)
     const message = isMiteApiError(error) ? error.error : error.message
     await say(`Sorry, I couldn't to that because of: "${message}"`)

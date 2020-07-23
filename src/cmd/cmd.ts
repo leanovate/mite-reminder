@@ -32,7 +32,8 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                     .then(displayRegisterResult)
                 break
             case "unregister":
-                await doUnregister(context).then(displayUnregisterResult)
+                await doUnregister(context)()
+                    .then(displayUnregisterResult)
             }
         } else {
             console.log("I don't understand")

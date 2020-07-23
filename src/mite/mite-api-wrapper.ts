@@ -2,7 +2,7 @@ import { taskEither } from "fp-ts"
 import { fromNullable, Option } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import miteApi, { MiteApi, MiteApiError, TimeEntries } from "mite-api"
+import miteApi, { MiteApi, TimeEntries } from "mite-api"
 import { Moment } from "moment"
 import { AppError, UnknownAppError } from "../app/errors"
 
@@ -12,14 +12,17 @@ const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (api
     applicationName: "mite-reminder"
 })
 
-async function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment, to: Moment): Promise<TimeEntries> {
-    return new Promise((resolve, reject) => mite.getTimeEntries({
+function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment, to: Moment): TaskEither<AppError, TimeEntries> {
+    const params = {
         from: from.format("YYYY-MM-DD"),
         to: to.format("YYYY-MM-DD"),
         user_id: userId
-    }, (err, result) => err
-        ? reject(result as any as MiteApiError)
-        : resolve(<TimeEntries>result)))
+    }
+
+    return pipe(
+        taskEither.taskify(mite.getTimeEntries)(params),
+        taskEither.mapLeft(error => new UnknownAppError(error))
+    )
 }
 
 const getMiteIdByEmail = (mite: MiteApi, email: string): TaskEither<AppError, Option<number>> => pipe(
