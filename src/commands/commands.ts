@@ -33,11 +33,7 @@ export function doRegister(command: RegisterCommand, context: UserContext, email
         emailResolver(context.slackId),
         T.chain(email => getMiteIdByEmail(context.miteApi, email.email)),
         T.chain(orElseFailWith(new UserIsUnknown(context.slackId))),
-        T.chain(id => {
-            console.log("ID", id)
-            return    context.repository.registerUserWithMiteId(context.slackId, id)
-        
-        }),
+        T.chain(id => context.repository.registerUserWithMiteId(context.slackId, id))
     )
 }
 
