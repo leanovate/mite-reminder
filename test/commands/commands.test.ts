@@ -12,16 +12,17 @@ import { Config } from "../../src/config"
 import { Repository } from "../../src/db/user-repository"
 import { UserContext } from "../../src/slack/userContext"
 import { taskEither, option } from "fp-ts"
-import { AppError } from "../../src/app/errors"
-import { TaskEither } from "fp-ts/lib/TaskEither"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
 
+    const registerUserWithMiteIdMock = jest.fn()
+    const registerUserWithMiteApiKeyMock = jest.fn()
+
     const userRepository: Repository = {
         /* eslint-disable @typescript-eslint/no-empty-function */
-        registerUserWithMiteApiKey: jest.fn(() => { }),
-        registerUserWithMiteId: jest.fn(() => { console.log("registerUserWithMiteId mock called")}),
+        registerUserWithMiteApiKey: registerUserWithMiteApiKeyMock,
+        registerUserWithMiteId: registerUserWithMiteIdMock,
         unregisterUser: jest.fn(() => { }),
         loadUser: loadUserMock
         /* eslint-enable @typescript-eslint/no-empty-function */
@@ -42,21 +43,14 @@ describe("Commands", () => {
         jest.clearAllMocks()
     })
 
-    it.only("should register a user without api key in the database", async () => {
+    it("should register a user without api key in the database", async () => {
         const registerCommand: RegisterCommand = { name: "register" }
         const miteId = 4711
         getMiteIdMock.mockReturnValue(taskEither.right(option.of(miteId)))
+        registerUserWithMiteIdMock.mockReturnValue(taskEither.right(null))
 
-        const task = doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))
-        console.log("task", task)
-        // console.log("task()", task())
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))()
 
-        console.log((<any>userRepository.registerUserWithMiteId).mock)
-
-        // task().then(() => {console.log("yay")})
-        console.log(await Promise.resolve("promise yay"))
-        console.log(await task().then(() => "tasks yay"))
-        
         expect(userRepository.registerUserWithMiteId).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteId).toBeCalledWith(defaultUserContext.slackId, miteId)
     })
@@ -64,6 +58,7 @@ describe("Commands", () => {
     it("should register a user with api key in the database", async () => {
         const miteApiKey = "mite-api-key"
         const registerCommand: RegisterCommand = { name: "register", miteApiKey }
+        registerUserWithMiteApiKeyMock.mockReturnValue(taskEither.right(null))
 
         await doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))()
 
