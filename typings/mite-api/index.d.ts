@@ -55,8 +55,8 @@ declare module "mite-api" {
         },
         callback: GetUserCallback) => void
 
-    export type GetTimeEntriesCallBack = (error: Error, result: TimeEntries) => void
-    export type GetUserCallback = (error: Error, result: Users) => void
+    export type GetTimeEntriesCallBack = (error: Error | undefined, result: TimeEntries) => void
+    export type GetUserCallback = (error: Error | undefined, result: Users) => void
 
     type MiteApiConstructorParams = { account: string, apiKey: string, applicationName: string }
     export = (params: MiteApiConstructorParams): MiteApi => MiteApi;
