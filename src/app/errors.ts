@@ -21,3 +21,9 @@ export class UnknownAppError implements AppError {
         this.message = (error as Error)?.message ?? "Ooopsie Woopsie" // TODO
     }
 }
+
+export class IOError implements AppError {
+    message = "Could not write/read to/from disk"
+    constructor(readonly error: Error) {
+    }
+}

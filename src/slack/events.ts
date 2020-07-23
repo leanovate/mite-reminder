@@ -43,7 +43,8 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
             .then(displayRegisterResult(say))
         break
     case "unregister":
-        await doUnregister(context).then(() => displayUnregisterResult(say))
+        await doUnregister(context)()
+            .then(() => displayUnregisterResult(say))
     }
 })
 

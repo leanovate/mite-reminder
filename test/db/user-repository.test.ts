@@ -65,7 +65,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await new Repository(testDb, path).unregisterUser(slackId)
+        await new Repository(testDb, path).unregisterUser(slackId)()
 
         expect(testDb).toEqual({})
         expect(fs.writeFile).toHaveBeenCalledTimes(1)
@@ -79,7 +79,7 @@ describe("User Repository", () => {
             [slackId]: { miteApiKey }
         }
 
-        await new Repository(testDb, "path").unregisterUser("unknown-slack-id")
+        await new Repository(testDb, "path").unregisterUser("unknown-slack-id")()
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
         expect(fs.writeFile).toHaveBeenCalledTimes(0)
     })

@@ -2,7 +2,7 @@ import { taskEither as T } from "fp-ts"
 import { pipe } from "fp-ts/lib/function"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import moment, { Moment } from "moment"
-import { ApiKeyIsMissing, AppError, UserIsUnknown } from "../app/errors"
+import { ApiKeyIsMissing, AppError, UserIsUnknown, IOError } from "../app/errors"
 import { orElseFailWith } from "../app/utils"
 import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
 import { getMissingTimeEntries } from "../mite/time"
@@ -19,7 +19,7 @@ export enum Failures {
     UserIsUnknown = "User is unknown and needs to register with his/her own api key.",
 }
 
-export function doRegister(command: RegisterCommand, context: UserContext, emailResolver: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, void> {
+export function doRegister(command: RegisterCommand, context: UserContext, getEmailFromSlackId: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, void> {
     if (command.miteApiKey) {
         return context.repository.registerUserWithMiteApiKey(context.slackId, command.miteApiKey)
     }
@@ -30,10 +30,10 @@ export function doRegister(command: RegisterCommand, context: UserContext, email
     }    
 
     return pipe(
-        emailResolver(context.slackId),
-        T.chain(email => getMiteIdByEmail(context.miteApi, email.email)),
+        getEmailFromSlackId(context.slackId),
+        T.chain(result => getMiteIdByEmail(context.miteApi, result.email)),
         T.chain(orElseFailWith(new UserIsUnknown(context.slackId))),
-        T.chain(id => context.repository.registerUserWithMiteId(context.slackId, id))
+        T.chain(miteId => context.repository.registerUserWithMiteId(context.slackId, miteId))
     )
 }
 
@@ -57,6 +57,6 @@ export async function doCheck(context: UserContext): Promise<Moment[] | Failures
     )
 }
 
-export async function doUnregister(context: UserContext): Promise<void> {
+export function doUnregister(context: UserContext): TaskEither<IOError, void> {
     return context.repository.unregisterUser(context.slackId)
 }

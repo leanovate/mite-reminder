@@ -1,7 +1,7 @@
-import fs from "fs/promises"
 import { taskEither } from "fp-ts"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import { UnknownAppError, AppError } from "../app/errors"
+import fs from "fs/promises"
+import { AppError, IOError } from "../app/errors"
 
 export type User = Partial<UserWithMiteId & UserWithMiteApiKey>
 
@@ -24,16 +24,15 @@ export class Repository {
         return this.updateDatabase()
     }
 
-    async unregisterUser(slackId: string): Promise<void> {
-
+    unregisterUser(slackId: string): TaskEither<IOError, void> {
         if (!this.db[slackId]) {
             console.log(`User with slackId ${slackId} is unknown, hence cannot be unregistered.`)
-            return
+            return taskEither.right(undefined)
         }
 
         delete this.db[slackId]
         
-        await this.updateDatabase()()
+        return this.updateDatabase()
     }
 
     loadUser(slackId: string): User | null {
@@ -51,10 +50,10 @@ export class Repository {
             .map(key => ({ slackId: key, ...this.db[key] }))
     }
 
-    private updateDatabase(): TaskEither<AppError, void> {
+    private updateDatabase(): TaskEither<IOError, void> {
         return taskEither.tryCatch(
             () => fs.writeFile(this.path, JSON.stringify(this.db), { encoding: "utf-8" }),
-            e => new UnknownAppError(e as Error)
+            e => new IOError(e as Error)
         )
     }
 }
