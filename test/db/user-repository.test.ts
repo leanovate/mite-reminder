@@ -1,7 +1,7 @@
 jest.mock("../../src/config", () => ({}))
 jest.mock("fs/promises", () => {
     return {
-        writeFile: jest.fn()
+        writeFile: jest.fn( () => Promise.resolve({}))
     }
 })
 
@@ -19,7 +19,7 @@ describe("User Repository", () => {
         const slackId = "slack-id"
         const miteApiKey = "mite-api-key"
         const path = "path"
-        await new Repository(testDb, path).registerUserWithMiteApiKey(slackId, miteApiKey)
+        await new Repository(testDb, path).registerUserWithMiteApiKey(slackId, miteApiKey)()
 
         expect(fs.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteApiKey } })
@@ -32,7 +32,7 @@ describe("User Repository", () => {
         const miteId = 12
         const path = "path"
         
-        await new Repository(testDb, path).registerUserWithMiteId(slackId, miteId)
+        await new Repository(testDb, path).registerUserWithMiteId(slackId, miteId)()
 
         expect(fs.writeFile).toBeCalledTimes(1)
         expect(testDb).toEqual({ [slackId]: { miteId } })

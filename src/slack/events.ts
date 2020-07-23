@@ -39,10 +39,8 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
         await doCheck(context).then(result => displayCheckResult(say, result))
         break
     case "register":
-        await doRegister(command, context, slackUserResolver(app))().then(ei => {
-            console.log("Either:", ei)
-            displayRegisterResult(say)(ei)
-        }).catch(e => console.log("KAPUTT", e))
+        await doRegister(command, context, slackUserResolver(app))()
+            .then(displayRegisterResult(say))
         break
     case "unregister":
         await doUnregister(context).then(() => displayUnregisterResult(say))

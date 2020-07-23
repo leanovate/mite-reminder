@@ -2,10 +2,9 @@ jest.mock("../../src/config", () => ({
 }))
 
 import { App } from "@slack/bolt"
-import { Either } from "fp-ts/lib/Either"
-import { isRight, isLeft } from "fp-ts/lib/These"
-import { slackUserResolver } from "../../src/slack/slackUserResolver"
+import { getLeft, getRight } from "../testUtils"
 import { UnknownAppError } from "../../src/app/errors"
+import { slackUserResolver } from "../../src/slack/slackUserResolver"
 
 describe("Help", () => {
     it("should return the email", async () => {
@@ -14,7 +13,7 @@ describe("Help", () => {
 
         const result = await slackUserResolver(slackApp)("test-slack-id")()
 
-        expect(getLeft(result)).toEqual({ email })
+        expect(getRight(result)).toEqual({ email })
     })
 
     it("should return an AppError when the slack api throws", async () => {
@@ -23,22 +22,6 @@ describe("Help", () => {
 
         const result = await slackUserResolver(slackApp)("test-slack-id")()
 
-        expect(getRight(result)).toEqual(new UnknownAppError(slackApiError))
+        expect(getLeft(result)).toEqual(new UnknownAppError(slackApiError))
     })
 })
-
-function getLeft<T>(either: Either<unknown, T>): T {
-    if(isRight(either)) {
-        return either.right
-    }
-
-    throw either.left
-}
-
-function getRight<T>(either: Either<T, unknown>): T {
-    if(isLeft(either)) {
-        return either.left
-    }
-
-    throw either.right
-}
