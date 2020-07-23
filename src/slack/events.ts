@@ -1,26 +1,25 @@
-import { App, BlockAction, SayFn } from "@slack/bolt"
-import { WebAPICallResult } from "@slack/web-api"
-import { MiteApiError } from "mite-api"
-import { Moment } from "moment"
-import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
-import { Repository } from "../db/user-repository"
-import { missingTimeEntriesBlock } from "./blocks"
-import { createUserContext } from "./createUserContext"
-import { sayHelp } from "./help"
-import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
-import { slackUserResolver } from "./slackUserResolver"
-import { AppError } from "../app/errors"
-import { Either } from "fp-ts/lib/Either"
-import { either, taskEither } from "fp-ts"
-import { Task } from "fp-ts/lib/Task"
-import { pipe } from "fp-ts/lib/pipeable"
+import {App, BlockAction, SayFn} from "@slack/bolt"
+import {WebAPICallResult} from "@slack/web-api"
+import {either, taskEither} from "fp-ts"
+import {pipe} from "fp-ts/lib/pipeable"
+import {MiteApiError} from "mite-api"
+import {Moment} from "moment"
+import {parse} from "../commands/commandParser"
+import {doCheck, doRegister, doUnregister, Failures} from "../commands/commands"
+import {Repository} from "../db/user-repository"
+import {missingTimeEntriesBlock} from "./blocks"
+import {createUserContext} from "./createUserContext"
+import {sayHelp} from "./help"
+import {Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal} from "./home"
+import {slackUserResolver} from "./slackUserResolver"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
 } & WebAPICallResult
 
-export const setupMessageHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
+const displayRegisterResult = (say: SayFn) => either.fold(() => sayMissingApiKey(say), () => say("Success!"))
+
+export const setupMessageHandling = (app: App, repository: Repository): void => app.message(async ({message, say}): Promise<void> => {
     if (!message.text) {
         console.warn("Received an empty message. Will respond with 'help' message.", message)
         return sayHelp(say)
@@ -41,7 +40,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
         break
     case "register":
         await doRegister(command, context, slackUserResolver(app))().then(ei => {
-            console.log('Either:', ei)
+            console.log("Either:", ei)
             displayRegisterResult(say)(ei)
         }).catch(e => console.log("KAPUTT", e))
         break
@@ -51,7 +50,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
 })
 
 export const setupHomeTabHandling: (app: App, repository: Repository) => void = (app, repository) => {
-    app.event("app_home_opened", async ({ event }) => {
+    app.event("app_home_opened", async ({event}) => {
         if (event.tab !== "home") {
             return
         }
@@ -61,12 +60,12 @@ export const setupHomeTabHandling: (app: App, repository: Repository) => void = 
 }
 
 export const setupActionHandling: (app: App, repository: Repository) => void = (app, repository) => {
-    app.action(Actions.Register, async ({ body, ack }) => {
+    app.action(Actions.Register, async ({body, ack}) => {
         console.log("Register action received.")
         await ack()
 
         // FIXME if this throws because there is already an api key for the user, but it is mistyped, we throw and do not let the user register again
-        const result = doRegister({ name: "register" }, createUserContext(repository, body.user.id), slackUserResolver(app))
+        const result = doRegister({name: "register"}, createUserContext(repository, body.user.id), slackUserResolver(app))
         const task = pipe(
             result,
             taskEither.fold(
@@ -77,7 +76,7 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         await task()
     })
 
-    app.action(Actions.Unregister, async ({ body, ack }) => {
+    app.action(Actions.Unregister, async ({body, ack}) => {
         console.log("Unregister action received.")
         await ack()
 
@@ -85,14 +84,14 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
-    app.action(Actions.Refresh, async ({ body, ack }) => {
+    app.action(Actions.Refresh, async ({body, ack}) => {
         console.log("Refresh action received.")
         await ack()
 
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
-    app.view(registerWithApiKeyModal.id, async ({ body, view, ack }) => {
+    app.view(registerWithApiKeyModal.id, async ({body, view, ack}) => {
         await ack()
         // TODO what if we cannot find the value?
         const miteApiKey: string = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
@@ -114,8 +113,6 @@ async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failure
         reportError(say, e)
     }
 }
-
-const displayRegisterResult = (say: SayFn) => either.fold(() => sayMissingApiKey(say), () => say("Success!"))
 
 async function displayUnregisterResult(say: SayFn): Promise<void> {
     await say("Success!")

@@ -1,11 +1,11 @@
 import { App } from "@slack/bolt"
-import { KnownBlock, View, WebAPICallResult } from "@slack/web-api"
+import { KnownBlock, View } from "@slack/web-api"
+import moment from "moment"
 import { doCheck, Failures } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
-import moment from "moment"
 
 export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => Promise<void> = async (app, slackId, repository) => {
     const user = repository.loadUser(slackId)
@@ -34,7 +34,7 @@ export enum Actions {
     Refresh = "refresh",
 }
 
-const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
+async function buildRegisterBlocks(): Promise<KnownBlock[]> {
     return [
         {
             "type": "actions",
@@ -67,7 +67,7 @@ const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
     ]
 }
 
-const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Promise<KnownBlock[]> = async (slackId, repository) => {
+async function buildMissingTimesBlocks(slackId: string, repository: Repository): Promise<KnownBlock[]> {
     const result = await doCheck(createUserContext(repository, slackId))
     if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
         console.log("Please handle this error properly") // FIXME
@@ -113,14 +113,6 @@ const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Prom
         }]
 }
 
-export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<void> {
-    await app.client.views.open({
-        token: config.slackToken,
-        trigger_id: triggerId,
-        view: registerWithApiKeyModalView
-    })
-}
-
 export const registerWithApiKeyModal = {
     id: "registerWithApiKeyModal",
     inputBlockId: "miteApiKeyInputBlockId",
@@ -163,3 +155,12 @@ export const registerWithApiKeyModalView: View = {
     ],
     type: "modal"
 }
+
+export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<void> {
+    await app.client.views.open({
+        token: config.slackToken,
+        trigger_id: triggerId,
+        view: registerWithApiKeyModalView
+    })
+}
+

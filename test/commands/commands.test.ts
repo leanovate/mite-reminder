@@ -11,6 +11,9 @@ import { doCheck, doRegister, doUnregister, Failures } from "../../src/commands/
 import { Config } from "../../src/config"
 import { Repository } from "../../src/db/user-repository"
 import { UserContext } from "../../src/slack/userContext"
+import { taskEither, option } from "fp-ts"
+import { AppError } from "../../src/app/errors"
+import { TaskEither } from "fp-ts/lib/TaskEither"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
@@ -18,7 +21,7 @@ describe("Commands", () => {
     const userRepository: Repository = {
         /* eslint-disable @typescript-eslint/no-empty-function */
         registerUserWithMiteApiKey: jest.fn(() => { }),
-        registerUserWithMiteId: jest.fn(() => { }),
+        registerUserWithMiteId: jest.fn(() => { console.log("registerUserWithMiteId mock called")}),
         unregisterUser: jest.fn(() => { }),
         loadUser: loadUserMock
         /* eslint-enable @typescript-eslint/no-empty-function */
@@ -39,13 +42,21 @@ describe("Commands", () => {
         jest.clearAllMocks()
     })
 
-    it("should register a user without api key in the database", async () => {
+    it.only("should register a user without api key in the database", async () => {
         const registerCommand: RegisterCommand = { name: "register" }
-        const miteId = "mite-id"
-        getMiteIdMock.mockReturnValue(miteId)
+        const miteId = 4711
+        getMiteIdMock.mockReturnValue(taskEither.right(option.of(miteId)))
 
-        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
+        const task = doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))
+        console.log("task", task)
+        // console.log("task()", task())
 
+        console.log((<any>userRepository.registerUserWithMiteId).mock)
+
+        // task().then(() => {console.log("yay")})
+        console.log(await Promise.resolve("promise yay"))
+        console.log(await task().then(() => "tasks yay"))
+        
         expect(userRepository.registerUserWithMiteId).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteId).toBeCalledWith(defaultUserContext.slackId, miteId)
     })
@@ -54,7 +65,7 @@ describe("Commands", () => {
         const miteApiKey = "mite-api-key"
         const registerCommand: RegisterCommand = { name: "register", miteApiKey }
 
-        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))()
 
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledWith(defaultUserContext.slackId, miteApiKey)

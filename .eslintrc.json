@@ -22,12 +22,12 @@
       "double"
     ],
     "object-curly-spacing": [
-      "always"
+      "off"
     ],
     "no-use-before-define": [
       "error",
       {
-        "functions": true,
+        "functions": false,
         "classes": true
       }
     ]

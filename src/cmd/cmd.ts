@@ -13,6 +13,8 @@ const rl = readline.createInterface({
     output: process.stdout
 })
 
+const displayRegisterResult = either.fold(e => {throw e}, () => {console.log("Success!")})
+
 const requestAndRunCommand = async (repository: Repository): Promise<void> => {
     rl.question("Enter a command ", async (answer) => {
         const parsedAnswer = parse(answer)
@@ -53,8 +55,6 @@ function displayCheckResult(result: Moment[] | Failures) {
         console.log(message)
     }
 }
-
-const displayRegisterResult = either.fold(e => {throw e}, () => {console.log("Success!")})
 
 function displayUnregisterResult() {
     console.log("Success!")   

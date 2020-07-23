@@ -14,7 +14,7 @@ export const scheduleCronJobs = (app: App, repository: Repository): void => {
     scheduleDailyCron(repository, app)
 }
 
-const scheduleDailyCron = (repository: Repository, app: App) => {
+function scheduleDailyCron(repository: Repository, app: App) {
     cron.schedule("0 9 * * 1-5", async () => {
         const users = repository.loadAllUsers()
         console.log(`Running daily cron for ${users.length} users.`)
