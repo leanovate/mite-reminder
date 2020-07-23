@@ -13,7 +13,7 @@ describe("command parser", () => {
         const result = parse("register")
 
         expect(result.status).toBeTruthy()
-        expect((<Success<MiteCommand>>result).value).toEqual({name: "register"})
+        expect((<Success<MiteCommand>>result).value).toEqual({ name: "register" })
     })
 
     it("should parse the 'register' command with a miteApiKey", () => {

@@ -49,7 +49,7 @@ describe("Commands", () => {
         getMiteIdMock.mockReturnValue(taskEither.right(option.of(miteId)))
         registerUserWithMiteIdMock.mockReturnValue(taskEither.right(null))
 
-        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))()
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({ email: "test@email.com" }))()
 
         expect(userRepository.registerUserWithMiteId).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteId).toBeCalledWith(defaultUserContext.slackId, miteId)
@@ -60,7 +60,7 @@ describe("Commands", () => {
         const registerCommand: RegisterCommand = { name: "register", miteApiKey }
         registerUserWithMiteApiKeyMock.mockReturnValue(taskEither.right(null))
 
-        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({email: "test@email.com"}))()
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({ email: "test@email.com" }))()
 
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledWith(defaultUserContext.slackId, miteApiKey)
@@ -90,7 +90,7 @@ describe("Commands", () => {
         const miteId = "mite-id"
 
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({miteId})
+        loadUserMock.mockReturnValue({ miteId })
 
         await doCheck(defaultUserContext)
 

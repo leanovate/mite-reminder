@@ -27,11 +27,11 @@ const register: Parser<RegisterCommand> =
           .then(P.whitespace)
           .then(P.all)
           .map(result => ({ name: "register", miteApiKey: result }) as RegisterCommand),
-      P.string("register").result( {name: "register"} as RegisterCommand)
+      P.string("register").result( { name: "register" } as RegisterCommand)
   )
 
-const unregister: Parser<UnregisterCommand> = P.string("unregister").result({name: "unregister"} as UnregisterCommand)
-const check: Parser<CheckCommand> = P.string("check").result({name: "check"} as CheckCommand)
+const unregister: Parser<UnregisterCommand> = P.string("unregister").result({ name: "unregister" } as UnregisterCommand)
+const check: Parser<CheckCommand> = P.string("check").result({ name: "check" } as CheckCommand)
 const all: Parser<MiteCommand> = P.alt(register, unregister, check)
 
 export function parse(commandString: string): P.Result<MiteCommand> {

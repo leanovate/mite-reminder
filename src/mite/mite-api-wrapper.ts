@@ -23,7 +23,7 @@ async function getTimeEntries(mite: MiteApi, userId: number | "current", from: M
 }
 
 const getMiteIdByEmail = (mite: MiteApi, email: string): TaskEither<AppError, Option<number>> => pipe(
-    taskEither.taskify(mite.getUsers)({email}),
+    taskEither.taskify(mite.getUsers)({ email }),
     taskEither.mapLeft(error => new UnknownAppError(error)),
     taskEither.map(users => fromNullable(users
         .map(user => user.user)
