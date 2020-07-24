@@ -46,9 +46,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
             doRegister(command, context, slackUserResolver(app)),
             taskEither.fold(
                 () => async () => sayMissingApiKey(say), 
-                () => {
-                    console.log("returning success")
-                    return async () => {await say("Success!")}}
+                () => async () => {await say("Success!")}
             )
         )()
         break
