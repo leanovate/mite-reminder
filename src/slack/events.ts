@@ -1,25 +1,21 @@
 import { App, BlockAction, SayFn } from "@slack/bolt"
 import { WebAPICallResult } from "@slack/web-api"
-import { either, taskEither } from "fp-ts"
+import { taskEither } from "fp-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { MiteApiError } from "mite-api"
-import { Moment } from "moment"
+import { AppError } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
+import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
-import { Either } from "fp-ts/lib/Either"
-import { AppError } from "../app/errors"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
 } & WebAPICallResult
-
-const displayRegisterResult = (say: SayFn) => either.fold(() => sayMissingApiKey(say), () => say("Success!"))
 
 export const setupMessageHandling = (app: App, repository: Repository): void => app.message(async ({ message, say }): Promise<void> => {
     if (!message.text) {
@@ -38,12 +34,23 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
 
     switch (command.name) {
     case "check":
-        await doCheck(context)()
-            .then(result => displayCheckResult(say, result))
+        await pipe(
+            doCheck(context),
+            taskEither.fold(
+                e => () => reportError(say, e), 
+                result => async () => {await say(missingTimeEntriesBlock(result))})
+        )()
         break
     case "register":
-        await doRegister(command, context, slackUserResolver(app))()
-            .then(displayRegisterResult(say))
+        await pipe(
+            doRegister(command, context, slackUserResolver(app)),
+            taskEither.fold(
+                () => async () => sayMissingApiKey(say), 
+                () => {
+                    console.log("returning success")
+                    return async () => {await say("Success!")}}
+            )
+        )()
         break
     case "unregister":
         await doUnregister(context)()
@@ -82,7 +89,7 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         console.log("Unregister action received.")
         await ack()
 
-        await doUnregister(createUserContext(repository, body.user.id))
+        await doUnregister(createUserContext(repository, body.user.id))()
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
@@ -98,18 +105,9 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         // TODO what if we cannot find the value?
         const miteApiKey: string = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
 
-        await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)
+        await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)()
         publishDefaultHomeTab(app, body.user.id, repository)
     })
-}
-
-function displayCheckResult(say: SayFn, timesOrFailure: Either<AppError, Moment[]>) {
-    pipe(
-        timesOrFailure,
-        either.fold(
-            e => () => reportError(say, e), 
-            timeEntries => () => say(missingTimeEntriesBlock(timeEntries)).then(null))
-    )
 }
 
 async function displayUnregisterResult(say: SayFn): Promise<void> {
