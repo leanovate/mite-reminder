@@ -7,6 +7,8 @@ import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
 import { isCheckContext } from "./userContext"
+import { pipe } from "fp-ts/lib/function"
+import { taskEither } from "fp-ts"
 
 const { timezone } = config
 
@@ -32,23 +34,25 @@ function scheduleDailyCron(repository: Repository, app: App) {
 
             const miteId = user.miteId ?? "current"
 
-            getMissingTimeEntries(miteId, start, end, context.miteApi)
-                .then(times => {
+            await pipe(
+                getMissingTimeEntries(miteId, start, end, context.miteApi),
+                taskEither.fold(e => async () => {
+                    console.error("Error when running daily cron:", e)
+                    await app.client.chat.postMessage({
+                        token: config.slackToken,
+                        channel: user.slackId,
+                        text: "I tried check your mite time entries, but something went wrong. Please inform the mite bot admin."
+                    })
+                }, times => async () => {
                     if (times.length > 0) {
-                        app.client.chat.postMessage({
+                        await app.client.chat.postMessage({
                             token: config.slackToken,
                             channel: user.slackId,
                             ...missingTimeEntriesBlock(times)
                         })
                     }
-                }).catch(e => {
-                    console.error("Error when running daily cron:", e)
-                    app.client.chat.postMessage({
-                        token: config.slackToken,
-                        channel: user.slackId,
-                        text: "I tried check your mite time entries, but something went wrong. Please inform the mite bot admin."
-                    })
                 })
+            )()
         })
     }, { timezone })
 }
