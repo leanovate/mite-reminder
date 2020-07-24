@@ -1,12 +1,15 @@
 import { either, taskEither } from "fp-ts"
 import { Moment } from "moment"
 import readline from "readline"
-import { UserIsUnknown } from "../app/errors"
+import { UserIsUnknown, AppError } from "../app/errors"
 import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
 import { createUserContext } from "../slack/createUserContext"
+import { Either } from "fp-ts/lib/Either"
+import { pipe } from "fp-ts/lib/function"
+import { fold } from "fp-ts/lib/Option"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -25,7 +28,8 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
             switch(command.name) {
             case "check":
-                await doCheck(context).then(result => displayCheckResult(result))
+                await doCheck(context)()
+                    .then(displayCheckResult)
                 break
             case "register":
                 await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
@@ -44,17 +48,18 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
     })
 }
 
-function displayCheckResult(result: Moment[] | Failures) {
-    if (result === Failures.UserIsUnknown || result === Failures.ApiKeyIsMissing) {
-        throw result
-    } else {
-        const message = result.length > 0
-            ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                + result.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+function displayCheckResult(result: Either<AppError, Moment[]>) {
+    pipe(
+        result,
+        either.fold(e => {throw e}, timeEntries => {
+            const message = timeEntries.length > 0
+                ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
+                + timeEntries.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n")
-            : "You completed all your time entries."
-        console.log(message)
-    }
+                : "You completed all your time entries."
+            console.log(message)
+        })
+    )
 }
 
 function displayUnregisterResult() {
