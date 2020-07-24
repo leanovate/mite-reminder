@@ -31,25 +31,22 @@ describe("miteApi", () => {
                 getTimeEntries: (_, callback) => callback(undefined, [{ time_entry: testEntry }])
             }
 
-            const entries: TimeEntries = await getTimeEntries(mite, "current", moment(), moment())
+            const maybeEntries = await getTimeEntries(mite, "current", moment(), moment())()
+            const entries = getRight(maybeEntries)
 
             expect(entries).toHaveLength(1)
             expect(entries[0].time_entry).toEqual(testEntry)
         })
 
-        it("throws an exception with the error when there is one", async () => {
-            const error = { error: "Access denied. Please check your credentials." }
+        it("return an appError with the error when there is one", async () => {
+            const error = new Error("Access denied. Please check your credentials.")
             const mite: MiteApi = {
                 ...emptyMock,
-                getTimeEntries: (_, callback) => callback(new Error(error.error), error as any) // TODO
+                getTimeEntries: (_, callback) => callback(error, null as unknown as TimeEntries)
             }
 
-            try {
-                await getTimeEntries(mite, "current", moment(), moment())
-                fail()
-            } catch (error) {
-                expect(error).toEqual({ error: "Access denied. Please check your credentials." })
-            }
+            const result = await getTimeEntries(mite, "current", moment(), moment())()
+            expect(getLeft(result)).toEqual(new UnknownAppError(error))
         })
     })
 
