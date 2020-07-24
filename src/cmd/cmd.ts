@@ -1,15 +1,14 @@
 import { either, taskEither } from "fp-ts"
+import { Either } from "fp-ts/lib/Either"
+import { pipe } from "fp-ts/lib/function"
 import { Moment } from "moment"
 import readline from "readline"
-import { UserIsUnknown, AppError } from "../app/errors"
+import { AppError, UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
+import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
 import { createUserContext } from "../slack/createUserContext"
-import { Either } from "fp-ts/lib/Either"
-import { pipe } from "fp-ts/lib/function"
-import { fold } from "fp-ts/lib/Option"
 
 const rl = readline.createInterface({
     input: process.stdin,
