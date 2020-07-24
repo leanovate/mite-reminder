@@ -1,5 +1,5 @@
 import { App } from "@slack/bolt"
-import { KnownBlock, View } from "@slack/web-api"
+import { KnownBlock, View, Button } from "@slack/web-api"
 import { taskEither } from "fp-ts"
 import { pipe } from "fp-ts/lib/function"
 import { Task } from "fp-ts/lib/Task"
@@ -16,20 +16,20 @@ export enum Actions {
     Refresh = "refresh",
 }
 
+const registerButton: Button = {
+    type: "button",
+    action_id: Actions.Register,
+    text: {
+        type: "plain_text",
+        text: "Start using mite reminder"
+    },
+    style: "primary"
+}
+
 const registerBlocks: KnownBlock[] = [
     {
         "type": "actions",
-        "elements": [
-            {
-                type: "button",
-                action_id: Actions.Register,
-                text: {
-                    type: "plain_text",
-                    text: "Start using mite reminder"
-                },
-                style: "primary"
-            }
-        ]
+        "elements": [registerButton]
     },
     {
         type: "section",
@@ -71,14 +71,7 @@ function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<
         taskEither.map(timeEntries => [{
             type: "actions",
             elements: [
-                {
-                    type: "button",
-                    action_id: Actions.Refresh,
-                    text: {
-                        type: "plain_text",
-                        text: "Refresh"
-                    }
-                },
+                registerButton,
                 {
                     type: "button",
                     action_id: Actions.Unregister,
@@ -99,13 +92,18 @@ function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<
             }
         }] as KnownBlock[]
         ),
-        taskEither.getOrElse(() => () => Promise.resolve([{
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: "Failed to report missing times. Sorry -.-" 
-            }
-        } as KnownBlock])
+        taskEither.getOrElse(() => () => Promise.resolve([
+            {
+                type: "actions",
+                elements: [registerButton]
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "Failed to report missing times. Sorry -.-" 
+                }
+            } as KnownBlock])
         )
     )
 }
