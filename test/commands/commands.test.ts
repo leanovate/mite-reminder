@@ -7,11 +7,13 @@ jest.mock("../../src/mite/mite-api-wrapper", () => ({
 
 import { MiteApi } from "mite-api"
 import { RegisterCommand } from "../../src/commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../../src/commands/commands"
+import { doCheck, doRegister, doUnregister } from "../../src/commands/commands"
 import { Config } from "../../src/config"
 import { Repository } from "../../src/db/user-repository"
 import { UserContext } from "../../src/slack/userContext"
 import { taskEither, option } from "fp-ts"
+import { getLeft } from "../testUtils"
+import { UserIsUnknown } from "../../src/app/errors"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
@@ -100,12 +102,12 @@ describe("Commands", () => {
         expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, miteId, expect.anything(), expect.anything())
     })
 
-    it("should return a failure if the user has no api key and is unknown", async () => {
+    it("should return an appError if the user has no api key and is unknown", async () => {
         getTimeEntriesMock.mockReturnValue([])
         loadUserMock.mockReturnValue(null)
 
-        const result = await doCheck(defaultUserContext)
+        const result = await doCheck(defaultUserContext)()
 
-        expect(result).toEqual(Failures.UserIsUnknown)
+        expect(getLeft(result)).toEqual(new UserIsUnknown(defaultUserContext.slackId))
     })
 })
