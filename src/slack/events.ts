@@ -115,6 +115,7 @@ async function displayUnregisterResult(say: SayFn): Promise<void> {
 async function reportError(say: SayFn, error: AppError): Promise<void> { // TODO Revamp
     console.error("Failed to execute command because of ", error)
     const message = isMiteApiError(error) ? error.error : error.message
+    //TODO for the Error "UserIsUnknown" we can provide a much more helpful error message here
     await say(`Sorry, I couldn't to that because of: "${message}"`)
 }
 

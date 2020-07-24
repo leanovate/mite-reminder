@@ -26,6 +26,25 @@ const registerButton: Button = {
     style: "primary"
 }
 
+const refreshButton: Button = {
+    type: "button",
+    action_id: Actions.Refresh,
+    text: {
+        type: "plain_text",
+        text: "Refresh"
+    },
+}
+
+const unregisterButton: Button = {
+    type: "button",
+    action_id: Actions.Unregister,
+    style: "danger",
+    text: {
+        type: "plain_text",
+        text: "Stop receiving notifications"
+    }
+}
+
 const registerBlocks: KnownBlock[] = [
     {
         "type": "actions",
@@ -71,16 +90,8 @@ function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<
         taskEither.map(timeEntries => [{
             type: "actions",
             elements: [
-                registerButton,
-                {
-                    type: "button",
-                    action_id: Actions.Unregister,
-                    style: "danger",
-                    text: {
-                        type: "plain_text",
-                        text: "Stop receiving notifications"
-                    }
-                }
+                refreshButton,
+                unregisterButton
             ]
         },
         ...missingTimeEntriesBlock(timeEntries).blocks,
@@ -95,7 +106,7 @@ function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<
         taskEither.getOrElse(() => () => Promise.resolve([
             {
                 type: "actions",
-                elements: [registerButton]
+                elements: [unregisterButton]
             },
             {
                 type: "section",
