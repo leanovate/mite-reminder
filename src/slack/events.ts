@@ -99,8 +99,11 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
 
     app.view(registerWithApiKeyModal.id, async ({ body, view, ack }) => {
         await ack()
-        // TODO what if we cannot find the value?
-        const miteApiKey: string = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
+        const miteApiKey: string | undefined = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
+
+        if(miteApiKey === undefined) {
+            throw new Error("mite-reminder did expect a form value but was unable to find one.") 
+        }
 
         await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)()
         publishDefaultHomeTab(app, body.user.id, repository)
