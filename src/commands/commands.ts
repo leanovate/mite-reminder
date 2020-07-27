@@ -1,8 +1,14 @@
+import { taskEither as T } from "fp-ts"
+import { pipe } from "fp-ts/lib/function"
+import { TaskEither } from "fp-ts/lib/TaskEither"
 import moment, { Moment } from "moment"
+import { ApiKeyIsMissing, AppError, UserIsUnknown, IOError } from "../app/errors"
+import { orElseFailWith } from "../app/utils"
 import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
 import { getMissingTimeEntries } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
+
 
 export type SlackUser = {
     slackId: string
@@ -10,47 +16,38 @@ export type SlackUser = {
 
 export enum Failures {
     ApiKeyIsMissing = "User is known but no app wide admin-api key is specified.",
-    UserIsUnknown = "User is unknown and needs to register with his/her own api key."
+    UserIsUnknown = "User is unknown and needs to register with his/her own api key.",
 }
 
-export async function doRegister(command: RegisterCommand, context: UserContext, emailResolver: (slackId: string) => Promise<{email: string | undefined}>): Promise<void | Failures> {
-    if(command.miteApiKey) {
+export function doRegister(command: RegisterCommand, context: UserContext, getEmailFromSlackId: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, void> {
+    if (command.miteApiKey) {
         return context.repository.registerUserWithMiteApiKey(context.slackId, command.miteApiKey)
     }
 
-    if(!isCheckContext(context)) {
+    if (!isCheckContext(context)) {
         // If the user registers without an API key, we need a global admin key instead to we can call mite
-        return Failures.ApiKeyIsMissing
-    }
+        return T.left(new ApiKeyIsMissing(context.slackId))
+    }    
 
-    const {email} = await emailResolver(context.slackId)
-
-    if(!email) {
-        console.warn("Failed to lookup email address with slack id", context.slackId)
-        return Failures.UserIsUnknown
-    }
-
-    const miteId = await getMiteIdByEmail(context.miteApi, email)
-
-    if(!miteId) {
-        console.warn("Failed to look up mite id with email", email)
-        return Failures.UserIsUnknown
-    }
-
-    return context.repository.registerUserWithMiteId(context.slackId, miteId)
+    return pipe(
+        getEmailFromSlackId(context.slackId),
+        T.chain(result => getMiteIdByEmail(context.miteApi, result.email)),
+        T.chain(orElseFailWith(new UserIsUnknown(context.slackId))),
+        T.chain(miteId => context.repository.registerUserWithMiteId(context.slackId, miteId))
+    )
 }
 
-export async function doCheck(context: UserContext): Promise<Moment[] | Failures> {
-    if(!isCheckContext(context)) {
-        return Failures.ApiKeyIsMissing
+export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
+    if (!isCheckContext(context)) {
+        return T.left(new ApiKeyIsMissing(context.slackId))
     }
 
-    const user = context.repository.loadUser(context.slackId) 
-    if(!user) {
-        return Failures.UserIsUnknown
+    const user = context.repository.loadUser(context.slackId)
+    if (!user) {
+        return T.left(new UserIsUnknown(context.slackId))
     }
 
-    const miteId = user.miteId ?? "current" 
+    const miteId = user.miteId ?? "current"
 
     return getMissingTimeEntries(
         miteId,
@@ -60,6 +57,6 @@ export async function doCheck(context: UserContext): Promise<Moment[] | Failures
     )
 }
 
-export async function doUnregister(context: UserContext): Promise<void> {
+export function doUnregister(context: UserContext): TaskEither<IOError, void> {
     return context.repository.unregisterUser(context.slackId)
 }

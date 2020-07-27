@@ -9,8 +9,28 @@
     "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
-    "semi": ["error", "never"],
-    "indent": ["error", 4],
-    "quotes": ["error", "double"]
+    "semi": [
+      "error",
+      "never"
+    ],
+    "indent": [
+      "error",
+      4
+    ],
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "object-curly-spacing": [
+    "warn", 
+      "always"
+    ],
+    "no-use-before-define": [
+      "warn",
+      {
+        "functions": false,
+        "classes": true
+      }
+    ]
   }
 }

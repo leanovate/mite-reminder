@@ -2,6 +2,10 @@ import { Moment } from "moment"
 import { TimeEntries, MiteApi } from "mite-api"
 import { getTimeEntries } from "./mite-api-wrapper"
 import { isHoliday } from "./holidays"
+import { TaskEither } from "fp-ts/lib/TaskEither"
+import { AppError } from "../app/errors"
+import { pipe } from "fp-ts/lib/function"
+import { taskEither } from "fp-ts"
 
 const isWeekend = (dateAsMoment: Moment): boolean => [0, 6].includes(dateAsMoment.day())
 
@@ -32,26 +36,19 @@ const lastWeekThursdayToThursday = (currentMoment: Moment): { start: Moment, end
     }
 }
 
-async function getMissingTimeEntries(
+function getMissingTimeEntries(
     miteUserId: number | "current", 
     from: Moment, 
     to: Moment, 
-    api: MiteApi): Promise<Moment[]> {
-    let timeEntries: TimeEntries = []
-    try {
-        timeEntries = await getTimeEntries(api, miteUserId, from, to)
-    }
-    catch (error) {
-        console.error("Failed to get time entries: ", error)
-        return []
-    }
+    api: MiteApi): TaskEither<AppError, Moment[]> {
 
-    const datesToCheck = getDatesBetween(from, to)
-
-    return datesToCheck
-        .filter(date => !isHoliday(date))
-        .filter(date => !isWeekend(date))
-        .filter(date => !isTimeEnteredOnDay(timeEntries, date))
+    return pipe(
+        getTimeEntries(api, miteUserId, from, to),
+        taskEither.map(timeEntries => getDatesBetween(from, to)
+            .filter(date => !isHoliday(date))
+            .filter(date => !isWeekend(date))
+            .filter(date => !isTimeEnteredOnDay(timeEntries, date)))
+    )
 }
 
 export {

@@ -1,22 +1,75 @@
 import { App } from "@slack/bolt"
-import { KnownBlock, View, WebAPICallResult } from "@slack/web-api"
-import { doCheck, Failures } from "../commands/commands"
+import { KnownBlock, View, Button } from "@slack/web-api"
+import { taskEither } from "fp-ts"
+import { pipe } from "fp-ts/lib/function"
+import { Task } from "fp-ts/lib/Task"
+import moment from "moment"
+import { doCheck } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
-import moment from "moment"
 
-export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => void = async (app, slackId, repository) => {
-    const user = repository.loadUser(slackId)
-    let blocks: KnownBlock[]
+export enum Actions {
+    Register = "register",
+    Unregister = "unregister",
+    Refresh = "refresh",
+}
 
-    if (user) {
-        // FIXME this can throw but we do not catch it
-        blocks = await buildMissingTimesBlocks(slackId, repository)
-    } else {
-        blocks = await buildRegisterBlocks()
+const registerButton: Button = {
+    type: "button",
+    action_id: Actions.Register,
+    text: {
+        type: "plain_text",
+        text: "Start using mite reminder"
+    },
+    style: "primary"
+}
+
+const refreshButton: Button = {
+    type: "button",
+    action_id: Actions.Refresh,
+    text: {
+        type: "plain_text",
+        text: "Refresh"
+    },
+}
+
+const unregisterButton: Button = {
+    type: "button",
+    action_id: Actions.Unregister,
+    style: "danger",
+    text: {
+        type: "plain_text",
+        text: "Stop receiving notifications"
     }
+}
+
+const registerBlocks: KnownBlock[] = [
+    {
+        "type": "actions",
+        "elements": [registerButton]
+    },
+    {
+        type: "section",
+        text: {
+            type: "plain_text",
+            text: "If you register you can check your missing mite entries and will receive reminders about them."
+        }
+    },
+    {
+        type: "section",
+        text: {
+            type: "plain_text",
+            text: "Reminders will happen each friday morning and will include all days for the past seven days, automatically excluding holidays and weekends."
+        }
+    }
+]
+
+
+export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => Promise<void> = async (app, slackId, repository) => {
+    const user = repository.loadUser(slackId)
+    const blocks = user ? await buildMissingTimesBlocks(slackId, repository)() : registerBlocks // TODO we can pass the user to buildMissingTimesBlock so that we don't have to load the user again
 
     app.client.views.publish({
         user_id: slackId,
@@ -28,97 +81,43 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
     })
 }
 
-export enum Actions {
-    Register = "register",
-    Unregister = "unregister",
-    Refresh = "refresh",
-}
 
-const buildRegisterBlocks: () => Promise<KnownBlock[]> = async () => {
-    return [
-        {
-            "type": "actions",
-            "elements": [
-                {
-                    type: "button",
-                    action_id: Actions.Register,
-                    text: {
-                        type: "plain_text",
-                        text: "Start using mite reminder"
-                    },
-                    style: "primary"
-                }
-            ]
-        },
-        {
-            type: "section",
-            text: {
-                type: "plain_text",
-                text: "If you register you can check your missing mite entries and will receive reminders about them."
-            }
-        },
-        {
-            type: "section",
-            text: {
-                type: "plain_text",
-                text: "Reminders will happen each friday morning and will include all days for the past seven days, automatically excluding holidays and weekends."
-            }
-        }
-    ]
-}
-
-const buildMissingTimesBlocks: (slackId: string, repository: Repository) => Promise<KnownBlock[]> = async (slackId, repository) => {
-    const result = await doCheck(createUserContext(repository, slackId))
-    if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-        console.log("Please handle this error properly") // FIXME
-        return [{
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: "Failed to report missing times. Sorry -.-" // TODO
-            }
-        }]
-    }
-
-    return [
-        {
+function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<KnownBlock[]> {
+    const userContext = createUserContext(repository, slackId)
+    const result = doCheck(userContext)
+    
+    return pipe(
+        result,
+        taskEither.map(timeEntries => [{
             type: "actions",
             elements: [
-                {
-                    type: "button",
-                    action_id: Actions.Refresh,
-                    text: {
-                        type: "plain_text",
-                        text: "Refresh"
-                    }
-                },
-                {
-                    type: "button",
-                    action_id: Actions.Unregister,
-                    style: "danger",
-                    text: {
-                        type: "plain_text",
-                        text: "Stop receiving notifications"
-                    }
-                }
+                refreshButton,
+                unregisterButton
             ]
         },
-        ...missingTimeEntriesBlock(result).blocks,
+        ...missingTimeEntriesBlock(timeEntries).blocks,
         {
             type: "section",
             text: {
                 type: "mrkdwn",
                 text: `_Update at: ${moment().format("LLL")}_`
             }
-        }]
-}
-
-export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<WebAPICallResult> {
-    return app.client.views.open({
-        token: config.slackToken,
-        trigger_id: triggerId,
-        view: registerWithApiKeyModalView
-    })
+        }] as KnownBlock[]
+        ),
+        taskEither.getOrElse(() => () => Promise.resolve([
+            {
+                type: "actions",
+                elements: [unregisterButton]
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "Failed to report missing times, sorry!" + (userContext.miteApi ? " Maybe you have mistyped your api key?":"") 
+                }
+            } as KnownBlock])
+        )
+    )
 }
 
 export const registerWithApiKeyModal = {
@@ -163,3 +162,12 @@ export const registerWithApiKeyModalView: View = {
     ],
     type: "modal"
 }
+
+export async function openRegisterWithApiKeyModal(app: App, triggerId: string): Promise<void> {
+    await app.client.views.open({
+        token: config.slackToken,
+        trigger_id: triggerId,
+        view: registerWithApiKeyModalView
+    })
+}
+

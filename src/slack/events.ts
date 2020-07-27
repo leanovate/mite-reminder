@@ -1,9 +1,11 @@
 import { App, BlockAction, SayFn } from "@slack/bolt"
 import { WebAPICallResult } from "@slack/web-api"
+import { taskEither } from "fp-ts"
+import { pipe } from "fp-ts/lib/pipeable"
 import { MiteApiError } from "mite-api"
-import { Moment } from "moment"
+import { AppError } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../commands/commands"
+import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContext } from "./createUserContext"
@@ -32,13 +34,25 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
 
     switch (command.name) {
     case "check":
-        await doCheck(context).then(result => displayCheckResult(say, result))
+        await pipe(
+            doCheck(context),
+            taskEither.fold(
+                e => () => reportError(say, e), 
+                result => async () => {await say(missingTimeEntriesBlock(result))})
+        )()
         break
     case "register":
-        await doRegister(command, context, slackUserResolver(app)).then(result => displayRegisterResult(say, result))
+        await pipe(
+            doRegister(command, context, slackUserResolver(app)),
+            taskEither.fold(
+                () => async () => sayMissingApiKey(say), 
+                () => async () => {await say("Success!")}
+            )
+        )()
         break
     case "unregister":
-        await doUnregister(context).then(() => displayUnregisterResult(say))
+        await doUnregister(context)()
+            .then(() => displayUnregisterResult(say))
     }
 })
 
@@ -57,20 +71,22 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         console.log("Register action received.")
         await ack()
 
-        // FIXME if this throws because there is already an api key for the user, but it is mistyped, we throw and do not let the user register again
-        const result = await doRegister({ name: "register" }, createUserContext(repository, body.user.id), slackUserResolver(app))
-        if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-            openRegisterWithApiKeyModal(app, (body as BlockAction).trigger_id)
-            return
-        }
-        publishDefaultHomeTab(app, body.user.id, repository)
+        const result = doRegister({ name: "register" }, createUserContext(repository, body.user.id), slackUserResolver(app))
+        const task = pipe(
+            result,
+            taskEither.fold(
+                () => () => openRegisterWithApiKeyModal(app, (body as BlockAction).trigger_id),
+                () => () => publishDefaultHomeTab(app, body.user.id, repository)
+            ))
+
+        await task()
     })
 
     app.action(Actions.Unregister, async ({ body, ack }) => {
         console.log("Unregister action received.")
         await ack()
 
-        await doUnregister(createUserContext(repository, body.user.id))
+        await doUnregister(createUserContext(repository, body.user.id))()
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
@@ -86,39 +102,19 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         // TODO what if we cannot find the value?
         const miteApiKey: string = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
 
-        await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)
+        await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)()
         publishDefaultHomeTab(app, body.user.id, repository)
     })
-}
-
-async function displayCheckResult(say: SayFn, timesOrFailure: Moment[] | Failures) {
-    try {
-        if (timesOrFailure === Failures.UserIsUnknown || timesOrFailure === Failures.ApiKeyIsMissing) {
-            console.warn(timesOrFailure)
-            await sayMissingApiKey(say)
-        } else {
-            await say(missingTimeEntriesBlock(timesOrFailure))
-        }
-    } catch (e) {
-        reportError(say, e)
-    }
-}
-
-async function displayRegisterResult(say: SayFn, result: void | Failures): Promise<void> {
-    if (result === Failures.ApiKeyIsMissing || result === Failures.UserIsUnknown) {
-        return sayMissingApiKey(say)
-    }
-
-    await say("Success!")
 }
 
 async function displayUnregisterResult(say: SayFn): Promise<void> {
     await say("Success!")
 }
 
-async function reportError(say: SayFn, error: Error | MiteApiError): Promise<void> {
+async function reportError(say: SayFn, error: AppError): Promise<void> { // TODO Revamp
     console.error("Failed to execute command because of ", error)
     const message = isMiteApiError(error) ? error.error : error.message
+    //TODO for the Error "UserIsUnknown" we can provide a much more helpful error message here
     await say(`Sorry, I couldn't to that because of: "${message}"`)
 }
 
@@ -127,6 +123,7 @@ function isMiteApiError(candidate: any): candidate is MiteApiError {
     return !!candidate.error
 }
 
-async function sayMissingApiKey(say: SayFn): Promise<void> {
-    await say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+function sayMissingApiKey(say: SayFn){
+    say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
+        .catch(e => console.error("Failed to say something", e))
 }

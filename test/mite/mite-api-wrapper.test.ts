@@ -1,6 +1,8 @@
-import { MiteApi, TimeEntry, TimeEntries, User } from "mite-api"
+import { MiteApi, TimeEntry, TimeEntries, User, Users } from "mite-api"
 import moment from "moment"
 import { createMiteApi, getTimeEntries, getMiteIdByEmail } from "../../src/mite/mite-api-wrapper"
+import { getRight, getValue, getLeft } from "../testUtils"
+import { UnknownAppError } from "../../src/app/errors"
 
 jest.mock("../../src/config", () => ({}))
 
@@ -21,38 +23,35 @@ describe("miteApi", () => {
         it("returns a promise with the result", async () => {
             const testEntry: TimeEntry = <TimeEntry>{
                 id: 1234,
-                minutes: 30,
+                minutes: 30
             }
 
             const mite: MiteApi = {
                 ...emptyMock,
-                getTimeEntries: (_, callback) => callback(null, [{ time_entry: testEntry }])
+                getTimeEntries: (_, callback) => callback(undefined, [{ time_entry: testEntry }])
             }
 
-            const entries: TimeEntries = await getTimeEntries(mite, "current", moment(), moment())
+            const maybeEntries = await getTimeEntries(mite, "current", moment(), moment())()
+            const entries = getRight(maybeEntries)
 
             expect(entries).toHaveLength(1)
             expect(entries[0].time_entry).toEqual(testEntry)
         })
 
-        it("throws an exception with the error when there is one", async () => {
-            const error = { error: "Access denied. Please check your credentials." }
+        it("return an appError with the error when there is one", async () => {
+            const error = new Error("Access denied. Please check your credentials.")
             const mite: MiteApi = {
                 ...emptyMock,
-                getTimeEntries: (_, callback) => callback(new Error(), error)
+                getTimeEntries: (_, callback) => callback(error, null as unknown as TimeEntries)
             }
 
-            try {
-                await getTimeEntries(mite, "current", moment(), moment())
-                fail()
-            } catch (error) {
-                expect(error).toEqual({ error: "Access denied. Please check your credentials." })
-            }
+            const result = await getTimeEntries(mite, "current", moment(), moment())()
+            expect(getLeft(result)).toEqual(new UnknownAppError(error))
         })
     })
 
     describe("getMiteIdByEmail", () => {
-        it("returns a promise with the result", async () => {
+        it("returns a TaskEither with the result", async () => {
             const testEntry: User = <User>{
                 id: 12,
                 name: "name",
@@ -60,12 +59,12 @@ describe("miteApi", () => {
             }
             const mite: MiteApi = {
                 ...emptyMock,
-                getUsers: (_, callback) => callback(null, [{ user: testEntry }])
+                getUsers: (_, callback) => callback(undefined, [{ user: testEntry }])
             }
 
-            const id = await getMiteIdByEmail(mite, "email@provider.com")
+            const either = await getMiteIdByEmail(mite, "email@provider.com")()
 
-            expect(id).toEqual(testEntry.id)
+            expect(getValue(getRight(either))).toEqual(testEntry.id)
         })
 
         it("it only returns user with an exact email match", async () => {
@@ -83,28 +82,23 @@ describe("miteApi", () => {
             ]
             const mite: MiteApi = {
                 ...emptyMock,
-                getUsers: (_, callback) => callback(null, testEntries.map(user => ({ user })))
+                getUsers: (_, callback) => callback(undefined, testEntries.map(user => ({ user })))
             }
 
-            const id = await getMiteIdByEmail(mite, emailToFind)
+            const result = await getMiteIdByEmail(mite, emailToFind)()
 
-            expect(id).not.toBeNull()
-            expect(id).toEqual(expectedId)
+            expect(getValue(getRight(result))).toEqual(expectedId)
         })
 
-        it("throws an exception with the error when there is one", async () => {
-            const error = { error: "Access denied. Please check your credentials." }
+        it("returns an error when there is one", async () => {
+            const errorFromMiteApi = new Error("Access denied. Please check your credentials.")
             const mite: MiteApi = {
                 ...emptyMock,
-                getUsers: (_, callback) => callback(new Error(), error)
+                getUsers: (_, callback) => callback(errorFromMiteApi, null as unknown as Users)
             }
 
-            try {
-                await getMiteIdByEmail(mite, "email")
-                fail()
-            } catch (error) {
-                expect(error).toEqual({ error: "Access denied. Please check your credentials." })
-            }
+            const result = await getMiteIdByEmail(mite, "email")()
+            expect(getLeft(result)).toEqual(new UnknownAppError(errorFromMiteApi))
         })
     })
 })

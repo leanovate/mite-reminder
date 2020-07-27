@@ -7,18 +7,24 @@ jest.mock("../../src/mite/mite-api-wrapper", () => ({
 
 import { MiteApi } from "mite-api"
 import { RegisterCommand } from "../../src/commands/commandParser"
-import { doCheck, doRegister, doUnregister, Failures } from "../../src/commands/commands"
+import { doCheck, doRegister, doUnregister } from "../../src/commands/commands"
 import { Config } from "../../src/config"
 import { Repository } from "../../src/db/user-repository"
 import { UserContext } from "../../src/slack/userContext"
+import { taskEither, option } from "fp-ts"
+import { getLeft } from "../testUtils"
+import { UserIsUnknown } from "../../src/app/errors"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
 
+    const registerUserWithMiteIdMock = jest.fn()
+    const registerUserWithMiteApiKeyMock = jest.fn()
+
     const userRepository: Repository = {
         /* eslint-disable @typescript-eslint/no-empty-function */
-        registerUserWithMiteApiKey: jest.fn(() => { }),
-        registerUserWithMiteId: jest.fn(() => { }),
+        registerUserWithMiteApiKey: registerUserWithMiteApiKeyMock,
+        registerUserWithMiteId: registerUserWithMiteIdMock,
         unregisterUser: jest.fn(() => { }),
         loadUser: loadUserMock
         /* eslint-enable @typescript-eslint/no-empty-function */
@@ -41,10 +47,11 @@ describe("Commands", () => {
 
     it("should register a user without api key in the database", async () => {
         const registerCommand: RegisterCommand = { name: "register" }
-        const miteId = "mite-id"
-        getMiteIdMock.mockReturnValue(miteId)
+        const miteId = 4711
+        getMiteIdMock.mockReturnValue(taskEither.right(option.of(miteId)))
+        registerUserWithMiteIdMock.mockReturnValue(taskEither.right(null))
 
-        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({ email: "test@email.com" }))()
 
         expect(userRepository.registerUserWithMiteId).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteId).toBeCalledWith(defaultUserContext.slackId, miteId)
@@ -53,8 +60,9 @@ describe("Commands", () => {
     it("should register a user with api key in the database", async () => {
         const miteApiKey = "mite-api-key"
         const registerCommand: RegisterCommand = { name: "register", miteApiKey }
+        registerUserWithMiteApiKeyMock.mockReturnValue(taskEither.right(null))
 
-        await doRegister(registerCommand, defaultUserContext, () => Promise.resolve({email: "test@email.com"}))
+        await doRegister(registerCommand, defaultUserContext, () => taskEither.right({ email: "test@email.com" }))()
 
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledTimes(1)
         expect(userRepository.registerUserWithMiteApiKey).toBeCalledWith(defaultUserContext.slackId, miteApiKey)
@@ -84,7 +92,7 @@ describe("Commands", () => {
         const miteId = "mite-id"
 
         getTimeEntriesMock.mockReturnValue([])
-        loadUserMock.mockReturnValue({miteId})
+        loadUserMock.mockReturnValue({ miteId })
 
         await doCheck(defaultUserContext)
 
@@ -94,12 +102,12 @@ describe("Commands", () => {
         expect(getTimeEntriesMock).toHaveBeenLastCalledWith(miteApiMock, miteId, expect.anything(), expect.anything())
     })
 
-    it("should return a failure if the user has no api key and is unknown", async () => {
+    it("should return an appError if the user has no api key and is unknown", async () => {
         getTimeEntriesMock.mockReturnValue([])
         loadUserMock.mockReturnValue(null)
 
-        const result = await doCheck(defaultUserContext)
+        const result = await doCheck(defaultUserContext)()
 
-        expect(result).toEqual(Failures.UserIsUnknown)
+        expect(getLeft(result)).toEqual(new UserIsUnknown(defaultUserContext.slackId))
     })
 })
