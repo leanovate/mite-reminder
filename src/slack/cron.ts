@@ -69,6 +69,6 @@ async function sayPleaseRegisterWithApiKey(app: App, token: string, channel: str
     app.client.chat.postMessage({
         token,
         channel,
-        text: "I cannot remind you because I can't find your mite account. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`."
+        text: `I cannot remind you because I can't find your mite account. Please register with your mite api key from https://${config.miteAccountName}.mite.yo.lk/myself and send \`register <YOUR_MITE_API_KEY>\`.`
     })
 }

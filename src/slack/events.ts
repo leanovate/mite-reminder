@@ -13,6 +13,7 @@ import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
 import { Task } from "fp-ts/lib/Task"
+import config from "../config"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
@@ -126,7 +127,6 @@ function isMiteApiError(candidate: any): candidate is MiteApiError {
     return !!candidate.error
 }
 
-function sayMissingApiKey(say: SayFn){
-    say("Sorry, I can't get your times by myself. Please register with your mite api key from https://leanovate.mite.yo.lk/myself and send `register <YOUR_MITE_API_KEY>`.")
-        .catch(e => console.error("Failed to say something", e))
+async function sayMissingApiKey(say: SayFn) {
+    await say(`Sorry, I can't get your times by myself. Please register with your mite api key from https://${config.miteAccountName}.mite.yo.lk/myself and send \`register <YOUR_MITE_API_KEY>\`.`)
 }

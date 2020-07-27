@@ -138,7 +138,7 @@ export const registerWithApiKeyModalView: View = {
             type: "section",
             text: {
                 type: "mrkdwn",
-                text: "Sorry, I can't find your mite account. Please register with your mite api key from https://leanovate.mite.yo.lk/myself"
+                text: `Sorry, I can't find your mite account. Please register with your mite api key from https://${config.miteAccountName}.mite.yo.lk/myself`
             }
         },
         {

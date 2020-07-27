@@ -10,6 +10,7 @@ import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
 import { createUserContextFromSlackId } from "../slack/createUserContext"
 import { fold } from "fp-ts/lib/TaskEither"
+import config from "../config"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -54,7 +55,7 @@ function displayCheckResult(result: Either<AppError, Moment[]>) {
         either.fold(e => {throw e}, timeEntries => {
             const message = timeEntries.length > 0
                 ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
-                + timeEntries.map(date => `https://leanovate.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
+                + timeEntries.map(date => `https://${config.miteAccountName}.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
                     .join("\n")
                 : "You completed all your time entries."
             console.log(message)
