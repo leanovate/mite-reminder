@@ -1,14 +1,14 @@
 import { App } from "@slack/bolt"
-import { KnownBlock, View, Button } from "@slack/web-api"
+import { Button, KnownBlock, View } from "@slack/web-api"
 import { taskEither } from "fp-ts"
 import { pipe } from "fp-ts/lib/function"
 import { Task } from "fp-ts/lib/Task"
 import moment from "moment"
 import { doCheck } from "../commands/commands"
 import config from "../config"
-import { Repository } from "../db/user-repository"
+import { Repository, User } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
-import { createUserContext } from "./createUserContext"
+import { createUserContextFromUser } from "./createUserContext"
 
 export enum Actions {
     Register = "register",
@@ -66,10 +66,9 @@ const registerBlocks: KnownBlock[] = [
     }
 ]
 
-
 export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repository) => Promise<void> = async (app, slackId, repository) => {
     const user = repository.loadUser(slackId)
-    const blocks = user ? await buildMissingTimesBlocks(slackId, repository)() : registerBlocks // TODO we can pass the user to buildMissingTimesBlock so that we don't have to load the user again
+    const blocks = user ? await buildMissingTimesBlocks(repository, user)() : registerBlocks
 
     app.client.views.publish({
         user_id: slackId,
@@ -81,9 +80,8 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
     })
 }
 
-
-function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<KnownBlock[]> {
-    const userContext = createUserContext(repository, slackId)
+function buildMissingTimesBlocks(repository: Repository, user: User): Task<KnownBlock[]> {
+    const userContext = createUserContextFromUser(repository, user)
     const result = doCheck(userContext)
     
     return pipe(

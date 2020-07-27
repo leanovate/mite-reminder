@@ -5,7 +5,7 @@ import config from "../config"
 import { Repository } from "../db/user-repository"
 import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
 import { missingTimeEntriesBlock } from "./blocks"
-import { createUserContext } from "./createUserContext"
+import { createUserContextFromSlackId } from "./createUserContext"
 import { isCheckContext } from "./userContext"
 import { pipe } from "fp-ts/lib/function"
 import { taskEither } from "fp-ts"
@@ -22,7 +22,7 @@ function scheduleDailyCron(repository: Repository, app: App) {
         console.log(`Running daily cron for ${users.length} users.`)
         users.forEach(async user => { // for (const user in users) gets the type wrong for some reason (it is not string)
             const { start, end } = lastWeekThursdayToThursday(moment())
-            const context = createUserContext(repository, user.slackId)
+            const context = createUserContextFromSlackId(repository, user.slackId)
 
             if(!isCheckContext(context)) {
                 return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)

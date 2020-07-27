@@ -3,13 +3,12 @@ import { TaskEither } from "fp-ts/lib/TaskEither"
 import fs from "fs/promises"
 import { AppError, IOError } from "../app/errors"
 
-export type User = Partial<UserWithMiteId & UserWithMiteApiKey>
-
 type UserWithMiteId = { miteId: number }
 type UserWithMiteApiKey = { miteApiKey: string }
+type DBUser = Partial<UserWithMiteId & UserWithMiteApiKey> 
 
-export type DB = { [slackId: string]: User }
-export type Users = Array<User & { slackId: string }>
+export type User = DBUser & {slackId: string}
+export type DB = { [slackId: string]: DBUser }
 
 export class Repository {
     constructor(private readonly db: DB, private readonly path: string) { }
@@ -36,16 +35,21 @@ export class Repository {
     }
 
     loadUser(slackId: string): User | null {
-        const user = this.db[slackId] || null
-        if (user && !user.miteApiKey && !user.miteId) {
+        const user = this.db[slackId]
+
+        if(!user) {
+            return null
+        }
+
+        if (!user.miteApiKey && !user.miteId) {
             console.warn(`User [${slackId}] is in an invalid state. Neither miteId nor miteApiKey is present. Telling user to re-register to fix the issue.`)
             return null
         }
 
-        return user
+        return { ...user, slackId }
     }
 
-    loadAllUsers(): Users {
+    loadAllUsers(): User[] {
         return Object.keys(this.db)
             .map(key => ({ slackId: key, ...this.db[key] }))
     }

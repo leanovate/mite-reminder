@@ -8,7 +8,7 @@ import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
-import { createUserContext } from "../slack/createUserContext"
+import { createUserContextFromSlackId } from "../slack/createUserContext"
 import { fold } from "fp-ts/lib/TaskEither"
 
 const rl = readline.createInterface({
@@ -23,7 +23,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
         const parsedAnswer = parse(answer)
 
         if (parsedAnswer.status) {
-            const context = createUserContext(repository, "cmd-user")
+            const context = createUserContextFromSlackId(repository, "cmd-user")
             const command = parsedAnswer.value
 
             switch(command.name) {

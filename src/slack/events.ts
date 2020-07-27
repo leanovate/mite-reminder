@@ -8,7 +8,7 @@ import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { Repository } from "../db/user-repository"
 import { missingTimeEntriesBlock } from "./blocks"
-import { createUserContext } from "./createUserContext"
+import { createUserContextFromSlackId } from "./createUserContext"
 import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
@@ -29,7 +29,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
         return sayHelp(say)
     }
 
-    const context = createUserContext(repository, message.user)
+    const context = createUserContextFromSlackId(repository, message.user)
     const command = parserResult.value
 
     switch (command.name) {
@@ -71,7 +71,7 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         console.log("Register action received.")
         await ack()
 
-        const result = doRegister({ name: "register" }, createUserContext(repository, body.user.id), slackUserResolver(app))
+        const result = doRegister({ name: "register" }, createUserContextFromSlackId(repository, body.user.id), slackUserResolver(app))
         const task = pipe(
             result,
             taskEither.fold(
@@ -86,7 +86,7 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         console.log("Unregister action received.")
         await ack()
 
-        await doUnregister(createUserContext(repository, body.user.id))()
+        await doUnregister(createUserContextFromSlackId(repository, body.user.id))()
         publishDefaultHomeTab(app, body.user.id, repository)
     })
 
