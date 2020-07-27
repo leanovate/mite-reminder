@@ -22,5 +22,5 @@ export function getValue<T>(option: Option<T>) : T {
         return option.value
     }
 
-    throw new Error("Cannot extract vaue from None.")
+    throw new Error("Cannot extract value from None.")
 }
