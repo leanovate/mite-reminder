@@ -18,7 +18,8 @@ export class ApiKeyIsMissing implements AppError {
 export class UnknownAppError implements AppError {
     message: string
     constructor(readonly error: unknown) {
-        this.message = (error as Error)?.message ?? "Ooopsie Woopsie" // TODO
+        console.error("There is an unexpected error:", error)
+        this.message = (error as Error)?.message ?? "Oh, something went wrong :(" // TODO
     }
 }
 
