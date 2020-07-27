@@ -8,11 +8,12 @@ describe("Help", () => {
 
     it("should respond with default help text, when mite admin key should not be used", async () => {
         jest.mock("../../src/config", () => ({
-            miteApiKey: undefined    
+            miteApiKey: undefined,
+            miteAccountName: "test"
         }))
 
         const expectedText = `
-Use \`register <MITE_API_KEY>\` to receive mite reminders in the future. You can find your api key here: https://leanovate.mite.yo.lk/myself
+Use \`register <MITE_API_KEY>\` to receive mite reminders in the future. You can find your api key here: https://test.mite.yo.lk/myself
 Use \`check\` to for missing time entries. Holidays and weekends are automatically excluded.
 Use \`unregister\` to undo your registration.
 `
