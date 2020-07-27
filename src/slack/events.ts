@@ -71,7 +71,6 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         console.log("Register action received.")
         await ack()
 
-        // FIXME if this throws because there is already an api key for the user, but it is mistyped, we throw and do not let the user register again
         const result = doRegister({ name: "register" }, createUserContext(repository, body.user.id), slackUserResolver(app))
         const task = pipe(
             result,
