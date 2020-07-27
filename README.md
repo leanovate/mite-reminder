@@ -3,6 +3,8 @@
 # mite-reminder
 This is a slack app for reminding mite users about missing time entries.
 
+[![demonstration .gif](demo.gif)](demo.gif)
+
 ## How to run
 You will need to set up a few environment variables. Either `export <VAR_NAME>=<VAR_VALUE>` them or put them in a `.env` [file](https://github.com/motdotla/dotenv#readme).
 
