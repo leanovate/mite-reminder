@@ -1,30 +1,30 @@
 export interface AppError {
-    message: string
+    presentableMessage: string
 }
 
 export class UserIsUnknown implements AppError {
-    message: string
+    presentableMessage = "I don't know you. Please provide your API key. Say 'register <API_KEY>' to solve this issue. You can get an api key from your mite web ui."
     constructor(readonly slackId: string) {
-        this.message = `The user with slack id ${slackId} cannot be connected to a mite account. Can be fixed by providing a personal api key for the user.`
+        console.warn(`The user with slack id ${slackId} cannot be connected to a mite account. Can be fixed by providing a personal api key for the user.`)
     }
 }
 export class ApiKeyIsMissing implements AppError {
-    message: string
+    presentableMessage = "I don't know you. Please provide your API key. Say 'register <API_KEY>' to solve this issue. You can get an api key from your mite web ui."
     constructor(readonly slackId: string) {
-        this.message = "A global api key is missing" //FIXME What case does that cover?
-        // 1. Neither personal nor admin api key are present
+        console.warn("A global api key is missing")
     }
 }
 export class UnknownAppError implements AppError {
-    message: string
+    presentableMessage: string
     constructor(readonly error: unknown) {
         console.error("There is an unexpected error:", error)
-        this.message = (error as Error)?.message ?? "Oh, something went wrong :(" // TODO
+        this.presentableMessage = (error as Error)?.message ?? "There was an unexpected error :(" 
     }
 }
 
 export class IOError implements AppError {
-    message = "Could not write/read to/from disk"
+    presentableMessage = "OOPSIE WOOPSIE!! Our hawd drive did a fucky wucky!! A wittle fucko boingo!"
     constructor(readonly error: Error) {
+        console.warn("Failed to access the file system", error)
     }
 }

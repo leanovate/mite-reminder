@@ -5,7 +5,7 @@ import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/function"
 import { taskEither, task } from "fp-ts"
 import { Task } from "fp-ts/lib/Task"
-import { UnknownAppError } from "../app/errors"
+import { IOError } from "../app/errors"
 
 const createFile: Task<void> = async (): Promise<void> => {
     try {
@@ -15,13 +15,13 @@ const createFile: Task<void> = async (): Promise<void> => {
     }
 }
 
-export const createRepository = (): TaskEither<UnknownAppError, Repository> => {
+export const createRepository = (): TaskEither<IOError, Repository> => {
     return pipe(
         createFile,
         task.chain(() => {
             return tryCatch(
                 () => fs.readFile(config.dbPath, { encoding: "utf-8" }),
-                e => new UnknownAppError(e) 
+                e => new IOError(e as Error) 
             )
         }),
         taskEither.map(data => new Repository(JSON.parse(data) as DB, config.dbPath))
