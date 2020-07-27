@@ -83,7 +83,8 @@ export const publishDefaultHomeTab: (app: App, slackId: string, repository: Repo
 
 
 function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<KnownBlock[]> {
-    const result = doCheck(createUserContext(repository, slackId))
+    const userContext = createUserContext(repository, slackId)
+    const result = doCheck(userContext)
     
     return pipe(
         result,
@@ -112,7 +113,7 @@ function buildMissingTimesBlocks(slackId: string, repository: Repository): Task<
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: "Failed to report missing times. Sorry -.-" 
+                    text: "Failed to report missing times, sorry!" + (userContext.miteApi ? " Maybe you have mistyped your api key?":"") 
                 }
             } as KnownBlock])
         )
