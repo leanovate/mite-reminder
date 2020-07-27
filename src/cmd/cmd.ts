@@ -9,6 +9,7 @@ import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import { createRepository } from "../db/create-user-repository"
 import { Repository } from "../db/user-repository"
 import { createUserContext } from "../slack/createUserContext"
+import { fold } from "fp-ts/lib/TaskEither"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -65,6 +66,10 @@ function displayUnregisterResult() {
     console.log("Success!")   
 }
 
-createRepository()
-    .then(repository => requestAndRunCommand(repository))
-    .catch(e => console.log("Unable to run command:", e))
+pipe(
+    createRepository(),
+    fold(
+        e => async () => console.error("Unable to start the application:", e),
+        repository => () => requestAndRunCommand(repository)
+    )
+)()
