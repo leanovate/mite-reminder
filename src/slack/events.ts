@@ -12,6 +12,7 @@ import { createUserContextFromSlackId } from "./createUserContext"
 import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
+import { Task } from "fp-ts/lib/Task"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
@@ -37,7 +38,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
         await pipe(
             doCheck(context),
             taskEither.fold(
-                e => () => reportError(say, e), 
+                e => reportError(say, e), 
                 result => async () => {await say(missingTimeEntriesBlock(result))})
         )()
         break
@@ -114,10 +115,10 @@ async function displayUnregisterResult(say: SayFn): Promise<void> {
     await say("Success!")
 }
 
-async function reportError(say: SayFn, error: AppError): Promise<void> { // TODO Revamp
+function reportError(say: SayFn, error: AppError): Task<void> {
     console.error("Failed to execute command because of ", error)
     const message = isMiteApiError(error) ? error.error : error.presentableMessage
-    await say(`Sorry, I couldn't to that because of: "${message}"`)
+    return () => say(`Sorry, I couldn't to that because of: "${message}"`).then(undefined)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
