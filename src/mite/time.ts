@@ -1,6 +1,6 @@
 import { Moment } from "moment"
 import { TimeEntries, MiteApi } from "mite-api"
-import { getTimeEntries } from "./mite-api-wrapper"
+import { getTimeEntries } from "./miteApWrapper"
 import { isHoliday } from "./holidays"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { AppError } from "../app/errors"

@@ -1,6 +1,6 @@
 import { Repository, User } from "../db/user-repository"
 import config from "../config"
-import { createMiteApi } from "../mite/mite-api-wrapper"
+import { createMiteApi } from "../mite/miteApWrapper"
 import { UserContext } from "./userContext"
 
 export function createUserContextFromUser(repository: Repository, user: User): UserContext {
