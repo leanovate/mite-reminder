@@ -9,7 +9,7 @@ import { AppError, UnknownAppError } from "../app/errors"
 const createMiteApi: (apiKey: string, miteAccountName: string) => MiteApi = (apiKey, miteAccountName) => miteApi({
     account: miteAccountName,
     apiKey: apiKey,
-    applicationName: "mite-reminder"
+    applicationName: `${miteAccountName}-mite-reminder`
 })
 
 function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment, to: Moment): TaskEither<AppError, TimeEntries> {
