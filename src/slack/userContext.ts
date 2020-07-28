@@ -1,4 +1,4 @@
-import { Repository } from "../db/user-repository"
+import { Repository } from "../db/userRepository"
 import { Config } from "../config"
 import { MiteApi } from "mite-api"
 

@@ -1,6 +1,6 @@
 import { MiteApi, TimeEntry, TimeEntries, User, Users } from "mite-api"
 import moment from "moment"
-import { createMiteApi, getTimeEntries, getMiteIdByEmail } from "../../src/mite/miteApWrapper"
+import { createMiteApi, getTimeEntries, getMiteIdByEmail } from "../../src/mite/miteApiWrapper"
 import { getRight, getValue, getLeft } from "../testUtils"
 import { UnknownAppError } from "../../src/app/errors"
 

@@ -1,6 +1,6 @@
 import config from "../config"
 import fs from "fs/promises"
-import { Repository, DB } from "./user-repository"
+import { Repository, DB } from "./userRepository"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/function"
 import { taskEither, task } from "fp-ts"
