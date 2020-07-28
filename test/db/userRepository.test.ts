@@ -6,7 +6,7 @@ jest.mock("fs/promises", () => {
 })
 
 import fs from "fs/promises"
-import { Repository } from "../../src/db/user-repository"
+import { Repository } from "../../src/db/userRepository"
 
 describe("User Repository", () => {
 

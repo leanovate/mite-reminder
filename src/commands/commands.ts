@@ -4,20 +4,10 @@ import { TaskEither } from "fp-ts/lib/TaskEither"
 import moment, { Moment } from "moment"
 import { ApiKeyIsMissing, AppError, UserIsUnknown, IOError } from "../app/errors"
 import { orElseFailWith } from "../app/utils"
-import { getMiteIdByEmail } from "../mite/mite-api-wrapper"
+import { getMiteIdByEmail } from "../mite/miteApiWrapper"
 import { getMissingTimeEntries } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
-
-
-export type SlackUser = {
-    slackId: string
-}
-
-export enum Failures {
-    ApiKeyIsMissing = "User is known but no app wide admin-api key is specified.",
-    UserIsUnknown = "User is unknown and needs to register with his/her own api key.",
-}
 
 export function doRegister(command: RegisterCommand, context: UserContext, getEmailFromSlackId: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, void> {
     if (command.miteApiKey) {

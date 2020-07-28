@@ -1,6 +1,6 @@
 const getTimeEntriesMock = jest.fn()
 const getMiteIdMock = jest.fn()
-jest.mock("../../src/mite/mite-api-wrapper", () => ({
+jest.mock("../../src/mite/miteApiWrapper", () => ({
     getTimeEntries: getTimeEntriesMock,
     getMiteIdByEmail: getMiteIdMock
 }))
@@ -9,7 +9,7 @@ import { MiteApi } from "mite-api"
 import { RegisterCommand } from "../../src/commands/commandParser"
 import { doCheck, doRegister, doUnregister } from "../../src/commands/commands"
 import { Config } from "../../src/config"
-import { Repository } from "../../src/db/user-repository"
+import { Repository } from "../../src/db/userRepository"
 import { UserContext } from "../../src/slack/userContext"
 import { taskEither, option } from "fp-ts"
 import { getLeft } from "../testUtils"

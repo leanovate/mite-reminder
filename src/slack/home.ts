@@ -6,7 +6,7 @@ import { Task } from "fp-ts/lib/Task"
 import moment from "moment"
 import { doCheck } from "../commands/commands"
 import config from "../config"
-import { Repository, User } from "../db/user-repository"
+import { Repository, User } from "../db/userRepository"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContextFromUser } from "./createUserContext"
 

@@ -1,7 +1,7 @@
 import config from "../config"
 import fs from "fs/promises"
-import { Repository, DB } from "./user-repository"
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither"
+import { Repository, DB } from "./userRepository"
+import { TaskEither } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/function"
 import { taskEither, task } from "fp-ts"
 import { Task } from "fp-ts/lib/Task"
@@ -18,12 +18,10 @@ const createFile: Task<void> = async (): Promise<void> => {
 export const createRepository = (): TaskEither<IOError, Repository> => {
     return pipe(
         createFile,
-        task.chain(() => {
-            return tryCatch(
-                () => fs.readFile(config.dbPath, { encoding: "utf-8" }),
-                e => new IOError(e as Error) 
-            )
-        }),
+        task.chain(() => taskEither.tryCatch(
+            () => fs.readFile(config.dbPath, { encoding: "utf-8" }),
+            e => new IOError(e as Error) 
+        )),
         taskEither.map(data => new Repository(JSON.parse(data) as DB, config.dbPath))
     )
 }

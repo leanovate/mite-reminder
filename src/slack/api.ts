@@ -1,7 +1,7 @@
 import { App } from "@slack/bolt"
 import { setupMessageHandling, setupHomeTabHandling, setupActionHandling } from "./events"
 import config from "../config"
-import { Repository } from "../db/user-repository"
+import { Repository } from "../db/userRepository"
 import { scheduleCronJobs } from "./cron"
 
 interface SlackBotApi {
