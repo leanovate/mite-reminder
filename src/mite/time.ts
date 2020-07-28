@@ -36,6 +36,17 @@ const lastWeekThursdayToThursday = (currentMoment: Moment): { start: Moment, end
     }
 }
 
+const lastMonth = (currentMoment: Moment): { start: Moment, end: Moment } => {
+    const pastMonth = currentMoment.clone().subtract(1, "month")
+    const startOfPastMonth = pastMonth.clone().startOf("month")
+    const endOfPastMonth = pastMonth.clone().endOf("month")
+
+    return {
+        start: startOfPastMonth,
+        end: endOfPastMonth
+    }
+}
+
 function getMissingTimeEntries(
     miteUserId: number | "current", 
     from: Moment, 
@@ -56,5 +67,6 @@ export {
     isTimeEnteredOnDay,
     getDatesBetween,
     lastWeekThursdayToThursday,
-    getMissingTimeEntries
+    getMissingTimeEntries,
+    lastMonth
 }
