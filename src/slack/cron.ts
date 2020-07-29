@@ -1,9 +1,9 @@
 import { App } from "@slack/bolt"
-import moment from "moment"
+import moment, { Moment } from "moment"
 import cron from "node-cron"
 import config from "../config"
 import { Repository } from "../db/userRepository"
-import { getMissingTimeEntries, lastWeekThursdayToThursday } from "../mite/time"
+import { getMissingTimeEntries, lastWeekThursdayToThursday, lastMonth } from "../mite/time"
 import { missingTimeEntriesBlock } from "./blocks"
 import { createUserContextFromSlackId } from "./createUserContext"
 import { isCheckContext } from "./userContext"
@@ -14,47 +14,57 @@ const { timezone } = config
 
 export const scheduleCronJobs = (app: App, repository: Repository): void => {
     scheduleDailyCron(repository, app)
+    scheduleMonthlyCron(repository, app)
 }
 
 function scheduleDailyCron(repository: Repository, app: App) {
-    cron.schedule("0 9 * * 1-5", async () => {
-        const users = repository.loadAllUsers()
-        console.log(`Running daily cron for ${users.length} users.`)
-        users.forEach(async user => { // for (const user in users) gets the type wrong for some reason (it is not string)
-            const { start, end } = lastWeekThursdayToThursday(moment())
-            const context = createUserContextFromSlackId(repository, user.slackId)
+    cron.schedule("0 9 * * 1-5", () => 
+        runReminder(app, repository, lastWeekThursdayToThursday(moment()))
+    , { timezone })
+}
 
-            if(!isCheckContext(context)) {
-                return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
-            }
+function scheduleMonthlyCron(repository: Repository, app: App) {
+    cron.schedule("2 9 1 * *", () =>
+        runReminder(app, repository, lastMonth(moment()))
+    , { timezone })
+}
 
-            if(!user.miteId && !user.miteApiKey) {
-                return sayPleaseRegister(app, config.slackToken, user.slackId)
-            }
+function runReminder(app: App, repository: Repository, { start, end }: {start: Moment, end: Moment}): Promise<void>[] {
+    const users = repository.loadAllUsers()
+    console.log(`Running reminder for ${users.length} users.`)
+    return users.map(async user => {
+        const context = createUserContextFromSlackId(repository, user.slackId)
 
-            const miteId = user.miteId ?? "current"
+        if(!isCheckContext(context)) {
+            return sayPleaseRegisterWithApiKey(app, config.slackToken, user.slackId)
+        }
 
-            await pipe(
-                getMissingTimeEntries(miteId, start, end, context.miteApi),
-                taskEither.fold(e => async () => {
-                    console.error("Error when running daily cron:", e)
+        if(!user.miteId && !user.miteApiKey) {
+            return sayPleaseRegister(app, config.slackToken, user.slackId)
+        }
+
+        const miteId = user.miteId ?? "current"
+
+        return pipe(
+            getMissingTimeEntries(miteId, start, end, context.miteApi),
+            taskEither.fold(e => async () => {
+                console.error("Error when running reminder:", e)
+                await app.client.chat.postMessage({
+                    token: config.slackToken,
+                    channel: user.slackId,
+                    text: `I tried to remind you about your missing time entries, but failed because of: "${e.presentableMessage}"`
+                })
+            }, times => async () => {
+                if (times.length > 0) {
                     await app.client.chat.postMessage({
                         token: config.slackToken,
                         channel: user.slackId,
-                        text: "I tried check your mite time entries, but something went wrong. Please inform the mite bot admin."
+                        ...missingTimeEntriesBlock(times)
                     })
-                }, times => async () => {
-                    if (times.length > 0) {
-                        await app.client.chat.postMessage({
-                            token: config.slackToken,
-                            channel: user.slackId,
-                            ...missingTimeEntriesBlock(times)
-                        })
-                    }
-                })
-            )()
-        })
-    }, { timezone })
+                }
+            })
+        )()
+    })
 }
 
 async function sayPleaseRegister(app: App, token: string, channel: string): Promise<void> {
