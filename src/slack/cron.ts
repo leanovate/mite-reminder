@@ -24,8 +24,7 @@ function scheduleDailyCron(repository: Repository, app: App) {
 }
 
 function scheduleMonthlyCron(repository: Repository, app: App) {
-    // 2 9 1 * *
-    cron.schedule("* * * * *", () =>
+    cron.schedule("2 9 1 * *", () =>
         runReminder(app, repository, lastMonth(moment()))
     , { timezone })
 }
