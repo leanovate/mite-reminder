@@ -1,4 +1,5 @@
 import { Timezone } from "tz-offset"
+import moment from "moment"
 
 export type Config = {
     miteApiKey?: string
@@ -26,6 +27,10 @@ const getConfig = (): Config => {
     if (!miteAccountName) {
         throw new Error("MITE_ACCOUNT_NAME environment variable not set. It is required to run the slack bot.")
     }
+
+    // configure the moment locale
+    moment.locale(process.env.LOCALE || "de")
+
     return {
         miteApiKey,
         slackToken,

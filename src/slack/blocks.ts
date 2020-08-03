@@ -1,6 +1,7 @@
 import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
 import { Moment } from "moment"
 import config from "../config"
+import { formatTimeReadable } from "../mite/time"
 
 const emptyTimesBlock: KnownBlock = {
     type: "section",
@@ -35,7 +36,7 @@ export const missingTimeEntriesBlock = (times: Moment[]): {text: string, blocks:
         type: "section",
         text: {
             type: "mrkdwn",
-            text: times.map(time => `• <https://${config.miteAccountName}.mite.yo.lk/#${time.format("YYYY/MM/DD")}|*${time.format("DD.MM.YYYY")}*>`).join("\n")
+            text: times.map(time => `• <https://${config.miteAccountName}.mite.yo.lk/#${time.format("YYYY/MM/DD")}|*${formatTimeReadable(time)}*>`).join("\n")
         }
     }    
     

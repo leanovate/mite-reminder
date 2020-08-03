@@ -1,4 +1,4 @@
-import { lastWeekThursdayToThursday, lastMonth, lastFortyDays } from "../../src/mite/time"
+import { lastWeekThursdayToThursday, lastMonth, lastFortyDays, formatTimeReadable } from "../../src/mite/time"
 import moment from "moment"
 
 
@@ -49,30 +49,44 @@ describe("time", () => {
     describe("getting previous month", () => {
         const dateFormat = "YYYY-MM-DD"
         test("on the first day of the month, it should return last months dates ", () => {
-            const friday = moment("2019-06-01", dateFormat)
+            const day = moment("2019-06-01", dateFormat)
 
-            const { start, end } = lastMonth(friday)
+            const { start, end } = lastMonth(day)
 
             expect(start.format(dateFormat)).toEqual("2019-05-01")
             expect(end.format(dateFormat)).toEqual("2019-05-31")
         })
         
         test("on the last day of the month, it should return last months dates ", () => {
-            const friday = moment("2019-06-30", dateFormat)
+            const day = moment("2019-06-30", dateFormat)
 
-            const { start, end } = lastMonth(friday)
+            const { start, end } = lastMonth(day)
 
             expect(start.format(dateFormat)).toEqual("2019-05-01")
             expect(end.format(dateFormat)).toEqual("2019-05-31")
         })
         
         test("should return last months date for february ", () => {
-            const friday = moment("2019-03-01", dateFormat)
+            const day = moment("2019-03-01", dateFormat)
 
-            const { start, end } = lastMonth(friday)
+            const { start, end } = lastMonth(day)
 
             expect(start.format(dateFormat)).toEqual("2019-02-01")
             expect(end.format(dateFormat)).toEqual("2019-02-28")
+        })
+    })
+
+    describe("formatTimeReadable", () => {
+        const dateFormat = "YYYY-MM-DD"
+        test("formats the time according to the moment locale", () => {
+
+            moment.locale("de")
+            const tuesdayGerman = moment("2020-06-02", dateFormat)
+            moment.locale("en")
+            const tuesdayEnglish = moment("2020-06-02", dateFormat)
+            
+            expect(formatTimeReadable(tuesdayGerman)).toEqual("Di 2020/06/02")
+            expect(formatTimeReadable(tuesdayEnglish)).toEqual("Tu 2020/06/02")
         })
     })
 })

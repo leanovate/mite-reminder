@@ -69,6 +69,8 @@ function getMissingTimeEntries(
     )
 }
 
+const formatTimeReadable = (moment: Moment): string => moment.format("dd YYYY/MM/DD")
+
 export {
     isWeekend,
     isTimeEnteredOnDay,
@@ -76,5 +78,6 @@ export {
     lastWeekThursdayToThursday,
     getMissingTimeEntries,
     lastMonth,
-    lastFortyDays
+    lastFortyDays,
+    formatTimeReadable
 }
