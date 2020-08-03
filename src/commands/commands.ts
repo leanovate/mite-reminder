@@ -5,7 +5,7 @@ import moment, { Moment } from "moment"
 import { ApiKeyIsMissing, AppError, UserIsUnknown, IOError } from "../app/errors"
 import { orElseFailWith } from "../app/utils"
 import { getMiteIdByEmail } from "../mite/miteApiWrapper"
-import { getMissingTimeEntries } from "../mite/time"
+import { getMissingTimeEntries, lastFortyDays } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
 
@@ -39,10 +39,12 @@ export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
 
     const miteId = user.miteId ?? "current"
 
+    const { start, end } = lastFortyDays(moment())
+
     return getMissingTimeEntries(
         miteId,
-        moment().subtract(40, "day"),
-        moment(),
+        start,
+        end,
         context.miteApi
     )
 }

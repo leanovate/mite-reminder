@@ -1,4 +1,4 @@
-import { lastWeekThursdayToThursday, lastMonth } from "../../src/mite/time"
+import { lastWeekThursdayToThursday, lastMonth, lastFortyDays } from "../../src/mite/time"
 import moment from "moment"
 
 
@@ -30,6 +30,18 @@ describe("time", () => {
 
             expect(start.format(dateFormat)).toEqual("2019-05-30")
             expect(end.format(dateFormat)).toEqual("2019-06-06")
+        })
+    })
+
+    describe("getting the last 40 days", () => {
+        const dateFormat = "YYYY-MM-DD"
+        test("should include the last forty days, but not today", () => {
+            const friday = moment("2019-06-15", dateFormat)
+
+            const { start, end } = lastFortyDays(friday)
+
+            expect(start.format(dateFormat)).toEqual("2019-05-06")
+            expect(end.format(dateFormat)).toEqual("2019-06-14")
         })
     })
 

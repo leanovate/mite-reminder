@@ -47,6 +47,13 @@ const lastMonth = (currentMoment: Moment): { start: Moment, end: Moment } => {
     }
 }
 
+const lastFortyDays = (currentMoment: Moment): { start: Moment, end: Moment } => {
+    return {
+        start: currentMoment.clone().subtract(40, "days"),
+        end: currentMoment.clone().subtract(1, "day")
+    }
+}
+
 function getMissingTimeEntries(
     miteUserId: number | "current", 
     from: Moment, 
@@ -68,5 +75,6 @@ export {
     getDatesBetween,
     lastWeekThursdayToThursday,
     getMissingTimeEntries,
-    lastMonth
+    lastMonth,
+    lastFortyDays
 }
