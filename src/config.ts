@@ -28,7 +28,6 @@ const getConfig = (): Config => {
         throw new Error("MITE_ACCOUNT_NAME environment variable not set. It is required to run the slack bot.")
     }
 
-    // configure the moment locale
     moment.locale(process.env.LOCALE || "de")
 
     return {
