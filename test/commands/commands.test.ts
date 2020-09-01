@@ -120,4 +120,14 @@ describe("Commands", () => {
 
         expect(usersThatAreMissingTimes).toEqual(users)
     })
+
+    it("should only return users that are missing their times", async () => {
+        getTimeEntriesMock.mockReturnValue([]) // TODO mock entered times for "user"
+        loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
+
+        const users: string[] = ["user", "user with missing times"]
+        const usersThatAreMissingTimes: string[] = getRight(await doCheckUsers(defaultUserContext, users)())
+
+        expect(usersThatAreMissingTimes).toEqual(["user with missing times"])
+    })
 })
