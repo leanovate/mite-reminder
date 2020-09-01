@@ -1,16 +1,16 @@
 import { either, taskEither } from "fp-ts"
 import { Either } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/function"
+import { fold } from "fp-ts/lib/TaskEither"
 import { Moment } from "moment"
 import readline from "readline"
 import { AppError, UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister } from "../commands/commands"
+import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
 import { createUserContextFromSlackId } from "../slack/createUserContext"
-import { fold } from "fp-ts/lib/TaskEither"
-import config from "../config"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -39,6 +39,9 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
             case "unregister":
                 await doUnregister(context)()
                     .then(displayUnregisterResult)
+                break
+            case "check channel":
+                console.log(`Cannot check channel ${command.channelName} (or any channel) on the command line.`)
             }
         } else {
             console.log("I don't understand")

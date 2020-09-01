@@ -20,7 +20,8 @@ export interface UnregisterCommand extends BaseMiteCommand {
 }
 
 export interface CheckChannel extends BaseMiteCommand {
-    name: "check channel"
+    name: "check channel",
+    channelName: string
 }
 
 export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand | CheckChannel
@@ -30,7 +31,7 @@ const register: Parser<RegisterCommand> =
       P.string("register")
           .then(P.whitespace)
           .then(P.all)
-          .map(result => ({ name: "register", miteApiKey: result }) as RegisterCommand),
+          .map(result => ({ name: "register", miteApiKey: result } as RegisterCommand)),
       P.string("register").result( { name: "register" } as RegisterCommand)
   )
 
@@ -39,7 +40,8 @@ const check: Parser<CheckCommand> = P.string("check").result({ name: "check" } a
 const checkChannel: Parser<CheckChannel> = P.string("check")
     .then(P.whitespace)
     .then(P.string("#"))
-    .then(P.all).map(result => ({ name: "check channel", channelName: `#${result}` }) as CheckChannel)
+    .then(P.all)
+    .map(result => ({ name: "check channel", channelName: `#${result}` } as CheckChannel))
 const all: Parser<MiteCommand> = P.alt(register, unregister, checkChannel, check)
 
 export function parse(commandString: string): P.Result<MiteCommand> {

@@ -5,15 +5,15 @@ jest.mock("../../src/mite/miteApiWrapper", () => ({
     getMiteIdByEmail: getMiteIdMock
 }))
 
+import { option, taskEither } from "fp-ts"
 import { MiteApi } from "mite-api"
+import { UserIsUnknown } from "../../src/app/errors"
 import { RegisterCommand } from "../../src/commands/commandParser"
-import { doCheck, doRegister, doUnregister } from "../../src/commands/commands"
+import { doCheck, doCheckUsers, doRegister, doUnregister } from "../../src/commands/commands"
 import { Config } from "../../src/config"
 import { Repository } from "../../src/db/userRepository"
 import { UserContext } from "../../src/slack/userContext"
-import { taskEither, option } from "fp-ts"
-import { getLeft } from "../testUtils"
-import { UserIsUnknown } from "../../src/app/errors"
+import { getLeft, getRight } from "../testUtils"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
@@ -109,5 +109,15 @@ describe("Commands", () => {
         const result = await doCheck(defaultUserContext)()
 
         expect(getLeft(result)).toEqual(new UserIsUnknown(defaultUserContext.slackId))
+    })
+
+    it("should return a list of all users when all users are missing times", async () => {
+        getTimeEntriesMock.mockReturnValue([])
+        loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
+
+        const users: string[] = ["test-user 1", "test-user 2"]
+        const usersThatAreMissingTimes: string[] = getRight(await doCheckUsers(defaultUserContext, users)())
+
+        expect(usersThatAreMissingTimes).toEqual(users)
     })
 })

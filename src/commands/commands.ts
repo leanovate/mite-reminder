@@ -2,7 +2,7 @@ import { taskEither as T } from "fp-ts"
 import { pipe } from "fp-ts/lib/function"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import moment, { Moment } from "moment"
-import { ApiKeyIsMissing, AppError, UserIsUnknown, IOError } from "../app/errors"
+import { ApiKeyIsMissing, AppError, IOError, UserIsUnknown } from "../app/errors"
 import { orElseFailWith } from "../app/utils"
 import { getMiteIdByEmail } from "../mite/miteApiWrapper"
 import { getMissingTimeEntries, lastFortyDays } from "../mite/time"
@@ -51,4 +51,8 @@ export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
 
 export function doUnregister(context: UserContext): TaskEither<IOError, void> {
     return context.repository.unregisterUser(context.slackId)
+}
+
+export function doCheckUsers(context: UserContext, slackIds: string[]): TaskEither<IOError, string[]> {
+    return T.right(slackIds)
 }
