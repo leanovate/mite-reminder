@@ -16,6 +16,13 @@ describe("command parser", () => {
         expect((<Success<MiteCommand>>result).value).toEqual({ name: "register" })
     })
 
+    it("should parse the 'check #channel-name' command", () => {
+        const result = parse("check #channel-name")
+
+        expect(result.status).toBeTruthy()
+        expect((<Success<MiteCommand>>result).value).toEqual({ name: "check channel", channelName: "#channel-name" })
+    })
+
     it("should parse the 'register' command with a miteApiKey", () => {
         const testKey = "my-mite-api-key"
         const result = parse(`register ${testKey}`)
