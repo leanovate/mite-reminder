@@ -37,39 +37,39 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
     const command = parserResult.value
 
     switch (command.name) {
-        case "check":
-            await pipe(
-                doCheck(context),
-                taskEither.fold(
-                    e => reportError(say, e),
-                    result => async () => { await say(missingTimeEntriesBlock(result)) })
-            )()
-            break
-        case "check channel":
-            // TODO give a special error message when there is no mite api key for the user, like:
-            //  "You need to supply your own admin key to use the functionality"
-            await pipe(
-                getAllUsersFromChannel(app, command.channelName),
-                taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList)),
-                taskEither.map(userReportEntriesBlock),
-                taskEither.fold(
-                    e => reportError(say, e),
-                    result => async () => { await say(result) }
-                )
+    case "check":
+        await pipe(
+            doCheck(context),
+            taskEither.fold(
+                e => reportError(say, e),
+                result => async () => { await say(missingTimeEntriesBlock(result)) })
+        )()
+        break
+    case "check channel":
+        // TODO give a special error message when there is no mite api key for the user, like:
+        //  "You need to supply your own admin key to use the functionality"
+        await pipe(
+            getAllUsersFromChannel(app, command.channelName),
+            taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList)),
+            taskEither.map(userReportEntriesBlock),
+            taskEither.fold(
+                e => reportError(say, e),
+                result => async () => { await say(result) }
             )
-            break
-        case "register":
-            await pipe(
-                doRegister(command, context, slackUserResolver(app)),
-                taskEither.fold(
-                    () => async () => sayMissingApiKey(say),
-                    () => async () => { await say("Success!") }
-                )
-            )()
-            break
-        case "unregister":
-            await doUnregister(context)()
-                .then(() => displayUnregisterResult(say))
+        )
+        break
+    case "register":
+        await pipe(
+            doRegister(command, context, slackUserResolver(app)),
+            taskEither.fold(
+                () => async () => sayMissingApiKey(say),
+                () => async () => { await say("Success!") }
+            )
+        )()
+        break
+    case "unregister":
+        await doUnregister(context)()
+            .then(() => displayUnregisterResult(say))
     }
 })
 

@@ -42,6 +42,12 @@ describe("Commands", () => {
         miteApi: miteApiMock,
         slackId: "slack-id"
     }
+    const createTimeEntries = (numberOfTieEntries: number): TimeEntries => {
+        return [...Array(numberOfTieEntries).keys()]
+            .map((daysToSubstract) => ({
+                time_entry: { date_at: moment().subtract(daysToSubstract + 1, "day").format("YYYY-MM-DD") } as unknown as TimeEntry
+            })) as TimeEntries
+    }
 
     afterEach(() => {
         jest.clearAllMocks()
@@ -154,11 +160,4 @@ describe("Commands", () => {
             "user with missing times": CheckUserResult.IS_MISSING_TIMES
         })
     })
-
-    const createTimeEntries = (numberOfTieEntries: number): TimeEntries => {
-        return [...Array(numberOfTieEntries).keys()]
-            .map((daysToSubstract) => ({
-                time_entry: { date_at: moment().subtract(daysToSubstract + 1, "day").format("YYYY-MM-DD") } as any as TimeEntry
-            })) as TimeEntries
-    }
 })

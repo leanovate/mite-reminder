@@ -6,12 +6,11 @@ import { Moment } from "moment"
 import readline from "readline"
 import { AppError, UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister, doCheckUsers } from "../commands/commands"
+import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/commands"
 import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
 import { createUserContextFromSlackId } from "../slack/createUserContext"
-import { getAllUsersFromChannel } from "../slack/channels"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -31,21 +30,21 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
             const command = parsedAnswer.value
 
             switch (command.name) {
-                case "check":
-                    await doCheck(context)()
-                        .then(displayCheckResult)
-                    break
-                case "register":
-                    await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
-                        .then(displayRegisterResult)
-                    break
-                case "unregister":
-                    await doUnregister(context)()
-                        .then(displayUnregisterResult)
-                    break
-                case "check channel":
-                    await doCheckUsers(context, ["cmd-user"])()
-                        .then(displayCheckUsersResults)
+            case "check":
+                await doCheck(context)()
+                    .then(displayCheckResult)
+                break
+            case "register":
+                await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
+                    .then(displayRegisterResult)
+                break
+            case "unregister":
+                await doUnregister(context)()
+                    .then(displayUnregisterResult)
+                break
+            case "check channel":
+                await doCheckUsers(context, ["cmd-user"])()
+                    .then(displayCheckUsersResults)
             }
         } else {
             console.log("I don't understand")
