@@ -56,7 +56,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
                 e => reportError(say, e),
                 result => async () => { await say(result) }
             )
-        )
+        )()
         break
     case "register":
         await pipe(
