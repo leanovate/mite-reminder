@@ -61,6 +61,7 @@ export enum CheckUserResult {
 
 export function doCheckUsers(context: UserContext, slackIds: string[]): TaskEither<AppError, CheckUsersReport> {
     const checkTimesForUser = (slackId: string): T.TaskEither<AppError, { slackId: string; missingTimes: moment.Moment[] }> => pipe(
+        // FIXME this doesn't work because doCheck tries to lookup each user, which fails when we try to check for users that are not registered
         doCheck({ ...context, slackId }),
         T.map(missingTimes => ({ slackId, missingTimes }))
     )
