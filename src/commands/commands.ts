@@ -66,7 +66,6 @@ export function doCheckUsers(context: UserContext, slackIds: string[]): TaskEith
     )
     const reduceMissingTimesIntoReport = (results: { slackId: string; missingTimes: moment.Moment[] }[]): { [x: string]: CheckUserResult } => pipe(
         results,
-        results => {console.log(results); return results},
         A.reduce({}, (report: CheckUsersReport, element: { slackId: string; missingTimes: moment.Moment[]} ) => ({
             ...report,
             [element.slackId]: element.missingTimes.length > 0

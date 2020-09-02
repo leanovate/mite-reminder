@@ -1,4 +1,4 @@
-import { parse, MiteCommand } from "../../src/commands/commandParser"
+import { parse, MiteCommand, tryParse } from "../../src/commands/commandParser"
 import { Success } from "parsimmon"
 
 describe("command parser", () => {
@@ -6,7 +6,7 @@ describe("command parser", () => {
         expect(parse(" register ").status).toBeTruthy()
     })
     it("should ignore case", () => {
-        expect(parse(" register ").status).toBeTruthy()
+        expect(parse("Register").status).toBeTruthy()
     })
 
     it("should parse the 'register' command", () => {
@@ -16,11 +16,12 @@ describe("command parser", () => {
         expect((<Success<MiteCommand>>result).value).toEqual({ name: "register" })
     })
 
-    it("should parse the 'check #channel-name' command", () => {
-        const result = parse("check #channel-name")
+    it("should extract the channel id from the 'check channel' command", () => {
+        const result = parse("check <#E43QM54DC|general>")
 
+        tryParse("check <#E43QM54DC|general>")
         expect(result.status).toBeTruthy()
-        expect((<Success<MiteCommand>>result).value).toEqual({ name: "check channel", channelName: "#channel-name" })
+        expect((<Success<MiteCommand>>result).value).toEqual({ name: "check channel", channelName: "E43QM54DC" })
     })
 
     it("should parse the 'register' command with a miteApiKey", () => {

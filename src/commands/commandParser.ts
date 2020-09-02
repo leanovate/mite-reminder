@@ -39,9 +39,10 @@ const unregister: Parser<UnregisterCommand> = P.string("unregister").result({ na
 const check: Parser<CheckCommand> = P.string("check").result({ name: "check" } as CheckCommand)
 const checkChannel: Parser<CheckChannel> = P.string("check")
     .then(P.whitespace)
-    .then(P.string("#"))
-    .then(P.all)
-    .map(result => ({ name: "check channel", channelName: `#${result}` } as CheckChannel))
+    .skip(P.string("<#"))
+    .then(P.takeWhile(char => char !== "|"))
+    .skip(P.all)
+    .map(result => ({ name: "check channel", channelName: result.toUpperCase() } as CheckChannel))
 const all: Parser<MiteCommand> = P.alt(register, unregister, checkChannel, check)
 
 export function parse(commandString: string): P.Result<MiteCommand> {

@@ -125,7 +125,6 @@ describe("Commands", () => {
 
         const users: string[] = ["test-user 1", "test-user 2"]
 
-        console.log("checkUsers list: ", doCheckUsers(defaultUserContext, users)())
         const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
 
         expect(usersThatAreMissingTimes).toEqual({
