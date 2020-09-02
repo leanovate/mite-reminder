@@ -6,7 +6,7 @@ jest.mock("../../src/mite/miteApiWrapper", () => ({
 }))
 
 import { option, taskEither } from "fp-ts"
-import { MiteApi } from "mite-api"
+import { MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import moment from "moment"
 import { UserIsUnknown } from "../../src/app/errors"
 import { RegisterCommand } from "../../src/commands/commandParser"
@@ -118,7 +118,7 @@ describe("Commands", () => {
         loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
 
         const users: string[] = ["test-user 1", "test-user 2"]
-        
+
         console.log("checkUsers list: ", doCheckUsers(defaultUserContext, users)())
         const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
 
@@ -128,16 +128,37 @@ describe("Commands", () => {
         })
     })
 
-    xit("should only return users that are missing their times", async () => {
-        getTimeEntriesMock.mockImplementation((_miteApi, miteId) => miteId === "miteuser" ? [moment()] : [])
-        loadUserMock.mockImplementation(slackId => ({ miteId: "mite"+slackId }))
+    it("should show all users have completed times when all users have completed their entries", async () => {
+        getTimeEntriesMock.mockReturnValue(T.right(createTimeEntries(40)))
+        loadUserMock.mockImplementation(slackId => ({ miteId: "mite" + slackId }))
 
-        const users: string[] = ["user", "user with missing times"]
-        const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
+        const users: string[] = ["user completed times", "another user with completed times"]
+        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
 
-        expect(usersThatAreMissingTimes).toEqual({
-            "user": "COMPLETED_ALL_ENTRIES",
-            "user with missing times": "IS_MISSING_TIMES"
+        expect(reportWIthCompletedTimes).toEqual({
+            "user completed times": CheckUserResult.COMPLETED_ALL_ENTRIES,
+            "another user with completed times": CheckUserResult.COMPLETED_ALL_ENTRIES
         })
     })
+
+    it("should report users with missing times and users that completed their entries", async () => {
+        getTimeEntriesMock.mockReturnValueOnce(T.right(createTimeEntries(40)))
+        getTimeEntriesMock.mockReturnValueOnce(T.right([]))
+        loadUserMock.mockImplementation(slackId => ({ miteId: "mite" + slackId }))
+
+        const users: string[] = ["user completed times", "user with missing times"]
+        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
+
+        expect(reportWIthCompletedTimes).toEqual({
+            "user completed times": CheckUserResult.COMPLETED_ALL_ENTRIES,
+            "user with missing times": CheckUserResult.IS_MISSING_TIMES
+        })
+    })
+
+    const createTimeEntries = (numberOfTieEntries: number): TimeEntries => {
+        return [...Array(numberOfTieEntries).keys()]
+            .map((daysToSubstract) => ({
+                time_entry: { date_at: moment().subtract(daysToSubstract + 1, "day").format("YYYY-MM-DD") } as any as TimeEntry
+            })) as TimeEntries
+    }
 })
