@@ -25,3 +25,18 @@ export function createUserContextFromSlackId(repository: Repository, slackId: st
         config
     }
 }
+
+/**
+ * This method never uses the globally defined mite api key (from the config).
+ */
+export function createRestrictedUserContext(repository: Repository, slackId: string): UserContext {
+    const user = repository.loadUser(slackId)
+    const miteApiKey = user?.miteApiKey
+
+    return {
+        repository,
+        slackId,
+        miteApi: miteApiKey ? createMiteApi(miteApiKey, config.miteAccountName) : undefined,
+        config
+    }
+}

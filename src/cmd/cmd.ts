@@ -6,18 +6,21 @@ import { Moment } from "moment"
 import readline from "readline"
 import { AppError, UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister } from "../commands/commands"
+import { doCheck, doRegister, doUnregister, doCheckUsers } from "../commands/commands"
 import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
 import { createUserContextFromSlackId } from "../slack/createUserContext"
+import { getAllUsersFromChannel } from "../slack/channels"
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 })
 
-const displayRegisterResult = either.fold(e => {throw e}, () => {console.log("Success!")})
+const displayRegisterResult = either.fold(e => { throw e }, () => { console.log("Success!") })
+
+const displayCheckUsersResults = either.fold(e => { throw e }, (report) => { console.log("report", report) })
 
 const requestAndRunCommand = async (repository: Repository): Promise<void> => {
     rl.question("Enter a command ", async (answer) => {
@@ -27,21 +30,22 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
             const context = createUserContextFromSlackId(repository, "cmd-user")
             const command = parsedAnswer.value
 
-            switch(command.name) {
-            case "check":
-                await doCheck(context)()
-                    .then(displayCheckResult)
-                break
-            case "register":
-                await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
-                    .then(displayRegisterResult)
-                break
-            case "unregister":
-                await doUnregister(context)()
-                    .then(displayUnregisterResult)
-                break
-            case "check channel":
-                console.log(`Cannot check channel ${command.channelName} (or any channel) on the command line.`)
+            switch (command.name) {
+                case "check":
+                    await doCheck(context)()
+                        .then(displayCheckResult)
+                    break
+                case "register":
+                    await doRegister(command, context, () => taskEither.left(new UserIsUnknown("cmd-user")))()
+                        .then(displayRegisterResult)
+                    break
+                case "unregister":
+                    await doUnregister(context)()
+                        .then(displayUnregisterResult)
+                    break
+                case "check channel":
+                    await doCheckUsers(context, ["cmd-user"])()
+                        .then(displayCheckUsersResults)
             }
         } else {
             console.log("I don't understand")
@@ -55,7 +59,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 function displayCheckResult(result: Either<AppError, Moment[]>) {
     pipe(
         result,
-        either.fold(e => {throw e}, timeEntries => {
+        either.fold(e => { throw e }, timeEntries => {
             const message = timeEntries.length > 0
                 ? "Your time entries for the following dates are missing or contain 0 minutes:\n"
                 + timeEntries.map(date => `https://${config.miteAccountName}.mite.yo.lk/#${date.format("YYYY/MM/DD")}`)
@@ -67,7 +71,7 @@ function displayCheckResult(result: Either<AppError, Moment[]>) {
 }
 
 function displayUnregisterResult() {
-    console.log("Success!")   
+    console.log("Success!")
 }
 
 pipe(

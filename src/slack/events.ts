@@ -2,18 +2,19 @@ import { App, BlockAction, SayFn } from "@slack/bolt"
 import { WebAPICallResult } from "@slack/web-api"
 import { taskEither } from "fp-ts"
 import { pipe } from "fp-ts/lib/pipeable"
+import { Task } from "fp-ts/lib/Task"
 import { MiteApiError } from "mite-api"
 import { AppError } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doRegister, doUnregister } from "../commands/commands"
+import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/commands"
+import config from "../config"
 import { Repository } from "../db/userRepository"
-import { missingTimeEntriesBlock } from "./blocks"
-import { createUserContextFromSlackId } from "./createUserContext"
+import { missingTimeEntriesBlock, userReportEntriesBlock } from "./blocks"
+import { getAllUsersFromChannel } from "./channels"
+import { createUserContextFromSlackId, createRestrictedUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
 import { Actions, openRegisterWithApiKeyModal, publishDefaultHomeTab, registerWithApiKeyModal } from "./home"
 import { slackUserResolver } from "./slackUserResolver"
-import { Task } from "fp-ts/lib/Task"
-import config from "../config"
 
 export type SlackApiUser = {
     user?: { profile?: { email?: string } }
@@ -32,29 +33,43 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
     }
 
     const context = createUserContextFromSlackId(repository, message.user)
+    const restrictedUserContext = createRestrictedUserContext(repository, message.user)
     const command = parserResult.value
 
     switch (command.name) {
-    case "check":
-        await pipe(
-            doCheck(context),
-            taskEither.fold(
-                e => reportError(say, e), 
-                result => async () => {await say(missingTimeEntriesBlock(result))})
-        )()
-        break
-    case "register":
-        await pipe(
-            doRegister(command, context, slackUserResolver(app)),
-            taskEither.fold(
-                () => async () => sayMissingApiKey(say), 
-                () => async () => {await say("Success!")}
+        case "check":
+            await pipe(
+                doCheck(context),
+                taskEither.fold(
+                    e => reportError(say, e),
+                    result => async () => { await say(missingTimeEntriesBlock(result)) })
+            )()
+            break
+        case "check channel":
+            // TODO give a special error message when there is no mite api key for the user, like:
+            //  "You need to supply your own admin key to use the functionality"
+            await pipe(
+                getAllUsersFromChannel(app, command.channelName),
+                taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList)),
+                taskEither.map(userReportEntriesBlock),
+                taskEither.fold(
+                    e => reportError(say, e),
+                    result => async () => { await say(result) }
+                )
             )
-        )()
-        break
-    case "unregister":
-        await doUnregister(context)()
-            .then(() => displayUnregisterResult(say))
+            break
+        case "register":
+            await pipe(
+                doRegister(command, context, slackUserResolver(app)),
+                taskEither.fold(
+                    () => async () => sayMissingApiKey(say),
+                    () => async () => { await say("Success!") }
+                )
+            )()
+            break
+        case "unregister":
+            await doUnregister(context)()
+                .then(() => displayUnregisterResult(say))
     }
 })
 
@@ -103,8 +118,8 @@ export const setupActionHandling: (app: App, repository: Repository) => void = (
         await ack()
         const miteApiKey: string | undefined = view.state.values[registerWithApiKeyModal.inputBlockId]?.[registerWithApiKeyModal.inputBlockActionId]?.value
 
-        if(miteApiKey === undefined) {
-            throw new Error("mite-reminder did expect a form value but was unable to find one.") 
+        if (miteApiKey === undefined) {
+            throw new Error("mite-reminder did expect a form value but was unable to find one.")
         }
 
         await repository.registerUserWithMiteApiKey(body.user.id, miteApiKey)()
