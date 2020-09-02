@@ -7,13 +7,15 @@ jest.mock("../../src/mite/miteApiWrapper", () => ({
 
 import { option, taskEither } from "fp-ts"
 import { MiteApi } from "mite-api"
+import moment from "moment"
 import { UserIsUnknown } from "../../src/app/errors"
 import { RegisterCommand } from "../../src/commands/commandParser"
-import { doCheck, doCheckUsers, doRegister, doUnregister } from "../../src/commands/commands"
+import { CheckUsersReport, doCheck, doCheckUsers, doRegister, doUnregister, CheckUserResult } from "../../src/commands/commands"
 import { Config } from "../../src/config"
 import { Repository } from "../../src/db/userRepository"
 import { UserContext } from "../../src/slack/userContext"
 import { getLeft, getRight } from "../testUtils"
+import { taskEither as T } from "fp-ts"
 
 describe("Commands", () => {
     const loadUserMock = jest.fn()
@@ -111,23 +113,31 @@ describe("Commands", () => {
         expect(getLeft(result)).toEqual(new UserIsUnknown(defaultUserContext.slackId))
     })
 
-    it("should return a list of all users when all users are missing times", async () => {
-        getTimeEntriesMock.mockReturnValue([])
+    it("should show all users are missing times when all users are missing times", async () => {
+        getTimeEntriesMock.mockReturnValue(T.right([]))
         loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
 
         const users: string[] = ["test-user 1", "test-user 2"]
-        const usersThatAreMissingTimes: string[] = getRight(await doCheckUsers(defaultUserContext, users)())
+        
+        console.log("checkUsers list: ", doCheckUsers(defaultUserContext, users)())
+        const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
 
-        expect(usersThatAreMissingTimes).toEqual(users)
+        expect(usersThatAreMissingTimes).toEqual({
+            "test-user 1": CheckUserResult.IS_MISSING_TIMES,
+            "test-user 2": CheckUserResult.IS_MISSING_TIMES
+        })
     })
 
-    it("should only return users that are missing their times", async () => {
-        getTimeEntriesMock.mockReturnValue([]) // TODO mock entered times for "user"
-        loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
+    xit("should only return users that are missing their times", async () => {
+        getTimeEntriesMock.mockImplementation((_miteApi, miteId) => miteId === "miteuser" ? [moment()] : [])
+        loadUserMock.mockImplementation(slackId => ({ miteId: "mite"+slackId }))
 
         const users: string[] = ["user", "user with missing times"]
-        const usersThatAreMissingTimes: string[] = getRight(await doCheckUsers(defaultUserContext, users)())
+        const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
 
-        expect(usersThatAreMissingTimes).toEqual(["user with missing times"])
+        expect(usersThatAreMissingTimes).toEqual({
+            "user": "COMPLETED_ALL_ENTRIES",
+            "user with missing times": "IS_MISSING_TIMES"
+        })
     })
 })
