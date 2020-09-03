@@ -6,11 +6,11 @@ import { Moment } from "moment"
 import readline from "readline"
 import { AppError, UserIsUnknown } from "../app/errors"
 import { parse } from "../commands/commandParser"
-import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/commands"
+import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
-import { createRestrictedUserContext, createUserContextFromSlackId } from "../slack/createUserContext"
+import { createUserContextFromSlackId } from "../slack/createUserContext"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -19,7 +19,6 @@ const rl = readline.createInterface({
 
 const displayRegisterResult = either.fold(e => { throw e }, () => { console.log("Success!") })
 
-const displayCheckUsersResults = either.fold(e => { throw e }, (report) => { console.log("report", report) })
 
 const requestAndRunCommand = async (repository: Repository): Promise<void> => {
     rl.question("Enter a command ", async (answer) => {
@@ -27,7 +26,6 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
         if (parsedAnswer.status) {
             const context = createUserContextFromSlackId(repository, "cmd-user")
-            const restrictedUserContext = createRestrictedUserContext(repository, "cmd-user")
             const command = parsedAnswer.value
 
             switch (command.name) {
@@ -46,6 +44,8 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
             case "check channel":
                 /*
                 you could test functionality if you provide an existing mite account here:
+                const displayCheckUsersResults = either.fold(e => { throw e }, (report) => { console.log("report", report) })
+                const restrictedUserContext = createRestrictedUserContext(repository, "cmd-user")
                 await doCheckUsers(restrictedUserContext, ["cmd-user"], () => taskEither.right({ email: "some.email.address@leanovate.de" }))()
                     .then(displayCheckUsersResults)
                 */

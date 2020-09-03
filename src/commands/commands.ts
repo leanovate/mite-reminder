@@ -86,7 +86,7 @@ export function doCheckUsers(context: UserContext, slackIds: string[], userResol
 
     const checkTimesForUser = (slackId: string): T.TaskEither<AppError, { slackId: string; missingTimes: moment.Moment[] }> => pipe(
         translateSlackUserToMiteId(slackId, context.miteApi, userResolver),
-        T.chain((miteId) => getMissingTimesForMiteId(miteId, context.miteApi)),
+        T.chain(miteId => getMissingTimesForMiteId(miteId, context.miteApi)),
         T.map(missingTimes => ({ slackId, missingTimes }))
     )
     const reduceMissingTimesIntoReport = (results: { slackId: string; missingTimes: moment.Moment[] }[]): { [x: string]: CheckUserResult } => pipe(
