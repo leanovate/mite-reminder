@@ -37,7 +37,7 @@ export const userReportEntriesBlock = (report: CheckUsersReport): { text: string
         type: "section",
         text: {
             type: "mrkdwn",
-            text: `:chart_with_updwards_trend: Following Users have tracked all times: ${usersWithCompletedTimes.join(", ")}`
+            text: `:chart_with_upwards_trend: Following Users have tracked all times: ${usersWithCompletedTimes.join(", ")}`
         }
     }
 
