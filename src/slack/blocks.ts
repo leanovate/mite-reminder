@@ -18,13 +18,14 @@ const emptyTimesBlock: KnownBlock = {
 }
 
 export const userReportEntriesBlock = (report: CheckUsersReport): { text: string, blocks: KnownBlock[] } => {
+    const convertIdToLink = (userId: string): string => `<@${userId}>`
     const usersWithMissingEntries = Object.keys(report)
         .filter(key => report[key] == CheckUserResult.IS_MISSING_TIMES)
-        .map(userId => `@${userId}`)
+        .map(convertIdToLink)
 
     const usersWithCompletedTimes = Object.keys(report)
         .filter(key => report[key] == CheckUserResult.COMPLETED_ALL_ENTRIES)
-        .map(userId => `@${userId}`)
+        .map(convertIdToLink)
 
     const usersWithMissingTimesBlock: SectionBlock = {
         type: "section",
