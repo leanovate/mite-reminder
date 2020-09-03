@@ -9,6 +9,7 @@ import { getMissingTimeEntries, lastFortyDays } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
 import * as A from "fp-ts/lib/Array"
+import { MiteApi } from "mite-api"
 
 export function doRegister(command: RegisterCommand, context: UserContext, getEmailFromSlackId: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, void> {
     if (command.miteApiKey) {
@@ -18,7 +19,7 @@ export function doRegister(command: RegisterCommand, context: UserContext, getEm
     if (!isCheckContext(context)) {
         // If the user registers without an API key, we need a global admin key instead to we can call mite
         return T.left(new ApiKeyIsMissing(context.slackId))
-    }    
+    }
 
     return pipe(
         getEmailFromSlackId(context.slackId),
@@ -28,7 +29,15 @@ export function doRegister(command: RegisterCommand, context: UserContext, getEm
     )
 }
 
-export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
+export const translateSlackUserToMiteId = (slackUserId: string, miteApi: MiteApi, getEmailFromSlackId: (slackId: string) => TaskEither<AppError, { email: string }>): TaskEither<AppError, number> => {
+    return pipe(
+        getEmailFromSlackId(slackUserId),
+        T.chain(({ email }) => getMiteIdByEmail(miteApi, email)),
+        T.chain(orElseFailWith(new UserIsUnknown(slackUserId))),
+    )
+}
+
+export function doCheck(context: UserContext): TaskEither<AppError, Moment[]> {
     if (!isCheckContext(context)) {
         return T.left(new ApiKeyIsMissing(context.slackId))
     }
@@ -50,6 +59,17 @@ export function doCheck(context: UserContext): TaskEither<AppError,Moment[]> {
     )
 }
 
+export const getMissingTimesForMiteId = (miteId: number, miteApi: MiteApi): TaskEither<AppError, Moment[]> => {
+    const { start, end } = lastFortyDays(moment())
+
+    return getMissingTimeEntries(
+        miteId,
+        start,
+        end,
+        miteApi
+    )
+}
+
 export function doUnregister(context: UserContext): TaskEither<IOError, void> {
     return context.repository.unregisterUser(context.slackId)
 }
@@ -59,15 +79,19 @@ export enum CheckUserResult {
     IS_MISSING_TIMES
 }
 
-export function doCheckUsers(context: UserContext, slackIds: string[]): TaskEither<AppError, CheckUsersReport> {
+export function doCheckUsers(context: UserContext, slackIds: string[], userResolver: (slackId: string) => TaskEither<AppError, { email: string; }>): TaskEither<AppError, CheckUsersReport> {
+    if (!isCheckContext(context)) {
+        return T.left(new ApiKeyIsMissing(context.slackId))
+    }
+
     const checkTimesForUser = (slackId: string): T.TaskEither<AppError, { slackId: string; missingTimes: moment.Moment[] }> => pipe(
-        // FIXME this doesn't work because doCheck tries to lookup each user, which fails when we try to check for users that are not registered
-        doCheck({ ...context, slackId }),
+        translateSlackUserToMiteId(slackId, context.miteApi, userResolver),
+        T.chain((miteId) => getMissingTimesForMiteId(miteId, context.miteApi)),
         T.map(missingTimes => ({ slackId, missingTimes }))
     )
     const reduceMissingTimesIntoReport = (results: { slackId: string; missingTimes: moment.Moment[] }[]): { [x: string]: CheckUserResult } => pipe(
         results,
-        A.reduce({}, (report: CheckUsersReport, element: { slackId: string; missingTimes: moment.Moment[]} ) => ({
+        A.reduce({}, (report: CheckUsersReport, element: { slackId: string; missingTimes: moment.Moment[] }) => ({
             ...report,
             [element.slackId]: element.missingTimes.length > 0
                 ? CheckUserResult.IS_MISSING_TIMES

@@ -10,7 +10,7 @@ import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/com
 import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
-import { createUserContextFromSlackId } from "../slack/createUserContext"
+import { createRestrictedUserContext, createUserContextFromSlackId } from "../slack/createUserContext"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -27,6 +27,7 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
 
         if (parsedAnswer.status) {
             const context = createUserContextFromSlackId(repository, "cmd-user")
+            const restrictedUserContext = createRestrictedUserContext(repository, "cmd-user")
             const command = parsedAnswer.value
 
             switch (command.name) {
@@ -43,8 +44,12 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                     .then(displayUnregisterResult)
                 break
             case "check channel":
-                await doCheckUsers(context, ["cmd-user"])()
+                /*
+                you could test functionality if you provide an existing mite account here:
+                await doCheckUsers(restrictedUserContext, ["cmd-user"], () => taskEither.right({ email: "some.email.address@leanovate.de" }))()
                     .then(displayCheckUsersResults)
+                */
+                console.log("sorry, but that's not possible here")
             }
         } else {
             console.log("I don't understand")

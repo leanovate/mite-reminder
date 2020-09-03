@@ -50,7 +50,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
         //  "You need to supply your own admin key to use the functionality"
         await pipe(
             getAllUsersFromChannel(app, command.channelName),
-            taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList)),
+            taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList, slackUserResolver(app))),
             taskEither.map(userReportEntriesBlock),
             taskEither.fold(
                 e => reportError(say, e),

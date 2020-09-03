@@ -125,7 +125,7 @@ describe("Commands", () => {
 
         const users: string[] = ["test-user 1", "test-user 2"]
 
-        const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
+        const usersThatAreMissingTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users, () => taskEither.right({ email: "test@leanovate.de" }))())
 
         expect(usersThatAreMissingTimes).toEqual({
             "test-user 1": CheckUserResult.IS_MISSING_TIMES,
@@ -138,7 +138,7 @@ describe("Commands", () => {
         loadUserMock.mockImplementation(slackId => ({ miteId: "mite" + slackId }))
 
         const users: string[] = ["user completed times", "another user with completed times"]
-        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
+        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users, () => taskEither.right({ email: "test@leanovate.de" }))())
 
         expect(reportWIthCompletedTimes).toEqual({
             "user completed times": CheckUserResult.COMPLETED_ALL_ENTRIES,
@@ -152,7 +152,7 @@ describe("Commands", () => {
         loadUserMock.mockImplementation(slackId => ({ miteId: "mite" + slackId }))
 
         const users: string[] = ["user completed times", "user with missing times"]
-        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users)())
+        const reportWIthCompletedTimes: CheckUsersReport = getRight(await doCheckUsers(defaultUserContext, users, () => taskEither.right({ email: "test@leanovate.de" }))())
 
         expect(reportWIthCompletedTimes).toEqual({
             "user completed times": CheckUserResult.COMPLETED_ALL_ENTRIES,
