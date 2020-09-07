@@ -8,7 +8,7 @@ import moment, { Moment } from "moment"
 import { ApiKeyIsMissing, AppError, IOError, UserIsUnknown } from "../app/errors"
 import { orElseFailWith } from "../app/utils"
 import { getMiteIdByEmail } from "../mite/miteApiWrapper"
-import { getMissingTimeEntries, lastFortyDays } from "../mite/time"
+import { getMissingTimeEntries, lastFortyDays, lastWeekThursdayToThursday } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
 import { RegisterCommand } from "./commandParser"
 
@@ -61,7 +61,7 @@ export function doCheck(context: UserContext): TaskEither<AppError, Moment[]> {
 }
 
 export const getMissingTimesForMiteId = (miteId: number, miteApi: MiteApi): TaskEither<AppError, Moment[]> => {
-    const { start, end } = lastFortyDays(moment())
+    const { start, end } = lastWeekThursdayToThursday(moment())
 
     return getMissingTimeEntries(
         miteId,
@@ -108,7 +108,7 @@ export function doCheckUsers(context: UserContext, slackIds: string[], userResol
         slackIds,
         A.map(checkTimesForUser),
         A.sequence(task),
-        T.map(A.map(E.fold(_ => [], userTimes => [userTimes]))),
+        T.map(A.map(E.fold(() => [], userTimes => [userTimes]))),
         T.map(A.flatten),
         T.map(reduceMissingTimesIntoReport),
         T.map(E.right)
