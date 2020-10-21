@@ -21,9 +21,9 @@ npm start
 
 The bot will need some scopes to work properly, which you will need to setup in the slack app settings at `OAuth & Permissions` -> `Scopes` -> `Bot Token Scopes`:
 
-* chat:write (for sending messages to users)
-* im:write (for sending messages to users)
-* im:history (for reading direct messages from users)
-* im:read (for reading direct messages from users)
-* users:read (for checking times for all users of a channel)
-* users:read.email (for automatic matching between slack and mite acocunts)
+* `chat:write` for sending messages to users
+* `im:write` for sending messages to users
+* `im:history` for reading direct messages from users
+* `im:read` for reading direct messages from users
+* `users:read` for checking times for all users of a channel
+* `users:read.email` for automatic matching between slack and mite acocunts
