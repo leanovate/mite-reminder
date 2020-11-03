@@ -35,9 +35,20 @@ declare module "mite-api" {
     export type TimeEntries = Array<{ time_entry: TimeEntry }>
     export type Users = Array<{ user: User }>
 
+    export interface AddTimeEntryOptions {
+        date_at?: string // in format YYYY-MM-DD, default: today
+        minutes?: number //default: 0
+        note?: string // default: "" (empty string)
+        user_id?: number // requires admin access to be set, default: current user id
+        project_id?: number // default: null (no project association)
+        service_id?: number // default: null (no service association)
+        locked?: boolean // requires admin access to be set, default: false (false means the time entry can still be edited)
+    }
+
     export interface MiteApi {
-        getTimeEntries: GetTimeEntries;
-        getUsers: GetUsers;
+        getTimeEntries: GetTimeEntries
+        getUsers: GetUsers
+        addTimeEntry: AddTimeEntry
     }
 
     export type MiteApiError = { error: string }
@@ -54,9 +65,12 @@ declare module "mite-api" {
             page?: number
         },
         callback: GetUserCallback) => void
+    
+    export type AddTimeEntry = (options: AddTimeEntryOptions, callback: AddTimeEntryCallback) => void
 
     export type GetTimeEntriesCallBack = (error: Error | undefined, result: TimeEntries) => void
     export type GetUserCallback = (error: Error | undefined, result: Users) => void
+    export type AddTimeEntryCallback = (error: Error | undefined, result: { time_entry: TimeEntry }) => void
 
     type MiteApiConstructorParams = { account: string, apiKey: string, applicationName: string }
     export = (params: MiteApiConstructorParams): MiteApi => MiteApi;
