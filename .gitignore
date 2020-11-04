@@ -5,3 +5,4 @@ coverage
 .env
 db.json
 .idea/
+mite-reminder-service-secrets.json
