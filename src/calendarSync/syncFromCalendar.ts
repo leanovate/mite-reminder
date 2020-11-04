@@ -1,12 +1,11 @@
-import { taskEither as Te, array as A, either } from "fp-ts"
+import { array as A, either, taskEither as Te } from "fp-ts"
 import { rights } from "fp-ts/lib/Array"
 import { Either } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
-import { calendar_v3, google, Auth } from "googleapis"
+import { Auth, calendar_v3, google } from "googleapis"
 import { AddTimeEntryOptions, MiteApi, TimeEntry } from "mite-api"
-import moment from "moment"
-import { Moment } from "moment"
+import moment, { Moment } from "moment"
 import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
 import { addTimeEntry } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
@@ -47,8 +46,17 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
         rights
     )
 }
-
-export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, AddTimeEntryOptions> {
+type EventConvertableToMiteEntry = calendar_v3.Schema$Event & {
+    summary: string,
+    description: string,
+    start: calendar_v3.Schema$EventDateTime & {
+        dateTime: string
+    },
+    end: calendar_v3.Schema$EventDateTime & {
+        dateTime: string
+    },
+}
+function validateEvent(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, EventConvertableToMiteEntry> {
     if (!event?.start || !event?.end) {
         console.warn("Received event without start or and date. Will ignore it and not sync to mite.", event)
         return either.left("start/end are missing")
@@ -62,25 +70,26 @@ export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFa
     if (!event.description) {
         return either.left("no #mite event")
     }
+    return either.right(event as EventConvertableToMiteEntry)
+}
 
-    const date = parseDayFrom(event.start.dateTime)
-    const miteInformation = findMiteInformation(event.description)
-    const durationInMinutes = getDurationInMinutes(event.start, event.end)
-    const summary = event.summary
-
+export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, AddTimeEntryOptions> {
     return pipe(
-        miteInformation,
-        either.map(info => ({
-            date_at: date,
-            project_id: info.projectId,
-            service_id: info.serviceId,
-            minutes: durationInMinutes,
-            note: summary
-        }))
+        validateEvent(event),
+        either.chain(event => pipe(
+            findMiteInformation(event.description),
+            either.map(info => ({
+                date_at: parseDayFrom(event.start.dateTime),
+                project_id: info.projectId,
+                service_id: info.serviceId,
+                minutes: getDurationInMinutes(event.start, event.end),
+                note: event.summary
+            }))
+        ))
     )
 }
 
-function findMiteInformation(description: string): Either<"no #mite event", { projectId: number, serviceId: number }> {
+function findMiteInformation(description: string): Either<MiteEntryFailure, { projectId: number, serviceId: number }> {
     const regex = /#mite\s+(\d+)\/(\d+)/
     const regexResult = regex.exec(description)
 
