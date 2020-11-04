@@ -53,6 +53,9 @@ export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFa
         console.warn("Received event without start or and date. Will ignore it and not sync to mite.", event)
         return either.left("start/end are missing")
     }
+    if (!event.summary) {
+        return either.left("summary is missing")
+    }
     if (!event.start.dateTime || !event.end.dateTime) {
         return either.left("all-day-event")
     }
@@ -63,6 +66,7 @@ export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFa
     const date = parseDayFrom(event.start.dateTime)
     const miteInformation = findMiteInformation(event.description)
     const durationInMinutes = getDurationInMinutes(event.start, event.end)
+    const summary = event.summary
 
     return pipe(
         miteInformation,
@@ -71,7 +75,7 @@ export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFa
             project_id: info.projectId,
             service_id: info.serviceId,
             minutes: durationInMinutes,
-            note: event.summary ?? "" // TODO test for default
+            note: summary
         }))
     )
 }
@@ -123,4 +127,4 @@ function getAuthorization(userEmail: string): TaskEither<GoogleApiAuthentication
     )
 }
 
-type MiteEntryFailure = "no #mite event" | "all-day-event" | "start/end are missing"
+type MiteEntryFailure = "no #mite event" | "all-day-event" | "start/end are missing" | "summary is missing"

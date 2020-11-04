@@ -21,8 +21,7 @@ describe("syncFromCalendar", () => {
                 minutes: 45, 
                 note: "CoP-DEV", 
                 project_id: projectId, 
-                service_id: serviceId, 
-                // user_id: 0 // TODO
+                service_id: serviceId
             }))
         })
 
@@ -70,6 +69,18 @@ describe("syncFromCalendar", () => {
             const result = toMiteEntry(calendarEntry)
 
             expect(result).toEqual(either.left("start/end are missing"))
+        })
+
+        it("should return an error when the summary is missing", () => {
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: undefined,
+                description: "#mite 1111/2222 a description",
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" }
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual(either.left("summary is missing"))
         })
     })
 })
