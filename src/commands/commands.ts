@@ -108,8 +108,7 @@ export function doCheckUsers(context: UserContext, slackIds: string[], userResol
         slackIds,
         A.map(checkTimesForUser),
         A.sequence(task),
-        T.map(A.map(E.fold(() => [], userTimes => [userTimes]))),
-        T.map(A.flatten),
+        T.map(A.rights),
         T.map(reduceMissingTimesIntoReport),
         T.map(E.right)
     )
