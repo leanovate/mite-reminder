@@ -49,5 +49,17 @@ describe("syncFromCalendar", () => {
 
             expect(result).toEqual(either.left("all-day-event"))
         })
+
+        it("should ignore unfilled description", () => {
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: "CoP-DEV",
+                description: undefined,
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" }
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual(either.left("no #mite event"))
+        })
     })
 })

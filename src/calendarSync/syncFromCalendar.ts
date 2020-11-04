@@ -50,12 +50,14 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
 
 export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, AddTimeEntryOptions> {
     if (!event?.start
-        || !event?.end
-        || !event?.description) {
-        throw new Error("start, end, description not set") // TODO do not throw
+        || !event?.end) {
+        throw new Error("start, end not set") // TODO do not throw
     }
     if (!event.start.dateTime || !event.end.dateTime) { 
         return either.left("all-day-event")
+    }
+    if (!event.description) {
+        return either.left("no #mite event")
     }
 
     const date = parseDayFrom(event.start.dateTime)
@@ -108,7 +110,7 @@ function getAuthorization(userEmail: string): TaskEither<GoogleApiAuthentication
         undefined,
         "./mite-reminder-service-secrets.json",
         undefined,
-        ["https://www.googleapis.com/auth/calendar.readonly"],
+        ["httpsi://www.googleapis.com/auth/calendar.readonly"],
         userEmail, // subject to impersonate
     )
 
