@@ -1,15 +1,17 @@
 import { array as A, either, taskEither as Te } from "fp-ts"
+import { sequenceT } from "fp-ts/lib/Apply"
 import { rights } from "fp-ts/lib/Array"
 import { Either } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { Auth, calendar_v3, google } from "googleapis"
-import { AddTimeEntryOptions, MiteApi, TimeEntry } from "mite-api"
+import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
 import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
-import { addTimeEntry } from "../mite/miteApiWrapper"
+import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
 
+// TODO test this method
 export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar_v3.Calendar, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
     const { start, end } = lastWeekThursdayToThursday(now)
 
@@ -17,7 +19,6 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
         () => calendarApi.events.list({
             auth,
             calendarId: userEmail,
-            maxResults: 2, // TODO remove limit
             timeMin: start.toISOString(),
             timeMax: end.toISOString(),
             orderBy: "startTime",
@@ -25,18 +26,30 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
         }),
         error => new UnknownAppError(error))
 
+    const miteEntriesLastWeek = getTimeEntries(miteApi, 1234, start, end) // TODO use correct userId
+
     return pipe(
         getAuthorization(userEmail),
         Te.chain(getEvents),
         Te.map(response => response.data),
         Te.map(toMiteEntries),
+        entriesToAdd => sequenceT(taskEither)(miteEntriesLastWeek, entriesToAdd),
+        value => value,
+        Te.map(([lastMiteEntries, entriesToAdd]) => pipe(
+            entriesToAdd,
+            A.filter(entry => !containsMiteEntry(entry, lastMiteEntries))
+        )),
         Te.chain(entries => pipe(
             entries,
-            A.map(entry => addTimeEntry(miteApi, entry)),
+            A.map(entry => addTimeEntry(miteApi, entry)), // TODO add userId to payload
             A.sequence(taskEither) // returns error when one of the tasks returns an error
         ))
     )
+}
 
+export function containsMiteEntry(miteEntry: AddTimeEntryOptions, list: TimeEntries): boolean {
+    // compare by: day, summary, duration, project, service
+    return true // TODO implement
 }
 
 function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryOptions[] {
@@ -46,15 +59,15 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
         rights
     )
 }
+
 type EventConvertableToMiteEntry = calendar_v3.Schema$Event & {
     summary: string,
     description: string,
-    start: calendar_v3.Schema$EventDateTime & {
-        dateTime: string
-    },
-    end: calendar_v3.Schema$EventDateTime & {
-        dateTime: string
-    },
+    start: SingleDayEventDateTime,
+    end: SingleDayEventDateTime,
+}
+type SingleDayEventDateTime = calendar_v3.Schema$EventDateTime & {
+    dateTime: string
 }
 function validateEvent(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, EventConvertableToMiteEntry> {
     if (!event?.start || !event?.end) {
@@ -102,12 +115,7 @@ function findMiteInformation(description: string): Either<MiteEntryFailure, { pr
     return either.left("no #mite event")
 }
 
-function getDurationInMinutes(startTime: calendar_v3.Schema$EventDateTime, endTime: calendar_v3.Schema$EventDateTime) {
-    if (!startTime.dateTime
-        || !endTime.dateTime) {
-        throw new Error("dateTime not set") // TODO don't throw
-    }
-
+function getDurationInMinutes(startTime: SingleDayEventDateTime, endTime: SingleDayEventDateTime) {
     const start = moment.utc(startTime.dateTime)
     const end = moment.utc(endTime.dateTime)
 
