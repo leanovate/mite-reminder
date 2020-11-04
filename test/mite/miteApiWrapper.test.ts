@@ -1,6 +1,6 @@
 import { MiteApi, TimeEntry, TimeEntries, User, Users } from "mite-api"
 import moment from "moment"
-import { createMiteApi, getTimeEntries, getMiteIdByEmail } from "../../src/mite/miteApiWrapper"
+import { createMiteApi, getTimeEntries, getMiteIdByEmail, addTimeEntry } from "../../src/mite/miteApiWrapper"
 import { getRight, getValue, getLeft } from "../testUtils"
 import { UnknownAppError } from "../../src/app/errors"
 
@@ -16,7 +16,8 @@ describe("createMiteApi", () => {
 describe("miteApi", () => {
     const emptyMock: MiteApi = {
         getTimeEntries: () => null,
-        getUsers: () => null
+        getUsers: () => null,
+        addTimeEntry: () => null
     }
 
     describe("getTimeEntries", () => {
@@ -46,6 +47,36 @@ describe("miteApi", () => {
             }
 
             const result = await getTimeEntries(mite, "current", moment(), moment())()
+            expect(getLeft(result)).toEqual(new UnknownAppError(error))
+        })
+    })
+
+    describe("addTimeEntry", () => {
+        it("returns a promise with the newly created time entry", async () => {
+            const testEntry: TimeEntry = <TimeEntry>{
+                id: 1234,
+                minutes: 30
+            }
+
+            const mite: MiteApi = {
+                ...emptyMock,
+                addTimeEntry: (_, callback) => callback(undefined, { time_entry: testEntry })
+            }
+
+            const maybeEntry = await addTimeEntry(mite, { user_id: 333 })()
+            const entry = getRight(maybeEntry)
+
+            expect(entry).toEqual(testEntry)
+        })
+
+        it("return an appError with the error when there is one", async () => {
+            const error = new Error("Access denied. Please check your credentials.")
+            const mite: MiteApi = {
+                ...emptyMock,
+                addTimeEntry: (_, callback) => callback(error, null as unknown as { time_entry: TimeEntry})
+            }
+
+            const result = await addTimeEntry(mite, {})()
             expect(getLeft(result)).toEqual(new UnknownAppError(error))
         })
     })
