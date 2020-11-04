@@ -42,24 +42,29 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
 function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryOptions[] {
     return pipe(
         calendarEvents.items ?? [],
-        A.map(toMiteEntry)
+        A.map(toMiteEntry),
+        A.filter(entry => entry!=="no #mite event"),
+        A.map(entry => entry as AddTimeEntryOptions) // TODO can this be done without 'as'?
     )
 }
 
-export function toMiteEntry(event: calendar_v3.Schema$Event): AddTimeEntryOptions {
+export function toMiteEntry(event: calendar_v3.Schema$Event): AddTimeEntryOptions | "no #mite event" {
     if (!event?.start?.dateTime
         || !event?.start
         || !event?.end
         || !event?.description) {
-        throw new Error() // TODO do not throw
+        throw new Error("start, end, dataTime, description not set") // TODO do not throw
     } 
     const date = parseDayFrom(event.start.dateTime)
-    const { projectId, serviceId } = findMiteInformation(event.description)
+    const miteInformation = findMiteInformation(event.description)
+    if (miteInformation === "no #mite event") {
+        return miteInformation
+    }
 
     return { // TODO: fill correctly
         date_at: date,
-        project_id: projectId,
-        service_id: serviceId,
+        project_id: miteInformation.projectId,
+        service_id: miteInformation.serviceId,
         minutes: getDurationInMinutes(event.start, event.end),
         note: event.summary ?? "" // TODO test for default
     }
@@ -75,13 +80,13 @@ function findMiteInformation(description: string) {
             serviceId: Number.parseInt(regexResult[2])
         }
     }
-    throw Error() // TODO don't throw
+    return "no #mite event"
 }
 
 function getDurationInMinutes(startTime: calendar_v3.Schema$EventDateTime, endTime: calendar_v3.Schema$EventDateTime) {
     if (!startTime.dateTime
         || !endTime.dateTime) {
-        throw new Error() // TODO don't throw
+        throw new Error("dateTime not set") // TODO don't throw
     }
 
     const start = moment.utc(startTime.dateTime)

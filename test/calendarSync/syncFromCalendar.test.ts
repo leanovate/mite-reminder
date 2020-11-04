@@ -25,6 +25,18 @@ describe("syncFromCalendar", () => {
             })
         })
 
+        it("should return Nothing when no '#mite'-information was given in description", () => {
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: "CoP-DEV",
+                description: "mite should not parse this event",
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" }
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual("no #mite event")
+        })
+
         // TODO test whole day (date instead of datetime)
     })
 })
