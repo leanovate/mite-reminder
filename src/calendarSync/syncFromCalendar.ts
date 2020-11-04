@@ -11,7 +11,6 @@ import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/
 import { addTimeEntry } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
 
-
 export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar_v3.Calendar, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
     const { start, end } = lastWeekThursdayToThursday(now)
 
@@ -49,13 +48,16 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
     )
 }
 
-export function toMiteEntry(event: calendar_v3.Schema$Event): Either<"no #mite event", AddTimeEntryOptions> {
-    if (!event?.start?.dateTime
-        || !event?.start
+export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, AddTimeEntryOptions> {
+    if (!event?.start
         || !event?.end
         || !event?.description) {
-        throw new Error("start, end, dataTime, description not set") // TODO do not throw
+        throw new Error("start, end, description not set") // TODO do not throw
     }
+    if (!event.start.dateTime || !event.end.dateTime) { 
+        return either.left("all-day-event")
+    }
+
     const date = parseDayFrom(event.start.dateTime)
     const miteInformation = findMiteInformation(event.description)
     const durationInMinutes = getDurationInMinutes(event.start, event.end)
@@ -118,3 +120,5 @@ function getAuthorization(userEmail: string): TaskEither<GoogleApiAuthentication
         Te.map(() => auth)
     )
 }
+
+type MiteEntryFailure = "no #mite event" | "all-day-event"

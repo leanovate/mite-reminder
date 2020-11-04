@@ -38,6 +38,16 @@ describe("syncFromCalendar", () => {
             expect(result).toEqual(either.left("no #mite event"))
         })
 
-        // TODO test whole day (date instead of datetime)
+        it("should return an error when all-day-event was given", () => {
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: "CoP-DEV",
+                description: "mite should not parse this event",
+                start: { date: "2019-10-12" },
+                end: { date: "2019-10-13" }
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual(either.left("all-day-event"))
+        })
     })
 })
