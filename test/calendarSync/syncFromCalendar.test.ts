@@ -61,5 +61,15 @@ describe("syncFromCalendar", () => {
 
             expect(result).toEqual(either.left("no #mite event"))
         })
+
+        it("should return an error when start or end are missing", () => {
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: "CoP-DEV",
+                description: "a description",
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual(either.left("start/end are missing"))
+        })
     })
 })

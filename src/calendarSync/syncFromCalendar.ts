@@ -49,11 +49,11 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
 }
 
 export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFailure, AddTimeEntryOptions> {
-    if (!event?.start
-        || !event?.end) {
-        throw new Error("start, end not set") // TODO do not throw
+    if (!event?.start || !event?.end) {
+        console.warn("Received event without start or and date. Will ignore it and not sync to mite.", event)
+        return either.left("start/end are missing")
     }
-    if (!event.start.dateTime || !event.end.dateTime) { 
+    if (!event.start.dateTime || !event.end.dateTime) {
         return either.left("all-day-event")
     }
     if (!event.description) {
@@ -123,4 +123,4 @@ function getAuthorization(userEmail: string): TaskEither<GoogleApiAuthentication
     )
 }
 
-type MiteEntryFailure = "no #mite event" | "all-day-event"
+type MiteEntryFailure = "no #mite event" | "all-day-event" | "start/end are missing"
