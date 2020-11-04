@@ -22,6 +22,14 @@ export class UnknownAppError implements AppError {
     }
 }
 
+export class GoogleApiAuthenticationError implements AppError {
+    presentableMessage: string
+    constructor(readonly error: unknown) {
+        console.error("Failed to authenticate against the google api:", error)
+        this.presentableMessage = "Sorry, I couldn't authenticate against the google calendar."
+    }
+}
+
 export class IOError implements AppError {
     presentableMessage = "OOPSIE WOOPSIE!! Our hawd drive did a fucky wucky!! A wittle fucko boingo!"
     constructor(readonly error: Error) {
