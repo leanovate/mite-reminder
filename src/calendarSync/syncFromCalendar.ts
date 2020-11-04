@@ -1,4 +1,6 @@
-import { taskEither as Te, array as A } from "fp-ts"
+import { taskEither as Te, array as A, either } from "fp-ts"
+import { rights } from "fp-ts/lib/Array"
+import { Either } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { calendar_v3, google, Auth } from "googleapis"
@@ -43,44 +45,44 @@ function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryO
     return pipe(
         calendarEvents.items ?? [],
         A.map(toMiteEntry),
-        A.filter(entry => entry!=="no #mite event"),
-        A.map(entry => entry as AddTimeEntryOptions) // TODO can this be done without 'as'?
+        rights
     )
 }
 
-export function toMiteEntry(event: calendar_v3.Schema$Event): AddTimeEntryOptions | "no #mite event" {
+export function toMiteEntry(event: calendar_v3.Schema$Event): Either<"no #mite event", AddTimeEntryOptions> {
     if (!event?.start?.dateTime
         || !event?.start
         || !event?.end
         || !event?.description) {
         throw new Error("start, end, dataTime, description not set") // TODO do not throw
-    } 
+    }
     const date = parseDayFrom(event.start.dateTime)
     const miteInformation = findMiteInformation(event.description)
-    if (miteInformation === "no #mite event") {
-        return miteInformation
-    }
+    const durationInMinutes = getDurationInMinutes(event.start, event.end)
 
-    return { // TODO: fill correctly
-        date_at: date,
-        project_id: miteInformation.projectId,
-        service_id: miteInformation.serviceId,
-        minutes: getDurationInMinutes(event.start, event.end),
-        note: event.summary ?? "" // TODO test for default
-    }
+    return pipe(
+        miteInformation,
+        either.map(info => ({
+            date_at: date,
+            project_id: info.projectId,
+            service_id: info.serviceId,
+            minutes: durationInMinutes,
+            note: event.summary ?? "" // TODO test for default
+        }))
+    )
 }
 
-function findMiteInformation(description: string) {
+function findMiteInformation(description: string): Either<"no #mite event", { projectId: number, serviceId: number }> {
     const regex = /#mite\s+(\d+)\/(\d+)/
     const regexResult = regex.exec(description)
 
     if (regexResult !== null && regexResult.length >= 3) {
-        return {
+        return either.right({
             projectId: Number.parseInt(regexResult[1]),
             serviceId: Number.parseInt(regexResult[2])
-        }
+        })
     }
-    return "no #mite event"
+    return either.left("no #mite event")
 }
 
 function getDurationInMinutes(startTime: calendar_v3.Schema$EventDateTime, endTime: calendar_v3.Schema$EventDateTime) {

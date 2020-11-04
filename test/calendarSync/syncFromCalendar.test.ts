@@ -1,3 +1,4 @@
+import { either } from "fp-ts"
 import { calendar_v3 } from "googleapis"
 import { toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
 
@@ -15,17 +16,17 @@ describe("syncFromCalendar", () => {
             }
             const result = toMiteEntry(calendarEntry)
 
-            expect(result).toEqual({
+            expect(result).toEqual(either.right({
                 date_at: "2019-10-12", 
                 minutes: 45, 
                 note: "CoP-DEV", 
                 project_id: projectId, 
                 service_id: serviceId, 
                 // user_id: 0 // TODO
-            })
+            }))
         })
 
-        it("should return Nothing when no '#mite'-information was given in description", () => {
+        it("should return an error when no '#mite'-information was given in description", () => {
             const calendarEntry: calendar_v3.Schema$Event = {
                 summary: "CoP-DEV",
                 description: "mite should not parse this event",
@@ -34,7 +35,7 @@ describe("syncFromCalendar", () => {
             }
             const result = toMiteEntry(calendarEntry)
 
-            expect(result).toEqual("no #mite event")
+            expect(result).toEqual(either.left("no #mite event"))
         })
 
         // TODO test whole day (date instead of datetime)
