@@ -34,7 +34,6 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
         Te.map(response => response.data),
         Te.map(toMiteEntries),
         entriesToAdd => sequenceT(taskEither)(miteEntriesLastWeek, entriesToAdd),
-        value => value,
         Te.map(([lastMiteEntries, entriesToAdd]) => pipe(
             entriesToAdd,
             A.filter(entry => !containsMiteEntry(entry, lastMiteEntries))
