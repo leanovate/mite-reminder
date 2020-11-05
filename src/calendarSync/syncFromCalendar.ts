@@ -8,18 +8,15 @@ import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { Auth, calendar_v3, GoogleApis } from "googleapis"
 import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
-import { ApiKeyIsMissing, AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
+import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
 import { Config } from "../config"
+import { makeCheckContext } from "../mite/makeCheckContext"
 import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
-import { isCheckContext, UserContext } from "../slack/userContext"
+import { UserContext } from "../slack/userContext"
 
 export function addCalendarEntriesToMite(context: UserContext, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
-    if (!isCheckContext(context)) {
-        return Te.left(new ApiKeyIsMissing(context.slackId)) // TODO reused from commands.ts, extract to method
-    }
-    const user = context.repository.loadUser(context.slackId)
-    const userId = user?.miteId ?? "current"
+    const checkContext = Te.fromEither(makeCheckContext(context))
 
     const { start, end } = lastWeekThursdayToThursday(now)
 
@@ -34,7 +31,9 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
         }),
         error => new UnknownAppError(error))
 
-    const miteEntriesLastWeek = getTimeEntries(context.miteApi, userId, start, end)
+    const miteEntriesLastWeek = pipe(checkContext,
+        Te.chain(context => getTimeEntries(context.miteApi, context.miteUserId, start, end)),
+    )
 
     return pipe(
         getAuthorization(googleApi, context.config, userEmail),
@@ -48,10 +47,14 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
         )),
         Te.chain(entries => pipe(
             entries,
-            A.map(entry => addTimeEntry(context.miteApi, {
-                ...entry,
-                user_id: userId
-            })),
+            A.map(entry => pipe(
+                checkContext,
+                Te.chain(
+                    context => addTimeEntry(context.miteApi, {
+                        ...entry,
+                        user_id: context.miteUserId
+                    }))
+            )),
             A.sequence(taskEither) // returns error when one of the tasks returns an error
         ))
     )
@@ -61,7 +64,7 @@ export function containsMiteEntry(toContain: AddTimeEntryOptions, list: TimeEntr
     return pipe(
         list,
         A.map(entry => entry.time_entry),
-        A.findFirst(entry => 
+        A.findFirst(entry =>
             entry.date_at === toContain.date_at
             && entry.note === toContain.note
             && entry.minutes === toContain.minutes

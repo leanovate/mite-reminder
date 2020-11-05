@@ -24,12 +24,10 @@ describe("Commands", () => {
     const registerUserWithMiteApiKeyMock = jest.fn()
 
     const userRepository: Repository = {
-        /* eslint-disable @typescript-eslint/no-empty-function */
         registerUserWithMiteApiKey: registerUserWithMiteApiKeyMock,
         registerUserWithMiteId: registerUserWithMiteIdMock,
-        unregisterUser: jest.fn(() => { }),
+        unregisterUser: jest.fn(() => T.rightTask(() => Promise.resolve())),
         loadUser: loadUserMock
-        /* eslint-enable @typescript-eslint/no-empty-function */
     } as unknown as Repository
 
     const miteApiMock = {} as unknown as MiteApi
@@ -77,17 +75,17 @@ describe("Commands", () => {
     })
 
     it("should unregister a user", async () => {
-        await doUnregister(defaultUserContext)
+        await doUnregister(defaultUserContext)()
 
         expect(userRepository.unregisterUser).toHaveBeenCalledTimes(1)
         expect(userRepository.unregisterUser).toHaveBeenCalledWith(defaultUserContext.slackId)
     })
 
     it("should detect missing time entries for the current user", async () => {
-        getTimeEntriesMock.mockReturnValue([])
+        getTimeEntriesMock.mockReturnValue(T.right([]))
         loadUserMock.mockReturnValue({ miteApiKey: "mite-api-key" })
 
-        await doCheck(defaultUserContext)
+        await doCheck(defaultUserContext)()
 
         expect(userRepository.loadUser).toHaveBeenCalledTimes(1)
         expect(userRepository.loadUser).toHaveBeenCalledWith(defaultUserContext.slackId)
@@ -99,10 +97,10 @@ describe("Commands", () => {
         const slackId = "slack-id"
         const miteId = "mite-id"
 
-        getTimeEntriesMock.mockReturnValue([])
+        getTimeEntriesMock.mockReturnValue(T.right([]))
         loadUserMock.mockReturnValue({ miteId })
 
-        await doCheck(defaultUserContext)
+        await doCheck(defaultUserContext)()
 
         expect(userRepository.loadUser).toHaveBeenCalledTimes(1)
         expect(userRepository.loadUser).toHaveBeenCalledWith(slackId)
@@ -111,7 +109,7 @@ describe("Commands", () => {
     })
 
     it("should return an appError if the user has no api key and is unknown", async () => {
-        getTimeEntriesMock.mockReturnValue([])
+        getTimeEntriesMock.mockReturnValue(T.right([]))
         loadUserMock.mockReturnValue(null)
 
         const result = await doCheck(defaultUserContext)()
