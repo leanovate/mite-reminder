@@ -8,12 +8,15 @@ import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { Auth, calendar_v3, GoogleApis } from "googleapis"
 import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
-import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
+import { ApiKeyIsMissing, AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
 import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
-import { CheckContext } from "../slack/userContext"
+import { isCheckContext, UserContext } from "../slack/userContext"
 
-export function addCalendarEntriesToMite(context: CheckContext, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
+export function addCalendarEntriesToMite(context: UserContext, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
+    if (!isCheckContext(context)) {
+        return Te.left(new ApiKeyIsMissing(context.slackId)) // TODO reused from commands.ts, extract to method
+    }
     const user = context.repository.loadUser(context.slackId)
     const userId = user?.miteId ?? "current"
 
