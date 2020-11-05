@@ -9,7 +9,7 @@ export function makeCheckContext(context: UserContext): Either<AppError, CheckCo
     }
     const user = context.repository.loadUser(context.slackId)
     if (!user) {
-        return either.left(new UserIsUnknown(context.slackId)) // TODO test this
+        return either.left(new UserIsUnknown(context.slackId))
     }
 
     return either.right({
