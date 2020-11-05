@@ -76,7 +76,7 @@ describe("miteApi", () => {
                 addTimeEntry: (_, callback) => callback(error, null as unknown as { time_entry: TimeEntry})
             }
 
-            const result = await addTimeEntry(mite, {})()
+            const result = await addTimeEntry(mite, { user_id: "current" })()
             expect(getLeft(result)).toEqual(new UnknownAppError(error))
         })
     })
