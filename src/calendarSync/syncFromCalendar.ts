@@ -6,13 +6,17 @@ import { isSome } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { Auth, calendar_v3, GoogleApis } from "googleapis"
-import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
+import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
 import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
 import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
+import { CheckContext } from "../slack/userContext"
 
-export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
+export function addCalendarEntriesToMite(context: CheckContext, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
+    const user = context.repository.loadUser(context.slackId)
+    const userId = user?.miteId ?? "current"
+
     const { start, end } = lastWeekThursdayToThursday(now)
 
     const getEvents = (auth: Auth.OAuth2Client) => Te.tryCatch(
@@ -26,7 +30,7 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis
         }),
         error => new UnknownAppError(error))
 
-    const miteEntriesLastWeek = getTimeEntries(miteApi, 1234, start, end) // TODO use correct userId
+    const miteEntriesLastWeek = getTimeEntries(context.miteApi, userId, start, end)
 
     return pipe(
         getAuthorization(googleApi, userEmail),
@@ -40,9 +44,9 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis
         )),
         Te.chain(entries => pipe(
             entries,
-            A.map(entry => addTimeEntry(miteApi, {
+            A.map(entry => addTimeEntry(context.miteApi, {
                 ...entry,
-                user_id: "current" // TODO use userId of the user to check instead of the current user
+                user_id: userId
             })),
             A.sequence(taskEither) // returns error when one of the tasks returns an error
         ))

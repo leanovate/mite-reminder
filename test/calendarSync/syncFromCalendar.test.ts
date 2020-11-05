@@ -4,6 +4,7 @@ import { AuthPlus, GaxiosPromise } from "googleapis/build/src/apis/ml"
 import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import moment from "moment"
 import { addCalendarEntriesToMite, containsMiteEntry, toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
+import { CheckContext } from "../../src/slack/userContext"
 
 describe("syncFromCalendar", () => {
     describe("toMiteEntry", () => {
@@ -187,10 +188,15 @@ describe("syncFromCalendar", () => {
                     JWT: jest.fn(() => ({ authorize: () => Promise.resolve() }))
                 } as unknown as AuthPlus
             } as unknown as GoogleApis
+            const checkContext: CheckContext = {
+                miteApi,
+                slackId: "slackId",
+                repository: { loadUser: () => ({ miteId: 1234 }) }
+            } as unknown as CheckContext
             const userEmail = "userEmail"
             const now = moment("2020-12-31")
 
-            await addCalendarEntriesToMite(miteApi, googleApi, userEmail, now)()
+            await addCalendarEntriesToMite(checkContext, googleApi, userEmail, now)()
             
             expect(addTimeEntryMock).toHaveBeenCalledTimes(1)
         })
