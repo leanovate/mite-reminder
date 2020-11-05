@@ -12,7 +12,6 @@ import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/
 import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
 
-// TODO test this method
 export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
     const { start, end } = lastWeekThursdayToThursday(now)
 
@@ -41,7 +40,10 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis
         )),
         Te.chain(entries => pipe(
             entries,
-            A.map(entry => addTimeEntry(miteApi, entry)), // TODO add userId to payload
+            A.map(entry => addTimeEntry(miteApi, {
+                ...entry,
+                user_id: "current" // TODO use userId of the user to check instead of the current user
+            })),
             A.sequence(taskEither) // returns error when one of the tasks returns an error
         ))
     )

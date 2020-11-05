@@ -2,7 +2,7 @@ import { taskEither } from "fp-ts"
 import { fromNullable, Option } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import miteApi, { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
+import miteApi, { MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import { Moment } from "moment"
 import { AppError, UnknownAppError } from "../app/errors"
 
@@ -25,9 +25,24 @@ function getTimeEntries(mite: MiteApi, userId: number | "current", from: Moment,
     )
 }
 
-export function addTimeEntry(mite: MiteApi, timeEntry: AddTimeEntryOptions): TaskEither<AppError, TimeEntry> {
+interface AddTimeEntryOptionsForUser {
+    date_at?: string
+    minutes?: number
+    note?: string
+    // requiring user_id so that the current user can only be used if it is explicitly stated
+    // the current user will ofter be the one who provided the mite admin key, not the user triggering the action
+    user_id: number | "current" 
+    project_id?: number
+    service_id?: number
+    locked?: boolean
+}
+
+export function addTimeEntry(mite: MiteApi, timeEntry: AddTimeEntryOptionsForUser): TaskEither<AppError, TimeEntry> {
     return pipe(
-        taskEither.taskify(mite.addTimeEntry)(timeEntry),
+        taskEither.taskify(mite.addTimeEntry)({
+            ...timeEntry,
+            user_id: timeEntry.user_id === "current" ? undefined : timeEntry.user_id
+        }),
         taskEither.map(entry => entry.time_entry),
         taskEither.mapLeft(error => new UnknownAppError(error))
     )
