@@ -61,7 +61,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
             )
         )()
         break
-    case "calendar": // TODO rename to 'add meetings'?
+    case "sync":
         await pipe(
             slackUserResolver(app)(context.slackId),
             taskEither.chain(userEmail => addCalendarEntriesToMite(context, google, userEmail.email, moment())),
