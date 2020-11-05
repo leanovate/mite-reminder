@@ -3,13 +3,16 @@ import { WebAPICallResult } from "@slack/web-api"
 import { taskEither } from "fp-ts"
 import { pipe } from "fp-ts/lib/pipeable"
 import { Task } from "fp-ts/lib/Task"
+import { google } from "googleapis"
 import { MiteApiError } from "mite-api"
+import moment from "moment"
 import { AppError } from "../app/errors"
+import { addCalendarEntriesToMite } from "../calendarSync/syncFromCalendar"
 import { parse } from "../commands/commandParser"
 import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/userRepository"
-import { missingTimeEntriesBlock, userReportEntriesBlock } from "./blocks"
+import { addedCalendarEntriesBlock, missingTimeEntriesBlock, userReportEntriesBlock } from "./blocks"
 import { getAllUsersFromChannel } from "./channels"
 import { createUserContextFromSlackId, createRestrictedUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
@@ -52,6 +55,17 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
             getAllUsersFromChannel(app, command.channelName),
             taskEither.chain(userList => doCheckUsers(restrictedUserContext, userList, slackUserResolver(app))),
             taskEither.map(userReportEntriesBlock),
+            taskEither.fold(
+                e => reportError(say, e),
+                result => async () => { await say(result) }
+            )
+        )()
+        break
+    case "sync":
+        await pipe(
+            slackUserResolver(app)(context.slackId),
+            taskEither.chain(userEmail => addCalendarEntriesToMite(context, google, userEmail.email, moment())),
+            taskEither.map(addedCalendarEntriesBlock),
             taskEither.fold(
                 e => reportError(say, e),
                 result => async () => { await say(result) }

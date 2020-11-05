@@ -35,4 +35,11 @@ describe("command parser", () => {
     it("should parse the 'check' command", () => {
         expect(parse("check").status).toBeTruthy()
     })
+
+    it("should parse the 'sync' command", () => {
+        const result = parse("sync")
+
+        expect(result.status).toBeTruthy()
+        expect((<Success<MiteCommand>>result).value).toEqual({ name: "sync" })
+    })
 })

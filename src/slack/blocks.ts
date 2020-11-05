@@ -1,4 +1,5 @@
 import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
+import { TimeEntry } from "mite-api"
 import { Moment } from "moment"
 import { CheckUserResult, CheckUsersReport } from "../commands/commands"
 import config from "../config"
@@ -82,6 +83,47 @@ export const missingTimeEntriesBlock = (times: Moment[]): { text: string, blocks
             header,
             divider,
             timeBlock
+        ]
+    }
+}
+
+export const addedCalendarEntriesBlock = (entriesAdded: TimeEntry[]): { text: string, blocks: KnownBlock[] } => {
+    if (entriesAdded.length === 0) {
+        return {
+            text: "I didn't find any new meetings I could sync to mite.",
+            blocks: [{
+                type: "section",
+                text: {
+                    type: "plain_text",
+                    emoji: true,
+                    text: "I didn't find any new meetings I could sync to mite."
+                }
+            }]
+        }
+    }
+
+    const header: SectionBlock = {
+        type: "section",
+        text: {
+            "type": "mrkdwn",
+            "text": ":calendar: I synced the following calendar entries to mite:"
+        }
+    }
+
+    const entryBlock: SectionBlock = {
+        type: "section",
+        text: {
+            type: "mrkdwn",
+            text: entriesAdded.map(entry => `• ${entry.note} - ${entry.date_at}`).join("\n")
+        }
+    }
+
+    return {
+        text: `I synced ${entriesAdded.length} calendar entries to mite.`,
+        blocks: [
+            header,
+            divider,
+            entryBlock
         ]
     }
 }

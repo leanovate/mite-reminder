@@ -9,7 +9,7 @@ export interface UserContext {
     config: Config
 }
 
-export type CheckContext = Required<UserContext>
+export type CheckContext = Required<UserContext> & { miteUserId: number | "current" }
 
 export function isCheckContext(context: UserContext) : context is CheckContext {
     return !!context.miteApi
