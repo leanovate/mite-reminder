@@ -5,7 +5,7 @@ import { Either } from "fp-ts/lib/Either"
 import { isSome } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
-import { Auth, calendar_v3, google } from "googleapis"
+import { Auth, calendar_v3, GoogleApis } from "googleapis"
 import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
 import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
@@ -13,11 +13,11 @@ import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
 
 // TODO test this method
-export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar_v3.Calendar, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
+export function addCalendarEntriesToMite(miteApi: MiteApi, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
     const { start, end } = lastWeekThursdayToThursday(now)
 
     const getEvents = (auth: Auth.OAuth2Client) => Te.tryCatch(
-        () => calendarApi.events.list({
+        () => googleApi.calendar("v3").events.list({
             auth,
             calendarId: userEmail,
             timeMin: start.toISOString(),
@@ -30,7 +30,7 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
     const miteEntriesLastWeek = getTimeEntries(miteApi, 1234, start, end) // TODO use correct userId
 
     return pipe(
-        getAuthorization(userEmail),
+        getAuthorization(googleApi, userEmail),
         Te.chain(getEvents),
         Te.map(response => response.data),
         Te.map(toMiteEntries),
@@ -136,12 +136,12 @@ function parseDayFrom(dateTime: string): string {
     return moment.utc(dateTime).format("YYYY-MM-DD")
 }
 
-function getAuthorization(userEmail: string): TaskEither<GoogleApiAuthenticationError, Auth.JWT> {
-    const auth = new google.auth.JWT(
+function getAuthorization(googleApi: GoogleApis, userEmail: string): TaskEither<GoogleApiAuthenticationError, Auth.JWT> {
+    const auth = new googleApi.auth.JWT(
         undefined,
         "./mite-reminder-service-secrets.json",
         undefined,
-        ["httpsi://www.googleapis.com/auth/calendar.readonly"],
+        ["https://www.googleapis.com/auth/calendar.readonly"],
         userEmail, // subject to impersonate
     )
 

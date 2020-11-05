@@ -1,7 +1,9 @@
 import { either } from "fp-ts"
-import { calendar_v3 } from "googleapis"
-import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
-import { containsMiteEntry, toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
+import { calendar_v3, GoogleApis } from "googleapis"
+import { AuthPlus, GaxiosPromise } from "googleapis/build/src/apis/ml"
+import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
+import moment from "moment"
+import { addCalendarEntriesToMite, containsMiteEntry, toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
 
 describe("syncFromCalendar", () => {
     describe("toMiteEntry", () => {
@@ -136,6 +138,61 @@ describe("syncFromCalendar", () => {
             const result = containsMiteEntry(addTimeEntryOptions, list)
 
             expect(result).toEqual(false)
+        })
+    })
+
+    describe("addCalendarEntriesToMite", () => {
+        it("add new (and only new) calendar events to mite", async () => {
+            const addTimeEntryMock = jest.fn((params, callback) => callback(undefined, { time_entry: {} as unknown as TimeEntry }))
+            const existingTimeEntries: TimeEntries = [
+                { time_entry: {
+                    date_at: "2019-10-12",
+                    note: "meeting already in mite",
+                    minutes: 45,
+                    project_id: 111,
+                    service_id: 222,
+                } as TimeEntry }
+            ]
+            const miteApi = <MiteApi>{
+                addTimeEntry: addTimeEntryMock,
+                getTimeEntries: (params, callback) => { callback(undefined, existingTimeEntries) },
+                getUsers: jest.fn()
+            }
+            const calendarEntries: calendar_v3.Schema$Event[] = [
+                {
+                    summary: "new meeting",
+                    description: "#mite 111/222",
+                    start: { dateTime: "2019-10-12T07:00:00Z" },
+                    end: { dateTime: "2019-10-12T07:45:00Z" }
+                },
+                {
+                    summary: "meeting already in mite",
+                    description: "#mite 111/222",
+                    start: { dateTime: "2019-10-12T07:00:00Z" },
+                    end: { dateTime: "2019-10-12T07:45:00Z" }
+                }
+            ]
+            const calendarEvents = <GaxiosPromise<calendar_v3.Schema$Events>>Promise.resolve({
+                data: {
+                    items: calendarEntries
+                }
+            })
+            const googleApi = {
+                calendar: () => ({
+                    events: {
+                        list: () => calendarEvents
+                    }
+                }),
+                auth: {
+                    JWT: jest.fn(() => ({ authorize: () => Promise.resolve() }))
+                } as unknown as AuthPlus
+            } as unknown as GoogleApis
+            const userEmail = "userEmail"
+            const now = moment("2020-12-31")
+
+            await addCalendarEntriesToMite(miteApi, googleApi, userEmail, now)()
+            
+            expect(addTimeEntryMock).toHaveBeenCalledTimes(1)
         })
     })
 })
