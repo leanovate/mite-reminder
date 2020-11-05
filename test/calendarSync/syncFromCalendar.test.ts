@@ -189,6 +189,7 @@ describe("syncFromCalendar", () => {
                 } as unknown as AuthPlus
             } as unknown as GoogleApis
             const checkContext: CheckContext = {
+                config: { googleSecretsPath: "some_path.json" },
                 miteApi,
                 slackId: "slackId",
                 repository: { loadUser: () => ({ miteId: 1234 }) }

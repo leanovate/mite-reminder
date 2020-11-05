@@ -9,6 +9,7 @@ import { Auth, calendar_v3, GoogleApis } from "googleapis"
 import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
 import moment, { Moment } from "moment"
 import { ApiKeyIsMissing, AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
+import { Config } from "../config"
 import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
 import { isCheckContext, UserContext } from "../slack/userContext"
@@ -36,7 +37,7 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
     const miteEntriesLastWeek = getTimeEntries(context.miteApi, userId, start, end)
 
     return pipe(
-        getAuthorization(googleApi, userEmail),
+        getAuthorization(googleApi, context.config, userEmail),
         Te.chain(getEvents),
         Te.map(response => response.data),
         Te.map(toMiteEntries),
@@ -145,10 +146,10 @@ function parseDayFrom(dateTime: string): string {
     return moment.utc(dateTime).format("YYYY-MM-DD")
 }
 
-function getAuthorization(googleApi: GoogleApis, userEmail: string): TaskEither<GoogleApiAuthenticationError, Auth.JWT> {
+function getAuthorization(googleApi: GoogleApis, config: Config, userEmail: string): TaskEither<GoogleApiAuthenticationError, Auth.JWT> {
     const auth = new googleApi.auth.JWT(
         undefined,
-        "./mite-reminder-service-secrets.json",
+        config.googleSecretsPath,
         undefined,
         ["https://www.googleapis.com/auth/calendar.readonly"],
         userEmail, // subject to impersonate

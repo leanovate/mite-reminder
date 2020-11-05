@@ -7,6 +7,7 @@ export type Config = {
     slackSigningSecret: string
     miteAccountName: string
     dbPath: string
+    googleSecretsPath: string
     timezone: Timezone
 }
 
@@ -15,6 +16,7 @@ const getConfig = (): Config => {
     const slackToken = process.env.SLACK_TOKEN
     const slackSigningSecret = process.env.SLACK_SIGNING_SECRET
     const dbPath = process.env.DB_PATH || "db.json"
+    const googleSecretsPath = process.env.GOOGLE_SECRETS_PATH || "mite-reminder-service-secrets.json"
     const timezone: Timezone = <Timezone>process.env.timezone || "Europe/Berlin"
 
     if (!slackToken) {
@@ -36,6 +38,7 @@ const getConfig = (): Config => {
         slackSigningSecret,
         miteAccountName,
         dbPath,
+        googleSecretsPath,
         timezone
     }
 }
