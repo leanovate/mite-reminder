@@ -2,6 +2,7 @@ import { array as A, either, taskEither as Te } from "fp-ts"
 import { sequenceT } from "fp-ts/lib/Apply"
 import { rights } from "fp-ts/lib/Array"
 import { Either } from "fp-ts/lib/Either"
+import { isSome } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { taskEither, TaskEither } from "fp-ts/lib/TaskEither"
 import { Auth, calendar_v3, google } from "googleapis"
@@ -46,9 +47,19 @@ export function addCalendarEntriesToMite(miteApi: MiteApi, calendarApi: calendar
     )
 }
 
-export function containsMiteEntry(miteEntry: AddTimeEntryOptions, list: TimeEntries): boolean {
-    // compare by: day, summary, duration, project, service
-    return true // TODO implement
+export function containsMiteEntry(toContain: AddTimeEntryOptions, list: TimeEntries): boolean {
+    return pipe(
+        list,
+        A.map(entry => entry.time_entry),
+        A.findFirst(entry => 
+            entry.date_at === toContain.date_at
+            && entry.note === toContain.note
+            && entry.minutes === toContain.minutes
+            && entry.project_id === toContain.project_id
+            && entry.service_id === toContain.service_id
+        ),
+        isSome
+    )
 }
 
 function toMiteEntries(calendarEvents: calendar_v3.Schema$Events): AddTimeEntryOptions[] {

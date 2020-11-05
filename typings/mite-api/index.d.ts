@@ -2,7 +2,7 @@ declare module "mite-api" {
     export interface TimeEntry {
         billable: boolean,
         created_at: string,
-        date_at: string,
+        date_at: string, // in format YYYY-MM-DD
         id: number,
         locked: boolean,
         minutes: number,

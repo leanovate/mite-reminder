@@ -1,6 +1,7 @@
 import { either } from "fp-ts"
 import { calendar_v3 } from "googleapis"
-import { toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
+import { AddTimeEntryOptions, TimeEntries, TimeEntry } from "mite-api"
+import { containsMiteEntry, toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
 
 describe("syncFromCalendar", () => {
     describe("toMiteEntry", () => {
@@ -81,6 +82,60 @@ describe("syncFromCalendar", () => {
             const result = toMiteEntry(calendarEntry)
 
             expect(result).toEqual(either.left("summary is missing"))
+        })
+    })
+
+    describe("containsMiteEntry", () => {
+        const dateAt = "2020-11-26"
+        const description = "meeting 1"
+        const duration = 30
+        const projectId = 111
+        const serviceId = 222
+
+        const addTimeEntryOptions: AddTimeEntryOptions = {
+            date_at: dateAt,
+            note: description,
+            minutes: duration,
+            project_id: projectId,
+            service_id: serviceId,
+        }
+
+        it("should return true when the date, description, duration, projectId and serviceId match", () => {
+            const list: TimeEntries = [{ time_entry: <TimeEntry>addTimeEntryOptions }]
+
+            const result = containsMiteEntry(addTimeEntryOptions, list)
+
+            expect(result).toEqual(true)
+        })
+
+        it("should false when either of date, description, duration, projectId and serviceId don't match match", () => {
+            const list: TimeEntries = [
+                // { time_entry: <TimeEntry>addTimeEntryOptions },
+                { time_entry: <TimeEntry>{
+                    ...addTimeEntryOptions,
+                    date_at: "not matching",
+                } },
+                { time_entry: <TimeEntry>{
+                    ...addTimeEntryOptions,
+                    note: "not matching",
+                } },
+                { time_entry: <TimeEntry>{
+                    ...addTimeEntryOptions,
+                    minutes: 999999999,
+                } },
+                { time_entry: <TimeEntry>{
+                    ...addTimeEntryOptions,
+                    project_id: 99999999,
+                } },
+                { time_entry: <TimeEntry>{
+                    ...addTimeEntryOptions,
+                    service_id: 99999999,
+                } },
+            ]
+
+            const result = containsMiteEntry(addTimeEntryOptions, list)
+
+            expect(result).toEqual(false)
         })
     })
 })
