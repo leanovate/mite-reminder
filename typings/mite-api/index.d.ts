@@ -75,7 +75,7 @@ declare module "mite-api" {
 
     export type GetTimeEntries = (
         { from: string, to: string, user_id: string },
-        callback: GetTimeEntriesCallBack) => void
+        callback: MiteCallback<TimeEntries>) => void
 
     export type GetUsers = (
         options: {
@@ -84,7 +84,7 @@ declare module "mite-api" {
             limit?: number,
             page?: number
         },
-        callback: GetUserCallback) => void
+        callback: MiteCallback<Users>) => void
 
     export type GetProjects = (options: GetProjectsOptions, callback: MiteCallback<{projects: Project[]}>) => void
     export interface GetProjectsOptions {
@@ -94,11 +94,8 @@ declare module "mite-api" {
         page?: number
     }
     
-    export type AddTimeEntry = (options: AddTimeEntryOptions, callback: AddTimeEntryCallback) => void
+    export type AddTimeEntry = (options: AddTimeEntryOptions, callback: MiteCallback<{ time_entry: TimeEntry }>) => void
 
-    export type GetTimeEntriesCallBack = (error: Error | undefined, result: TimeEntries) => void
-    export type GetUserCallback = (error: Error | undefined, result: Users) => void
-    export type AddTimeEntryCallback = (error: Error | undefined, result: { time_entry: TimeEntry }) => void
     export type MiteCallback<T> = (error: Error | undefined, result: T) => void
 
     type MiteApiConstructorParams = { account: string, apiKey: string, applicationName: string }
