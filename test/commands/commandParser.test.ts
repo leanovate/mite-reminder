@@ -52,4 +52,13 @@ describe("command parser", () => {
             searchString: "general meetings"
         })
     })
+    it("should parse the 'projects' command even when no search string is provided", () => {
+        const result = parse("projects")
+
+        expect(result.status).toBeTruthy()
+        expect((<Success<MiteCommand>>result).value).toEqual({ 
+            name: "show projects",
+            searchString: undefined
+        })
+    })
 })

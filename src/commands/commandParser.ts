@@ -25,7 +25,7 @@ export interface CheckCalendar extends BaseMiteCommand {
 }
 export interface ShowProjects extends BaseMiteCommand {
     name: "show projects",
-    searchString: string
+    searchString?: string
 }
 
 export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand | CheckChannel | CheckCalendar | ShowProjects
@@ -39,10 +39,12 @@ const register: Parser<RegisterCommand> =
       P.string("register").result( { name: "register" } as RegisterCommand)
   )
 const showProjects: Parser<ShowProjects> = 
-  P.string("projects")
-      .then(P.whitespace)
-      .then(P.all)
-      .map(result => ({ name: "show projects", searchString: result } as ShowProjects))
+    P.alt(
+        P.string("projects")
+            .then(P.whitespace)
+            .then(P.all)
+            .map(result => ({ name: "show projects", searchString: result } as ShowProjects)),
+        P.string("projects").result( { name: "show projects" } as ShowProjects))
 
 const unregister: Parser<UnregisterCommand> = P.string("unregister").result({ name: "unregister" } as UnregisterCommand)
 const check: Parser<CheckCommand> = P.string("check").result({ name: "check" } as CheckCommand)
