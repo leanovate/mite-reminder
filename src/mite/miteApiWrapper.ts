@@ -1,8 +1,8 @@
-import { taskEither } from "fp-ts"
+import { taskEither as Te, array as A } from "fp-ts"
 import { fromNullable, Option } from "fp-ts/lib/Option"
 import { pipe } from "fp-ts/lib/pipeable"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import miteApi, { GetProjectsOptions, MiteApi, Project, TimeEntries, TimeEntry } from "mite-api"
+import miteApi, { GetProjectsOptions, GetServicesOptions, MiteApi, Project, Service, TimeEntries, TimeEntry } from "mite-api"
 import { Moment } from "moment"
 import { AppError, UnknownAppError } from "../app/errors"
 
@@ -20,16 +20,23 @@ export function getTimeEntries(mite: MiteApi, userId: number | "current", from: 
     }
 
     return pipe(
-        taskEither.taskify(mite.getTimeEntries)(params),
-        taskEither.mapLeft(error => new UnknownAppError(error))
+        Te.taskify(mite.getTimeEntries)(params),
+        Te.mapLeft(error => new UnknownAppError(error))
     )
 }
 
 export function getProjects(mite: MiteApi, options: GetProjectsOptions): TaskEither<AppError, Project[]> {
     return pipe(
-        taskEither.taskify(mite.getProjects)(options),
-        taskEither.map(result => result.projects),
-        taskEither.mapLeft(error => new UnknownAppError(error))
+        Te.taskify(mite.getProjects)(options),
+        Te.map(A.map(entry => entry.project)),
+        Te.mapLeft(error => new UnknownAppError(error))
+    )
+}
+export function getServices(mite: MiteApi, options: GetServicesOptions): TaskEither<AppError, Service[]> {
+    return pipe(
+        Te.taskify(mite.getServices)(options),
+        Te.map(A.map(entry => entry.service)),
+        Te.mapLeft(error => new UnknownAppError(error))
     )
 }
 
@@ -47,19 +54,19 @@ interface AddTimeEntryOptionsForUser {
 
 export function addTimeEntry(mite: MiteApi, timeEntry: AddTimeEntryOptionsForUser): TaskEither<AppError, TimeEntry> {
     return pipe(
-        taskEither.taskify(mite.addTimeEntry)({
+        Te.taskify(mite.addTimeEntry)({
             ...timeEntry,
             user_id: timeEntry.user_id === "current" ? undefined : timeEntry.user_id
         }),
-        taskEither.map(entry => entry.time_entry),
-        taskEither.mapLeft(error => new UnknownAppError(error))
+        Te.map(entry => entry.time_entry),
+        Te.mapLeft(error => new UnknownAppError(error))
     )
 }
 
 export const getMiteIdByEmail = (mite: MiteApi, email: string): TaskEither<AppError, Option<number>> => pipe(
-    taskEither.taskify(mite.getUsers)({ email }),
-    taskEither.mapLeft(error => new UnknownAppError(error)),
-    taskEither.map(users => fromNullable(users
+    Te.taskify(mite.getUsers)({ email }),
+    Te.mapLeft(error => new UnknownAppError(error)),
+    Te.map(users => fromNullable(users
         .map(user => user.user)
         .find(user => user.email === email)?.id)
     ))

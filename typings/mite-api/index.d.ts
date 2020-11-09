@@ -52,7 +52,19 @@ declare module "mite-api" {
             }[],
         created_at: string // e.g. "2011-08-17T12:06:57+02:00",
         updated_at: string // e.g. "2015-02-19T10:53:10+01:00"
-     }
+    }
+
+    export interface Service {
+        id: number
+        name: string
+        note: string
+        hourly_rate: number
+        archived: boolean
+        billable: boolean
+        created_at: string // e.g. "2009-12-13T12:12:00+01:00",
+        updated_at: string // e.g. "2015-12-13T07:20:04+01:00"
+    }
+    
 
     export interface AddTimeEntryOptions {
         date_at?: string // in format YYYY-MM-DD, default: today
@@ -69,6 +81,7 @@ declare module "mite-api" {
         getUsers: GetUsers
         addTimeEntry: AddTimeEntry
         getProjects: GetProjects
+        getServices: GetServices
     }
 
     export type MiteApiError = { error: string }
@@ -86,10 +99,16 @@ declare module "mite-api" {
         },
         callback: MiteCallback<Users>) => void
 
-    export type GetProjects = (options: GetProjectsOptions, callback: MiteCallback<{projects: Project[]}>) => void
+    export type GetProjects = (options: GetProjectsOptions, callback: MiteCallback<{project: Project}[]>) => void
     export interface GetProjectsOptions {
         name?: string // only return projects containing this string in the name, ignoring capitalization
         customer_id?: number
+        limit?: number
+        page?: number
+    }
+    export type GetServices = (options: GetServicesOptions, callback: MiteCallback<{service: Service}[]>) => void
+    export interface GetServicesOptions {
+        name?: string // only return services containing this string in the name, ignoring capitalization
         limit?: number
         page?: number
     }

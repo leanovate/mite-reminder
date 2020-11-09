@@ -1,8 +1,8 @@
-import { MiteApi, TimeEntry, TimeEntries, User, Users, Project } from "mite-api"
+import { MiteApi, Project, Service, TimeEntries, TimeEntry, User, Users } from "mite-api"
 import moment from "moment"
-import { createMiteApi, getTimeEntries, getMiteIdByEmail, addTimeEntry, getProjects } from "../../src/mite/miteApiWrapper"
-import { getRight, getValue, getLeft } from "../testUtils"
 import { UnknownAppError } from "../../src/app/errors"
+import { addTimeEntry, createMiteApi, getMiteIdByEmail, getProjects, getServices, getTimeEntries } from "../../src/mite/miteApiWrapper"
+import { getLeft, getRight, getValue } from "../testUtils"
 
 jest.mock("../../src/config", () => ({}))
 
@@ -19,6 +19,7 @@ describe("miteApi", () => {
         getUsers: () => null,
         addTimeEntry: () => null,
         getProjects: () => null,
+        getServices: () => null,
     }
 
     describe("getTimeEntries", () => {
@@ -91,13 +92,30 @@ describe("miteApi", () => {
 
             const mite: MiteApi = {
                 ...emptyMock,
-                getProjects: (_, callback) => callback(undefined, { projects: [testProject] })
+                getProjects: (_, callback) => callback(undefined, [{ project: testProject }])
             }
 
             const result = await getProjects(mite, {})()
             const projects = getRight(result)
 
             expect(projects).toEqual([testProject])
+        })
+    })
+    describe("getServices", () => {
+        it("returns a promise with services", async () => {
+            const testService = <Service>{
+                name: "a service"
+            }
+
+            const mite: MiteApi = {
+                ...emptyMock,
+                getServices: (_, callback) => callback(undefined, [{ service: testService }])
+            }
+
+            const result = await getServices(mite, {})()
+            const projects = getRight(result)
+
+            expect(projects).toEqual([testService])
         })
     })
 
