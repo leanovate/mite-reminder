@@ -135,14 +135,14 @@ export const projectsAndServicesBlock = (projectsAndServices: ShowProjectsResult
         type: "section",
         text: {
             "type": "mrkdwn",
-            "text": "Projects:"
+            "text": "*Projects:*"
         }
     }
     const servicesHeader: SectionBlock = {
         type: "section",
         text: {
             "type": "mrkdwn",
-            "text": "Services:"
+            "text": "*Services:*"
         }
     }
 
