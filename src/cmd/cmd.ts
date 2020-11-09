@@ -5,11 +5,13 @@ import { fold } from "fp-ts/lib/TaskEither"
 import { Moment } from "moment"
 import readline from "readline"
 import { AppError, UserIsUnknown } from "../app/errors"
+import { showProjects } from "../calendarSync/syncFromCalendar"
 import { parse } from "../commands/commandParser"
 import { doCheck, doRegister, doUnregister } from "../commands/commands"
 import config from "../config"
 import { createRepository } from "../db/createUserRepository"
 import { Repository } from "../db/userRepository"
+import { makeCheckContext } from "../mite/makeCheckContext"
 import { createUserContextFromSlackId } from "../slack/createUserContext"
 
 const rl = readline.createInterface({
@@ -50,6 +52,22 @@ const requestAndRunCommand = async (repository: Repository): Promise<void> => {
                     .then(displayCheckUsersResults)
                 */
                 console.log("sorry, but that's not possible here")
+                break
+            case "show projects":
+                await pipe(
+                    makeCheckContext(context),
+                    taskEither.fromEither,
+                    taskEither.chain(context => showProjects(context, command.searchString)),
+                )()
+                    .then(
+                        either.fold(
+                            e => "got error: " + e,
+                            result => "Projects: \n"
+                            + result.projects.map(project => project.name + " => " + project.projectId.toString() + "\n").join("")
+                            + "\n\nServices:\n"
+                            + result.services.map(service => service.name + " => " + service.serviceId.toString() + "\n").join("")))
+                    .then(console.log)
+                break
             }
         } else {
             console.log("I don't understand")
