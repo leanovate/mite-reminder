@@ -103,7 +103,7 @@ describe("syncFromCalendar", () => {
             service_id: serviceId,
         }
 
-        it("should return true when the date, description, duration, projectId and serviceId match", () => {
+        it("should return true when the date, description, projectId and serviceId match", () => {
             const list: TimeEntries = [{ time_entry: <TimeEntry>addTimeEntryOptions }]
 
             const result = containsMiteEntry(addTimeEntryOptions, list)
@@ -111,7 +111,19 @@ describe("syncFromCalendar", () => {
             expect(result).toEqual(true)
         })
 
-        it("should false when either of date, description, duration, projectId and serviceId don't match match", () => {
+        it("should return true even when duration doesn't match", () => {
+            // this allows the user to adapt the time of automatic meeting entries afterwards, without having to worry about duplicated entries
+            const list: TimeEntries = [{ time_entry: <TimeEntry>{
+                ...addTimeEntryOptions,
+                minutes: 999999
+            } }]
+
+            const result = containsMiteEntry(addTimeEntryOptions, list)
+
+            expect(result).toEqual(true)
+        })
+
+        it("should false when either of date, description, projectId and serviceId don't match match", () => {
             const list: TimeEntries = [
                 // { time_entry: <TimeEntry>addTimeEntryOptions },
                 { time_entry: <TimeEntry>{
@@ -121,10 +133,6 @@ describe("syncFromCalendar", () => {
                 { time_entry: <TimeEntry>{
                     ...addTimeEntryOptions,
                     note: "not matching",
-                } },
-                { time_entry: <TimeEntry>{
-                    ...addTimeEntryOptions,
-                    minutes: 999999999,
                 } },
                 { time_entry: <TimeEntry>{
                     ...addTimeEntryOptions,

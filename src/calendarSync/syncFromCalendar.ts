@@ -67,7 +67,6 @@ export function containsMiteEntry(toContain: AddTimeEntryOptions, list: TimeEntr
         A.findFirst(entry =>
             entry.date_at === toContain.date_at
             && entry.note === toContain.note
-            && entry.minutes === toContain.minutes
             && entry.project_id === toContain.project_id
             && entry.service_id === toContain.service_id
         ),
