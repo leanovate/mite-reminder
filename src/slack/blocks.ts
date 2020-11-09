@@ -130,6 +130,7 @@ export const addedCalendarEntriesBlock = (entriesAdded: TimeEntry[]): { text: st
 }
 
 export const projectsAndServicesBlock = (projectsAndServices: ShowProjectsResult): { text: string, blocks: KnownBlock[] } => {
+    const { projects, services } = projectsAndServices
     const projectsHeader: SectionBlock = {
         type: "section",
         text: {
@@ -149,19 +150,23 @@ export const projectsAndServicesBlock = (projectsAndServices: ShowProjectsResult
         type: "section",
         text: {
             type: "mrkdwn",
-            text: projectsAndServices.projects.map(project => `• ${project.name} - ${project.projectId}`).join("\n")
+            text: projects.length > 0
+                ? projects.map(project => `• ${project.name} - ${project.projectId}`).join("\n")
+                : "No projects found."
         }
     }
     const servicesBlock: SectionBlock = {
         type: "section",
         text: {
             type: "mrkdwn",
-            text: projectsAndServices.services.map(service => `• ${service.name} - ${service.serviceId}`).join("\n")
+            text: services.length > 0
+                ? services.map(service => `• ${service.name} - ${service.serviceId}`).join("\n")
+                : "No services found."
         }
     }
 
     return {
-        text: `I have found ${projectsAndServices.projects.length} projects and ${projectsAndServices.services.length} services.`,
+        text: `I have found ${projects.length} projects and ${services.length} services.`,
         blocks: [
             projectsHeader,
             projectsBlock,
