@@ -11,9 +11,9 @@ import moment, { Moment } from "moment"
 import { AppError, GoogleApiAuthenticationError, UnknownAppError } from "../app/errors"
 import { Config } from "../config"
 import { makeCheckContext } from "../mite/makeCheckContext"
-import { addTimeEntry, getProjects, getServices, getTimeEntries } from "../mite/miteApiWrapper"
+import { addTimeEntry, getTimeEntries } from "../mite/miteApiWrapper"
 import { lastWeekThursdayToThursday } from "../mite/time"
-import { CheckContext, UserContext } from "../slack/userContext"
+import { UserContext } from "../slack/userContext"
 
 export function addCalendarEntriesToMite(context: UserContext, googleApi: GoogleApis, userEmail: string, now: Moment): TaskEither<AppError, TimeEntry[]> {
     const checkContext = Te.fromEither(makeCheckContext(context))
@@ -57,22 +57,6 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
             )),
             A.sequence(taskEither) // returns error when one of the tasks returns an error
         ))
-    )
-}
-
-export interface ShowProjectsResult {
-    projects: Array<{name: string, projectId: number}>
-    services: Array<{name: string, serviceId: number}>
-}
-
-export function showProjects(context: CheckContext, searchString?: string): TaskEither<AppError, ShowProjectsResult> {
-    return pipe(
-        sequenceT(taskEither)(getProjects(context.miteApi, { name: searchString }), getServices(context.miteApi, { name: searchString })),
-        Te.map(([projects, services ]) => ({
-            projects: projects.map(project => ({ name: project.name, projectId: project.id })),
-            services: services.map(service => ({ name: service.name, serviceId: service.id })),
-        })
-        )
     )
 }
 

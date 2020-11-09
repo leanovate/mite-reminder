@@ -1,7 +1,7 @@
 import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
 import { TimeEntry } from "mite-api"
 import { Moment } from "moment"
-import { ShowProjectsResult } from "../calendarSync/syncFromCalendar"
+import { ShowProjectsResult } from "../calendarSync/showProjects"
 import { CheckUserResult, CheckUsersReport } from "../commands/commands"
 import config from "../config"
 import { formatTimeReadable } from "../mite/time"
