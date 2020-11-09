@@ -125,8 +125,10 @@ export function toMiteEntry(event: calendar_v3.Schema$Event): Either<MiteEntryFa
 }
 
 function findMiteInformation(description: string): Either<MiteEntryFailure, { projectId: number, serviceId: number }> {
+    const descriptionWithoutHtmlTags = removeHtmlTags(description)
+
     const regex = /#mite\s+(\d+)\/(\d+)/
-    const regexResult = regex.exec(description)
+    const regexResult = regex.exec(descriptionWithoutHtmlTags)
 
     if (regexResult !== null && regexResult.length >= 3) {
         return either.right({
@@ -134,7 +136,14 @@ function findMiteInformation(description: string): Either<MiteEntryFailure, { pr
             serviceId: Number.parseInt(regexResult[2])
         })
     }
+    if (descriptionWithoutHtmlTags.includes("#mite")) {
+        console.warn("Description contains #mite but regex didn't match", descriptionWithoutHtmlTags)
+    }
     return either.left("no #mite event")
+}
+
+function removeHtmlTags(textWithHtmlTags: string): string {
+    return textWithHtmlTags.replace(/(<([^>]+)>)/gi, "")
 }
 
 function getDurationInMinutes(startTime: SingleDayEventDateTime, endTime: SingleDayEventDateTime) {

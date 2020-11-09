@@ -29,6 +29,27 @@ describe("syncFromCalendar", () => {
             }))
         })
 
+        it("should parse mite ids even when there are html tags between them", () => {
+            const projectId = 1111
+            const serviceId = 4444
+            
+            const calendarEntry: calendar_v3.Schema$Event = {
+                summary: "CoP-DEV",
+                description: `This is just for the mite matching: #mite <span>${projectId}/<span>${serviceId}</span></span><br /> talking about dev stuff, link to hangout <a href="https://meet.google.com/4711">here</a>`,
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" }
+            }
+            const result = toMiteEntry(calendarEntry)
+
+            expect(result).toEqual(either.right({
+                date_at: "2019-10-12", 
+                minutes: 45, 
+                note: "CoP-DEV", 
+                project_id: projectId, 
+                service_id: serviceId
+            }))
+        })
+
         it("should return an error when no '#mite'-information was given in description", () => {
             const calendarEntry: calendar_v3.Schema$Event = {
                 summary: "CoP-DEV",
