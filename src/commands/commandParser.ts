@@ -1,6 +1,6 @@
 import P, { Parser } from "parsimmon"
 
-export type CommandName = "register" | "check" | "unregister" | "check channel" | "sync"
+export type CommandName = "register" | "check" | "unregister" | "check channel" | "sync" | "show projects"
 
 export interface BaseMiteCommand  {
     name: CommandName
@@ -23,6 +23,10 @@ export interface CheckChannel extends BaseMiteCommand {
 export interface CheckCalendar extends BaseMiteCommand {
     name: "sync"
 }
+export interface ShowProjects extends BaseMiteCommand {
+    name: "show projects",
+    searchString: string
+}
 
 export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand | CheckChannel | CheckCalendar
 
@@ -34,6 +38,11 @@ const register: Parser<RegisterCommand> =
           .map(result => ({ name: "register", miteApiKey: result } as RegisterCommand)),
       P.string("register").result( { name: "register" } as RegisterCommand)
   )
+const showProjects: Parser<ShowProjects> = 
+  P.string("projects")
+      .then(P.whitespace)
+      .then(P.all)
+      .map(result => ({ name: "show projects", searchString: result } as ShowProjects))
 
 const unregister: Parser<UnregisterCommand> = P.string("unregister").result({ name: "unregister" } as UnregisterCommand)
 const check: Parser<CheckCommand> = P.string("check").result({ name: "check" } as CheckCommand)
@@ -44,7 +53,7 @@ const checkChannel: Parser<CheckChannel> = P.string("check")
     .then(P.takeWhile(char => char !== "|"))
     .skip(P.all)
     .map(result => ({ name: "check channel", channelName: result.toUpperCase() } as CheckChannel))
-const all: Parser<MiteCommand> = P.alt(register, unregister, checkChannel, check, checkCalendar)
+const all: Parser<MiteCommand> = P.alt(register, unregister, checkChannel, check, checkCalendar, showProjects)
 
 export function parse(commandString: string): P.Result<MiteCommand> {
     return all.parse(commandString.trim().toLowerCase())

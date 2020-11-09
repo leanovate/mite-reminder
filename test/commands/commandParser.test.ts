@@ -42,4 +42,14 @@ describe("command parser", () => {
         expect(result.status).toBeTruthy()
         expect((<Success<MiteCommand>>result).value).toEqual({ name: "sync" })
     })
+
+    it("should parse the 'projects <search_string>' command", () => {
+        const result = parse("projects general meetings")
+
+        expect(result.status).toBeTruthy()
+        expect((<Success<MiteCommand>>result).value).toEqual({ 
+            name: "show projects",
+            searchString: "general meetings"
+        })
+    })
 })
