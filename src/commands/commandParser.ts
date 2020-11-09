@@ -28,7 +28,7 @@ export interface ShowProjects extends BaseMiteCommand {
     searchString: string
 }
 
-export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand | CheckChannel | CheckCalendar
+export type MiteCommand = RegisterCommand | CheckCommand | UnregisterCommand | CheckChannel | CheckCalendar | ShowProjects
 
 const register: Parser<RegisterCommand> =
   P.alt(
