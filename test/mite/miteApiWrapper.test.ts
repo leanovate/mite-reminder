@@ -1,6 +1,6 @@
-import { MiteApi, TimeEntry, TimeEntries, User, Users } from "mite-api"
+import { MiteApi, TimeEntry, TimeEntries, User, Users, Project } from "mite-api"
 import moment from "moment"
-import { createMiteApi, getTimeEntries, getMiteIdByEmail, addTimeEntry } from "../../src/mite/miteApiWrapper"
+import { createMiteApi, getTimeEntries, getMiteIdByEmail, addTimeEntry, getProjects } from "../../src/mite/miteApiWrapper"
 import { getRight, getValue, getLeft } from "../testUtils"
 import { UnknownAppError } from "../../src/app/errors"
 
@@ -17,7 +17,8 @@ describe("miteApi", () => {
     const emptyMock: MiteApi = {
         getTimeEntries: () => null,
         getUsers: () => null,
-        addTimeEntry: () => null
+        addTimeEntry: () => null,
+        getProjects: () => null,
     }
 
     describe("getTimeEntries", () => {
@@ -78,6 +79,25 @@ describe("miteApi", () => {
 
             const result = await addTimeEntry(mite, { user_id: "current" })()
             expect(getLeft(result)).toEqual(new UnknownAppError(error))
+        })
+    })
+
+    
+    describe("getProjects", () => {
+        it("returns a promise with projects", async () => {
+            const testProject = <Project>{
+                name: "a project"
+            }
+
+            const mite: MiteApi = {
+                ...emptyMock,
+                getProjects: (_, callback) => callback(undefined, { projects: [testProject] })
+            }
+
+            const result = await getProjects(mite, {})()
+            const projects = getRight(result)
+
+            expect(projects).toEqual([testProject])
         })
     })
 

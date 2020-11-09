@@ -35,6 +35,25 @@ declare module "mite-api" {
     export type TimeEntries = Array<{ time_entry: TimeEntry }>
     export type Users = Array<{ user: User }>
 
+    export interface Project {
+        id: number
+        name: string
+        note: string
+        customer_id: number,
+        customer_name: string
+        budget: number
+        budget_type: "minutes" | "minutes_per_month" | "cents" | "cents_per_month"
+        hourly_rate: number
+        archived: boolean
+        active_hourly_rate: "hourly_rate" | "hourly_rates_per_service"
+        hourly_rates_per_service: {
+                service_id: number,
+                hourly_rate: number
+            }[],
+        created_at: string // e.g. "2011-08-17T12:06:57+02:00",
+        updated_at: string // e.g. "2015-02-19T10:53:10+01:00"
+     }
+
     export interface AddTimeEntryOptions {
         date_at?: string // in format YYYY-MM-DD, default: today
         minutes?: number //default: 0
@@ -49,6 +68,7 @@ declare module "mite-api" {
         getTimeEntries: GetTimeEntries
         getUsers: GetUsers
         addTimeEntry: AddTimeEntry
+        getProjects: GetProjects
     }
 
     export type MiteApiError = { error: string }
@@ -65,12 +85,21 @@ declare module "mite-api" {
             page?: number
         },
         callback: GetUserCallback) => void
+
+    export type GetProjects = (options: GetProjectsOptions, callback: MiteCallback<{projects: Project[]}>) => void
+    export interface GetProjectsOptions {
+        name?: string // only return projects containing this string in the name, ignoring capitalization
+        customer_id?: number
+        limit?: number
+        page?: number
+    }
     
     export type AddTimeEntry = (options: AddTimeEntryOptions, callback: AddTimeEntryCallback) => void
 
     export type GetTimeEntriesCallBack = (error: Error | undefined, result: TimeEntries) => void
     export type GetUserCallback = (error: Error | undefined, result: Users) => void
     export type AddTimeEntryCallback = (error: Error | undefined, result: { time_entry: TimeEntry }) => void
+    export type MiteCallback<T> = (error: Error | undefined, result: T) => void
 
     type MiteApiConstructorParams = { account: string, apiKey: string, applicationName: string }
     export = (params: MiteApiConstructorParams): MiteApi => MiteApi;
