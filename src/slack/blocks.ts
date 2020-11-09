@@ -115,7 +115,7 @@ export const addedCalendarEntriesBlock = (entriesAdded: TimeEntry[]): { text: st
         type: "section",
         text: {
             type: "mrkdwn",
-            text: entriesAdded.map(entry => `• ${entry.note} - ${entry.date_at}`).join("\n")
+            text: entriesAdded.map(entry => `• ${entry.note} (${entry.date_at})`).join("\n")
         }
     }
 
