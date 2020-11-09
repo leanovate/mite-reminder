@@ -7,12 +7,13 @@ import { google } from "googleapis"
 import { MiteApiError } from "mite-api"
 import moment from "moment"
 import { AppError } from "../app/errors"
-import { addCalendarEntriesToMite } from "../calendarSync/syncFromCalendar"
+import { addCalendarEntriesToMite, showProjects } from "../calendarSync/syncFromCalendar"
 import { parse } from "../commands/commandParser"
 import { doCheck, doCheckUsers, doRegister, doUnregister } from "../commands/commands"
 import config from "../config"
 import { Repository } from "../db/userRepository"
-import { addedCalendarEntriesBlock, missingTimeEntriesBlock, userReportEntriesBlock } from "./blocks"
+import { makeCheckContext } from "../mite/makeCheckContext"
+import { addedCalendarEntriesBlock, missingTimeEntriesBlock, projectsAndServicesBlock, userReportEntriesBlock } from "./blocks"
 import { getAllUsersFromChannel } from "./channels"
 import { createUserContextFromSlackId, createRestrictedUserContext } from "./createUserContext"
 import { sayHelp } from "./help"
@@ -41,6 +42,7 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
 
     switch (command.name) {
     case "check":
+        // TODO display the user the check time range (1 week)
         await pipe(
             doCheck(context),
             taskEither.fold(
@@ -66,6 +68,18 @@ export const setupMessageHandling = (app: App, repository: Repository): void => 
             slackUserResolver(app)(context.slackId),
             taskEither.chain(userEmail => addCalendarEntriesToMite(context, google, userEmail.email, moment())),
             taskEither.map(addedCalendarEntriesBlock),
+            taskEither.fold(
+                e => reportError(say, e),
+                result => async () => { await say(result) }
+            )
+        )()
+        break
+    case "show projects":
+        await pipe(
+            makeCheckContext(context),
+            taskEither.fromEither,
+            taskEither.chain(context => showProjects(context, command.searchString)),
+            taskEither.map(projectsAndServicesBlock),
             taskEither.fold(
                 e => reportError(say, e),
                 result => async () => { await say(result) }

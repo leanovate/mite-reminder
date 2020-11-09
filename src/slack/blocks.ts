@@ -1,6 +1,7 @@
 import { DividerBlock, KnownBlock, SectionBlock } from "@slack/web-api"
 import { TimeEntry } from "mite-api"
 import { Moment } from "moment"
+import { ShowProjectsResult } from "../calendarSync/syncFromCalendar"
 import { CheckUserResult, CheckUsersReport } from "../commands/commands"
 import config from "../config"
 import { formatTimeReadable } from "../mite/time"
@@ -124,6 +125,49 @@ export const addedCalendarEntriesBlock = (entriesAdded: TimeEntry[]): { text: st
             header,
             divider,
             entryBlock
+        ]
+    }
+}
+
+export const projectsAndServicesBlock = (projectsAndServices: ShowProjectsResult): { text: string, blocks: KnownBlock[] } => {
+    const projectsHeader: SectionBlock = {
+        type: "section",
+        text: {
+            "type": "mrkdwn",
+            "text": "Projects:"
+        }
+    }
+    const servicesHeader: SectionBlock = {
+        type: "section",
+        text: {
+            "type": "mrkdwn",
+            "text": "Services:"
+        }
+    }
+
+    const projectsBlock: SectionBlock = {
+        type: "section",
+        text: {
+            type: "mrkdwn",
+            text: projectsAndServices.projects.map(project => `• ${project.name} - ${project.projectId}`).join("\n")
+        }
+    }
+    const servicesBlock: SectionBlock = {
+        type: "section",
+        text: {
+            type: "mrkdwn",
+            text: projectsAndServices.services.map(service => `• ${service.name} - ${service.serviceId}`).join("\n")
+        }
+    }
+
+    return {
+        text: `I have found ${projectsAndServices.projects.length} projects and ${projectsAndServices.services.length} services.`,
+        blocks: [
+            projectsHeader,
+            projectsBlock,
+            divider,
+            servicesHeader,
+            servicesBlock
         ]
     }
 }
