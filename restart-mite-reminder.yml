@@ -1,0 +1,9 @@
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Pull new Mite-Reminder-Version
+      docker_compose:
+        project_src: "/root/mite-bot"
+        pull: yes
+        state: present

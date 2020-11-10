@@ -30,3 +30,16 @@ jobs:
         name: leanovatedocker/mite-reminder
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+
+  restart-service:
+    uses: dawidd6/action-ansible-playbook@v2
+    with:
+        playbook: restart-mite-reminder.yml
+        directory: ./
+        key: ${{secrets.MITE_SERVER_SSH_PRIVATE_KEY}}
+        inventory: |
+            [all]
+            ${{ secrets.MITE_SERVER }}
+        options: |
+            -u root
+            --verbose
