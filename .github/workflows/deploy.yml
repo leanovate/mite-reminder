@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     steps:
+    - uses: actions/checkout@v2
     - name: Pull and Restart Docker Image
       uses: dawidd6/action-ansible-playbook@v2
       with:
