@@ -32,6 +32,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
   restart-service:
+    needs: deploy
     uses: dawidd6/action-ansible-playbook@v2
     with:
         playbook: restart-mite-reminder.yml
