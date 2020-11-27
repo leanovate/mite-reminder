@@ -3,7 +3,7 @@ import { calendar_v3, GoogleApis } from "googleapis"
 import { AuthPlus, GaxiosPromise } from "googleapis/build/src/apis/ml"
 import { AddTimeEntryOptions, MiteApi, TimeEntries, TimeEntry } from "mite-api"
 import moment from "moment"
-import { addCalendarEntriesToMite, containsMiteEntry, toMiteEntry } from "../../src/calendarSync/syncFromCalendar"
+import { addCalendarEntriesToMite, containsMiteEntry, toMiteEntry, filterDeclinedEvents } from "../../src/calendarSync/syncFromCalendar"
 import { CheckContext } from "../../src/slack/userContext"
 
 describe("syncFromCalendar", () => {
@@ -168,6 +168,30 @@ describe("syncFromCalendar", () => {
             const result = containsMiteEntry(addTimeEntryOptions, list)
 
             expect(result).toEqual(false)
+        })
+    })
+
+    describe("filterDeclinedEvents", () => {
+        it("should filter out 'declined' events for the user", () => {
+            const userEmail = "testUserEmail"
+            
+            const calendarEntryDeclined: calendar_v3.Schema$Event = {
+                summary: "Declined Event",
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" },
+                attendees: [{ email: userEmail, responseStatus: "declined" }]
+            }
+            const calendarEntryAccepted: calendar_v3.Schema$Event = {
+                summary: "Accepted Event",
+                start: { dateTime: "2019-10-12T07:00:00Z" },
+                end: { dateTime: "2019-10-12T07:45:00Z" },
+                attendees: [{ email: userEmail, responseStatus: "accepted" }]
+            }
+            const result = filterDeclinedEvents(userEmail)({ items: [calendarEntryDeclined, calendarEntryAccepted] })
+
+            expect(result.items).not.toBeUndefined()
+            expect(result.items).toHaveLength(1)
+            expect((result.items as calendar_v3.Schema$Event[])[0].summary).toEqual("Accepted Event")
         })
     })
 
