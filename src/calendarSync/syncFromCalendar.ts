@@ -39,6 +39,7 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
         getAuthorization(googleApi, context.config, userEmail),
         Te.chain(getEvents),
         Te.map(response => response.data),
+        Te.map(filterDeclinedEvents(userEmail)),
         Te.map(toMiteEntries),
         entriesToAdd => sequenceT(taskEither)(miteEntriesLastWeek, entriesToAdd),
         Te.map(([lastMiteEntries, entriesToAdd]) => pipe(
@@ -155,6 +156,19 @@ function getDurationInMinutes(startTime: SingleDayEventDateTime, endTime: Single
 
 function parseDayFrom(dateTime: string): string {
     return moment.utc(dateTime).format("YYYY-MM-DD")
+}
+
+export function filterDeclinedEvents(declinedFrom: string): (events: calendar_v3.Schema$Events) => calendar_v3.Schema$Events {
+    return (events: calendar_v3.Schema$Events) => pipe(
+        events.items ?? [],
+        A.filter(event => {
+            const attendee = event.attendees?.find(attendee => attendee.email === declinedFrom)
+            if (!attendee || !attendee.responseStatus) {
+                return true // let's be safe and assume that when the user never set a response status, the user attended the meeting
+            }
+            return attendee.responseStatus !== "declined"
+        }),
+        items => ({ ...events, items }))
 }
 
 function getAuthorization(googleApi: GoogleApis, config: Config, userEmail: string): TaskEither<GoogleApiAuthenticationError, Auth.JWT> {
