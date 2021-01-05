@@ -35,10 +35,11 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
         Te.chain(context => getTimeEntries(context.miteApi, context.miteUserId, start, end)),
     )
 
+    console.log("inside syncFromCalendar")
     return pipe(
         getAuthorization(googleApi, context.config, userEmail),
         Te.chain(getEvents),
-        Te.map(response => response.data),
+        Te.map(response => { console.log("response from google: ", response ); return response.data }),
         Te.map(filterDeclinedEvents(userEmail)),
         Te.map(toMiteEntries),
         entriesToAdd => sequenceT(taskEither)(miteEntriesLastWeek, entriesToAdd),
