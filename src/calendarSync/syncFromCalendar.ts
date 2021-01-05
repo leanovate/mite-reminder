@@ -41,7 +41,7 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
         Te.chain(getEvents),
         Te.map(response => response.data),
         Te.map(filterDeclinedEvents(userEmail)),
-        Te.map(entries => { console.log("entries", entries); return toMiteEntries(entries) }),
+        Te.map(entries => { entries.items?.forEach(item => console.log("item", item, item.start)); return toMiteEntries(entries) }),
         Te.map(miteEntries => { console.log("miteEntries", miteEntries); return miteEntries }),
         entriesToAdd => sequenceT(taskEither)(miteEntriesLastWeek, entriesToAdd),
         Te.map(([lastMiteEntries, entriesToAdd]) => pipe(
