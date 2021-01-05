@@ -18,7 +18,6 @@ export const slackUserResolver: (_: App) => (_: string) => TaskEither<AppError, 
 
     return pipe(
         task,
-        T.map(result => { console.log("result is", result); return result }),
         T.map(result => option.fromNullable(result.user?.profile?.email)),
         T.chain(orElseFailWith<string>(new UserIsUnknown(slackId))),
         T.map(email => ({ email }))

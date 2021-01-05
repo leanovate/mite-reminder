@@ -62,6 +62,8 @@ export function addCalendarEntriesToMite(context: UserContext, googleApi: Google
 }
 
 export function containsMiteEntry(toContain: AddTimeEntryOptions, list: TimeEntries): boolean {
+    console.log("toContain", toContain)
+    console.log("list", list)
     return pipe(
         list,
         A.map(entry => entry.time_entry),
