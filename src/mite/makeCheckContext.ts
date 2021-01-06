@@ -4,7 +4,7 @@ import { ApiKeyIsMissing, AppError, UserIsUnknown } from "../app/errors"
 import { CheckContext, isCheckContext, UserContext } from "../slack/userContext"
 
 export function makeCheckContext(context: UserContext): Either<AppError, CheckContext> {
-    console.log("entering makeCheckContext")
+    console.log('entering makeCheckContext')
     if (!isCheckContext(context)) {
         return either.left(new ApiKeyIsMissing(context.slackId))
     }
@@ -13,7 +13,7 @@ export function makeCheckContext(context: UserContext): Either<AppError, CheckCo
         return either.left(new UserIsUnknown(context.slackId))
     }
 
-    console.log("leaving makeCheckContext")
+    console.log('leaving makeCheckContext')
     return either.right({
         ...context,
         miteUserId: user?.miteId ?? "current"
