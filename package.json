@@ -22,7 +22,7 @@
     "fp-ts": "^2.7.0",
     "googleapis": "^62.0.0",
     "mite-api": "^0.1.1",
-    "moment": "^2.26.0",
+    "moment": "^2.29.4",
     "node-cron": "^2.0.3",
     "parsimmon": "^1.13.0",
     "tz-offset": "0.0.2"
