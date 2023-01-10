@@ -16,7 +16,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@slack/bolt": "^2.1.1",
+    "@slack/bolt": "^3.12.2",
     "date-holidays": "^1.6.1",
     "dotenv": "^8.2.0",
     "fp-ts": "^2.7.0",
